@@ -1,16 +1,19 @@
+export type DishCategory = 'Основное' | 'Гарнир' | 'Салат' | 'Суп' | 'Напиток'
+
 export interface Dish {
   id: number
   name: string
-  description: string
   price: number
-  imageUrl: string
+  category: DishCategory
+  description?: string
+  imageUrl?: string
   /** Day of week this dish is available. If omitted, it's available every day. */
   day?: WeekDay
 }
 
-export type WeekDay = 'Пн' | 'Вт' | 'Ср' | 'Чт' | 'Пт'
+export type WeekDay = 'Пн' | 'Вт' | 'Ср' | 'Чт' | 'Пт' | 'Сб' | 'Вс'
 
-export const WEEK_DAYS: WeekDay[] = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт']
+export const WEEK_DAYS: WeekDay[] = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 
 export type Screen = 'catalog' | 'cart' | 'success'
 

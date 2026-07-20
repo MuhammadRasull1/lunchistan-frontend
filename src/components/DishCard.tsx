@@ -1,4 +1,4 @@
-import type { Dish } from '../types'
+import type { Dish, DishCategory } from '../types'
 import { formatPrice } from '../types'
 
 interface DishCardProps {
@@ -8,11 +8,44 @@ interface DishCardProps {
   onDecrement: (dish: Dish) => void
 }
 
+const CATEGORY_EMOJI: Record<DishCategory, string> = {
+  Основное: '🍲',
+  Гарнир: '🍚',
+  Салат: '🥗',
+  Суп: '🥣',
+  Напиток: '🥤',
+}
+
 function DishCard({ dish, quantity, onIncrement, onDecrement }: DishCardProps) {
+  const isMain = dish.category === 'Основное'
+  const classes = [
+    'dish-card',
+    isMain ? 'dish-card--main' : '',
+    quantity > 0 ? 'dish-card--active' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
-    <article className={`dish-card${quantity > 0 ? ' dish-card--active' : ''}`}>
+    <article className={classes}>
       <div className="dish-card__image-wrap">
-        <img className="dish-card__image" src={dish.imageUrl} alt={dish.name} />
+        {dish.imageUrl ? (
+          <img
+            className="dish-card__image"
+            src={dish.imageUrl}
+            alt={dish.name}
+          />
+        ) : (
+          <div
+            className={`dish-card__placeholder dish-card__placeholder--${
+              isMain ? 'main' : 'side'
+            }`}
+            aria-hidden="true"
+          >
+            {CATEGORY_EMOJI[dish.category] ?? '🍽️'}
+          </div>
+        )}
+        <span className="dish-card__category">{dish.category}</span>
         {quantity > 0 && <span className="dish-card__badge">{quantity}</span>}
       </div>
 

@@ -148,8 +148,10 @@ body {
 /* ---------- Grid ---------- */
 .catalog__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-auto-flow: dense;
   gap: 20px;
+  align-items: start;
 }
 
 /* ---------- Dish card ---------- */
@@ -178,6 +180,58 @@ body {
   position: relative;
 }
 
+/* Крупная карточка для основных блюд */
+.dish-card--main {
+  grid-column: span 2;
+}
+
+.dish-card--main .dish-card__name {
+  font-size: 19px;
+}
+
+@media (max-width: 560px) {
+  .dish-card--main {
+    grid-column: span 1;
+  }
+}
+
+/* Категория-бейдж */
+.dish-card__category {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--brand-dark);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Плейсхолдер картинки (когда imageUrl нет) */
+.dish-card__placeholder {
+  width: 100%;
+  height: 168px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56px;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  transition: transform 0.4s ease;
+}
+
+.dish-card__placeholder--main {
+  height: 200px;
+  font-size: 72px;
+  background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
+}
+
+.dish-card:hover .dish-card__placeholder {
+  transform: scale(1.05);
+}
+
 .dish-card__image {
   width: 100%;
   height: 168px;
@@ -188,6 +242,10 @@ body {
 
 .dish-card:hover .dish-card__image {
   transform: scale(1.05);
+}
+
+.dish-card--main .dish-card__image {
+  height: 200px;
 }
 
 .dish-card__badge {
