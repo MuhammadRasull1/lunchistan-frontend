@@ -3,30 +3,30 @@ import './App.css'
 import Catalog from './components/Catalog'
 import Cart from './components/Cart'
 import Success from './components/Success'
-import { MOCK_MENU } from './data/mockMenu'
-import type { CartState, Dish, Screen } from './types'
+import { MOCK_SETS } from './data/mockMenu'
+import type { CartState, MealSet, Screen } from './types'
 
 function App() {
   const [screen, setScreen] = useState<Screen>('catalog')
-  // Временно отключён fetch к бэкенду — используем локальный MOCK_MENU.
-  const [dishes] = useState<Dish[]>(MOCK_MENU)
+  // Временно отключён fetch к бэкенду — используем локальный MOCK_SETS.
+  const [sets] = useState<MealSet[]>(MOCK_SETS)
   const [cart, setCart] = useState<CartState>({})
   const loading = false
   const error = ''
 
-  const incrementDish = (dish: Dish) => {
-    setCart((prev) => ({ ...prev, [dish.id]: (prev[dish.id] ?? 0) + 1 }))
+  const incrementSet = (set: MealSet) => {
+    setCart((prev) => ({ ...prev, [set.id]: (prev[set.id] ?? 0) + 1 }))
   }
 
-  const decrementDish = (dish: Dish) => {
+  const decrementSet = (set: MealSet) => {
     setCart((prev) => {
-      const current = prev[dish.id] ?? 0
+      const current = prev[set.id] ?? 0
       if (current <= 1) {
         const next = { ...prev }
-        delete next[dish.id]
+        delete next[set.id]
         return next
       }
-      return { ...prev, [dish.id]: current - 1 }
+      return { ...prev, [set.id]: current - 1 }
     })
   }
 
@@ -36,12 +36,8 @@ function App() {
   )
 
   const total = useMemo(
-    () =>
-      dishes.reduce(
-        (sum, dish) => sum + dish.price * (cart[dish.id] ?? 0),
-        0
-      ),
-    [dishes, cart]
+    () => sets.reduce((sum, set) => sum + set.price * (cart[set.id] ?? 0), 0),
+    [sets, cart]
   )
 
   const handlePay = () => {
@@ -57,25 +53,25 @@ function App() {
     <div className="app">
       {screen === 'catalog' && (
         <Catalog
-          dishes={dishes}
+          sets={sets}
           cart={cart}
           loading={loading}
           error={error}
           total={total}
           itemsCount={itemsCount}
-          onIncrement={incrementDish}
-          onDecrement={decrementDish}
+          onIncrement={incrementSet}
+          onDecrement={decrementSet}
           onGoToCart={() => setScreen('cart')}
         />
       )}
 
       {screen === 'cart' && (
         <Cart
-          dishes={dishes}
+          sets={sets}
           cart={cart}
           total={total}
-          onIncrement={incrementDish}
-          onDecrement={decrementDish}
+          onIncrement={incrementSet}
+          onDecrement={decrementSet}
           onBack={() => setScreen('catalog')}
           onPay={handlePay}
         />

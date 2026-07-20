@@ -1,22 +1,22 @@
 import { useState } from 'react'
-import type { CartState, Dish, WeekDay } from '../types'
+import type { CartState, MealSet, WeekDay } from '../types'
 import { WEEK_DAYS, formatPrice } from '../types'
-import DishCard from './DishCard'
+import SetCard from './SetCard'
 
 interface CatalogProps {
-  dishes: Dish[]
+  sets: MealSet[]
   cart: CartState
   loading: boolean
   error: string
   total: number
   itemsCount: number
-  onIncrement: (dish: Dish) => void
-  onDecrement: (dish: Dish) => void
+  onIncrement: (set: MealSet) => void
+  onDecrement: (set: MealSet) => void
   onGoToCart: () => void
 }
 
 function Catalog({
-  dishes,
+  sets,
   cart,
   loading,
   error,
@@ -28,8 +28,8 @@ function Catalog({
 }: CatalogProps) {
   const [activeDay, setActiveDay] = useState<WeekDay>('Пн')
 
-  const visibleDishes = dishes.filter(
-    (dish) => dish.day == null || dish.day === activeDay
+  const visibleSets = sets.filter(
+    (set) => set.day == null || set.day === activeDay
   )
 
   return (
@@ -41,7 +41,9 @@ function Catalog({
             Lunch<span className="brand__accent">istan</span>
           </span>
         </div>
-        <p className="catalog__subtitle">Меню обедов для вашей команды</p>
+        <p className="catalog__subtitle">
+          Готовые сет-обеды для вашей команды
+        </p>
       </header>
 
       <nav className="tabs" role="tablist" aria-label="Дни недели">
@@ -62,15 +64,15 @@ function Catalog({
       {error && <p className="catalog__status catalog__status--error">{error}</p>}
 
       {!loading && (
-        <div className="catalog__grid">
-          {visibleDishes.length === 0 ? (
-            <p className="catalog__status">На этот день блюд пока нет.</p>
+        <div className="catalog__grid catalog__grid--sets">
+          {visibleSets.length === 0 ? (
+            <p className="catalog__status">На этот день сетов пока нет.</p>
           ) : (
-            visibleDishes.map((dish) => (
-              <DishCard
-                key={dish.id}
-                dish={dish}
-                quantity={cart[dish.id] ?? 0}
+            visibleSets.map((set) => (
+              <SetCard
+                key={set.id}
+                set={set}
+                quantity={cart[set.id] ?? 0}
                 onIncrement={onIncrement}
                 onDecrement={onDecrement}
               />
@@ -84,7 +86,7 @@ function Catalog({
           <div className="sticky-bar__info">
             <span className="sticky-bar__count">
               {itemsCount}{' '}
-              {itemsCount === 1 ? 'порция' : itemsCount < 5 ? 'порции' : 'порций'}
+              {itemsCount === 1 ? 'сет' : itemsCount < 5 ? 'сета' : 'сетов'}
             </span>
             <span className="sticky-bar__total">{formatPrice(total)}</span>
           </div>

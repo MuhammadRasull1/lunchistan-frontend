@@ -1,24 +1,24 @@
 import { useState } from 'react'
-import type { CartState, Dish, PaymentMethod } from '../types'
+import type { CartState, MealSet, PaymentMethod } from '../types'
 import { formatPrice } from '../types'
 
 interface CartLine {
-  dish: Dish
+  set: MealSet
   quantity: number
 }
 
 interface CartProps {
-  dishes: Dish[]
+  sets: MealSet[]
   cart: CartState
   total: number
-  onIncrement: (dish: Dish) => void
-  onDecrement: (dish: Dish) => void
+  onIncrement: (set: MealSet) => void
+  onDecrement: (set: MealSet) => void
   onBack: () => void
   onPay: (method: PaymentMethod) => void
 }
 
 function Cart({
-  dishes,
+  sets,
   cart,
   total,
   onIncrement,
@@ -28,9 +28,9 @@ function Cart({
 }: CartProps) {
   const [method, setMethod] = useState<PaymentMethod>('corporate')
 
-  const lines: CartLine[] = dishes
-    .filter((dish) => (cart[dish.id] ?? 0) > 0)
-    .map((dish) => ({ dish, quantity: cart[dish.id] }))
+  const lines: CartLine[] = sets
+    .filter((set) => (cart[set.id] ?? 0) > 0)
+    .map((set) => ({ set, quantity: cart[set.id] }))
 
   return (
     <div className="cart">
@@ -46,25 +46,26 @@ function Cart({
       ) : (
         <>
           <ul className="cart__list">
-            {lines.map(({ dish, quantity }) => (
-              <li key={dish.id} className="cart__item">
-                <img
-                  className="cart__item-image"
-                  src={dish.imageUrl}
-                  alt={dish.name}
-                />
+            {lines.map(({ set, quantity }) => (
+              <li key={set.id} className="cart__item">
+                <div className="cart__item-icon" aria-hidden="true">
+                  🍱
+                </div>
                 <div className="cart__item-info">
-                  <span className="cart__item-name">{dish.name}</span>
-                  <span className="cart__item-price">
-                    {formatPrice(dish.price)}
+                  <span className="cart__item-name">
+                    {set.name}{' — '}
+                    <span className="cart__item-price">
+                      {formatPrice(set.price)}
+                    </span>
                   </span>
+                  <span className="cart__item-desc">{set.description}</span>
                 </div>
                 <div className="counter counter--sm">
                   <button
                     type="button"
                     className="counter__btn"
-                    aria-label="Убрать одну порцию"
-                    onClick={() => onDecrement(dish)}
+                    aria-label="Убрать один сет"
+                    onClick={() => onDecrement(set)}
                   >
                     −
                   </button>
@@ -72,14 +73,14 @@ function Cart({
                   <button
                     type="button"
                     className="counter__btn counter__btn--add"
-                    aria-label="Добавить одну порцию"
-                    onClick={() => onIncrement(dish)}
+                    aria-label="Добавить один сет"
+                    onClick={() => onIncrement(set)}
                   >
                     +
                   </button>
                 </div>
                 <span className="cart__item-sum">
-                  {formatPrice(dish.price * quantity)}
+                  {formatPrice(set.price * quantity)}
                 </span>
               </li>
             ))}

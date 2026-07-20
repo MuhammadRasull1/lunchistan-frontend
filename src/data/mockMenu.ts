@@ -1,84 +1,149 @@
-import type { Dish, DishCategory, WeekDay } from '../types'
+import type { MealSet, WeekDay } from '../types'
 
-export interface DayMenu {
+export interface DaySets {
   day: WeekDay
-  dishes: {
+  sets: {
+    id: number
     name: string
-    category: DishCategory
+    description: string
     price: number
   }[]
 }
 
-// Полное меню на каждый день недели.
-export const menu: DayMenu[] = [
+const SET_PRICE = 55000
+
+// Сет-меню на каждый день недели: 2 сета по фиксированной цене.
+export const menu: DaySets[] = [
   {
     day: 'Пн',
-    dishes: [
-      { name: 'Гушт сай', category: 'Основное', price: 45000 },
-      { name: 'Гарнир рис басмати', category: 'Гарнир', price: 10000 },
-      { name: 'Салат капустный', category: 'Салат', price: 8000 },
+    sets: [
+      {
+        id: 1,
+        name: 'Сет 1',
+        description: 'Гушт сай, Салат капустный, Лепёшка, Напиток (Чай/Кола)',
+        price: SET_PRICE,
+      },
+      {
+        id: 2,
+        name: 'Сет 2',
+        description: 'Курица с грибами, Салат Цезарь, Лепёшка, Напиток (Чай/Кола)',
+        price: SET_PRICE,
+      },
     ],
   },
   {
     day: 'Вт',
-    dishes: [
+    sets: [
       {
-        name: 'Куриный стейк в кисло-сладком соусе',
-        category: 'Основное',
-        price: 45000,
+        id: 1,
+        name: 'Сет 1',
+        description:
+          'Куриный стейк в кисло-сладком соусе, Салат Смак, Лепёшка, Напиток (Чай/Кола)',
+        price: SET_PRICE,
       },
-      { name: 'Гарнир пюре', category: 'Гарнир', price: 10000 },
-      { name: 'Салат Смак', category: 'Салат', price: 8000 },
+      {
+        id: 2,
+        name: 'Сет 2',
+        description: 'Гуляш с пюре, Салат овощной, Лепёшка, Напиток (Чай/Кола)',
+        price: SET_PRICE,
+      },
     ],
   },
   {
     day: 'Ср',
-    dishes: [
-      { name: 'Котлеты по-киевски', category: 'Основное', price: 45000 },
-      { name: 'Гарнир Фри', category: 'Гарнир', price: 10000 },
-      { name: 'Салат Кристал', category: 'Салат', price: 8000 },
+    sets: [
+      {
+        id: 1,
+        name: 'Сет 1',
+        description: 'Котлеты по-киевски, Картофель Фри, Салат Кристал, Лепёшка, Напиток (Чай/Кола)',
+        price: SET_PRICE,
+      },
+      {
+        id: 2,
+        name: 'Сет 2',
+        description: 'Рыба запечённая, Рис, Салат витаминный, Лепёшка, Напиток (Чай/Кола)',
+        price: SET_PRICE,
+      },
     ],
   },
   {
     day: 'Чт',
-    dishes: [
-      { name: 'Плов свадебный', category: 'Основное', price: 45000 },
-      { name: 'Салат Весенний', category: 'Салат', price: 8000 },
+    sets: [
+      {
+        id: 1,
+        name: 'Сет 1',
+        description: 'Плов свадебный, Салат Весенний, Лепёшка, Напиток (Чай/Кола)',
+        price: SET_PRICE,
+      },
+      {
+        id: 2,
+        name: 'Сет 2',
+        description: 'Бефстроганов, Гречка, Салат греческий, Лепёшка, Напиток (Чай/Кола)',
+        price: SET_PRICE,
+      },
     ],
   },
   {
     day: 'Пт',
-    dishes: [
-      { name: 'Суп Борщ', category: 'Основное', price: 45000 },
-      { name: 'Парамач с фаршем', category: 'Основное', price: 15000 },
-      { name: 'Салат Нежный', category: 'Салат', price: 8000 },
+    sets: [
+      {
+        id: 1,
+        name: 'Сет 1',
+        description: 'Суп Борщ, Парамач с фаршем, Салат Нежный, Лепёшка, Напиток (Чай/Кола)',
+        price: SET_PRICE,
+      },
+      {
+        id: 2,
+        name: 'Сет 2',
+        description: 'Лагман, Манты, Салат ачичук, Лепёшка, Напиток (Чай/Кола)',
+        price: SET_PRICE,
+      },
     ],
   },
   {
     day: 'Сб',
-    dishes: [
-      { name: 'Чикен терияки', category: 'Основное', price: 45000 },
-      { name: 'Гарнир рис', category: 'Гарнир', price: 10000 },
-      { name: 'Салат Оливье', category: 'Салат', price: 8000 },
+    sets: [
+      {
+        id: 1,
+        name: 'Сет 1',
+        description: 'Чикен терияки, Рис, Салат Оливье, Лепёшка, Напиток (Чай/Кола)',
+        price: SET_PRICE,
+      },
+      {
+        id: 2,
+        name: 'Сет 2',
+        description: 'Кебаб, Овощи гриль, Салат ачичук, Лепёшка, Напиток (Чай/Кола)',
+        price: SET_PRICE,
+      },
     ],
   },
   {
     day: 'Вс',
-    dishes: [
-      { name: 'Бифштекс', category: 'Основное', price: 45000 },
-      { name: 'Салат Винегрет', category: 'Салат', price: 8000 },
+    sets: [
+      {
+        id: 1,
+        name: 'Сет 1',
+        description: 'Бифштекс, Пюре, Салат Винегрет, Лепёшка, Напиток (Чай/Кола)',
+        price: SET_PRICE,
+      },
+      {
+        id: 2,
+        name: 'Сет 2',
+        description: 'Плов, Салат ачичук, Лепёшка, Напиток (Чай/Кола)',
+        price: SET_PRICE,
+      },
     ],
   },
 ]
 
-// Плоский список блюд со стабильными id (нужны для корзины).
-// App.tsx использует именно этот массив как фолбэк для бэкенда.
-export const MOCK_MENU: Dish[] = menu.flatMap((dayMenu, dayIndex) =>
-  dayMenu.dishes.map((dish, dishIndex) => ({
-    id: (dayIndex + 1) * 100 + dishIndex + 1,
-    name: dish.name,
-    price: dish.price,
-    category: dish.category,
-    day: dayMenu.day,
+// Плоский список сетов со стабильными глобально-уникальными id (нужны для корзины).
+// App.tsx использует именно этот массив как источник данных.
+export const MOCK_SETS: MealSet[] = menu.flatMap((daySets, dayIndex) =>
+  daySets.sets.map((set) => ({
+    id: (dayIndex + 1) * 10 + set.id,
+    name: set.name,
+    description: set.description,
+    price: set.price,
+    day: daySets.day,
   }))
 )
