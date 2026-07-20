@@ -1,144 +1,116 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
 import './App.css'
-
-interface Dish {
-  id: number
-  name: string
-  description: string
-  price: number
-  imageUrl: string
-}
-
-type Screen = 'welcome' | 'menu'
+import Catalog from './components/Catalog'
+import Cart from './components/Cart'
+import Success from './components/Success'
+import { MOCK_MENU } from './data/mockMenu'
+import type { CartState, Dish, PaymentMethod, Screen } from './types'
 
 function App() {
-  const [screen, setScreen] = useState<Screen>('welcome')
-  const [employees, setEmployees] = useState<string>('')
-  const [dish, setDish] = useState<Dish | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [screen, setScreen] = useState<Screen>('catalog')
+  const [dishes, setDishes] = useState<Dish[]>([])
+  const [cart, setCart] = useState<CartState>({})
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [inputError, setInputError] = useState('')
 
-  const formatPrice = (value: number) =>
-    new Intl.NumberFormat('ru-RU').format(value) + ' сум'
+  useEffect(() => {
+    let cancelled = false
 
-  const handleEmployeesChange = (value: string) => {
-    setEmployees(value)
-    if (Number(value) > 0) {
-      setInputError('')
-    }
-  }
-
-  const handleShowMenu = async () => {
-    const count = Number(employees)
-    if (employees.trim() === '' || count <= 0) {
-      setInputError('напиши число')
-      return
-    }
-    setInputError('')
-    setLoading(true)
-    setError('')
-    try {
-      const { data } = await axios.get<Dish[]>(
-        `${import.meta.env.VITE_API_URL}/api/menu`
-      )
-      if (data && data.length > 0) {
-        setDish(data[0])
-        setScreen('menu')
-      } else {
-        setError('Меню пока недоступно. Попробуйте позже.')
+    const loadMenu = async () => {
+      setLoading(true)
+      setError('')
+      try {
+        const { data } = await axios.get<Dish[]>(
+          `${import.meta.env.VITE_API_URL}/api/menu`
+        )
+        if (cancelled) return
+        // Если бэкенд вернул пустой массив — используем моковые данные.
+        setDishes(data && data.length > 0 ? data : MOCK_MENU)
+      } catch {
+        if (cancelled) return
+        // При ошибке тоже показываем моковые данные, чтобы верстать UI.
+        setDishes(MOCK_MENU)
+        setError('Меню загружено в тестовом режиме (нет связи с сервером).')
+      } finally {
+        if (!cancelled) setLoading(false)
       }
-    } catch {
-      setError('Не удалось загрузить меню. Попробуйте позже.')
-    } finally {
-      setLoading(false)
     }
+
+    loadMenu()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const incrementDish = (dish: Dish) => {
+    setCart((prev) => ({ ...prev, [dish.id]: (prev[dish.id] ?? 0) + 1 }))
   }
 
-  const handleOrder = () => {
-    alert('🎉 Заказ отправлен на кухню Lunchistan!')
+  const decrementDish = (dish: Dish) => {
+    setCart((prev) => {
+      const current = prev[dish.id] ?? 0
+      if (current <= 1) {
+        const next = { ...prev }
+        delete next[dish.id]
+        return next
+      }
+      return { ...prev, [dish.id]: current - 1 }
+    })
   }
 
-  const total = dish ? dish.price * Number(employees) : 0
+  const itemsCount = useMemo(
+    () => Object.values(cart).reduce((sum, qty) => sum + qty, 0),
+    [cart]
+  )
+
+  const total = useMemo(
+    () =>
+      dishes.reduce(
+        (sum, dish) => sum + dish.price * (cart[dish.id] ?? 0),
+        0
+      ),
+    [dishes, cart]
+  )
+
+  const handlePay = (_method: PaymentMethod) => {
+    setScreen('success')
+  }
+
+  const handleNewOrder = () => {
+    setCart({})
+    setScreen('catalog')
+  }
 
   return (
     <div className="app">
-      <div className="card">
-        <div className="brand">
-          <span className="logo">🍽️</span>
-          <span>
-            Lunch<span className="accent">istan</span>
-          </span>
-        </div>
+      {screen === 'catalog' && (
+        <Catalog
+          dishes={dishes}
+          cart={cart}
+          loading={loading}
+          error={error}
+          total={total}
+          itemsCount={itemsCount}
+          onIncrement={incrementDish}
+          onDecrement={decrementDish}
+          onGoToCart={() => setScreen('cart')}
+        />
+      )}
 
-        {screen === 'welcome' && (
-          <>
-            <p className="subtitle">Вкусные обеды для вашей команды</p>
-            <label className="field-label" htmlFor="employees">
-              Сколько сотрудников нужно накормить?
-            </label>
-            <input
-              id="employees"
-              className="input"
-              type="number"
-              min={1}
-              value={employees}
-              onChange={(e) => handleEmployeesChange(e.target.value)}
-            />
-            {inputError && <p className="error error-inline">{inputError}</p>}
-            <button
-              type="button"
-              className="btn btn-primary mt"
-              onClick={handleShowMenu}
-            >
-              {loading ? 'Загружаем...' : 'Смотреть меню'}
-            </button>
-            {error && <p className="error">{error}</p>}
-          </>
-        )}
+      {screen === 'cart' && (
+        <Cart
+          dishes={dishes}
+          cart={cart}
+          total={total}
+          onIncrement={incrementDish}
+          onDecrement={decrementDish}
+          onBack={() => setScreen('catalog')}
+          onPay={handlePay}
+        />
+      )}
 
-        {screen === 'menu' && dish && (
-          <>
-            <img className="dish-image" src={dish.imageUrl} alt={dish.name} />
-            <h2 className="dish-name">{dish.name}</h2>
-            <p className="dish-description">{dish.description}</p>
-            <span className="dish-price">
-              {formatPrice(dish.price)} за порцию
-            </span>
-
-            <div className="calc">
-              <div className="calc-row">
-                <span>Количество человек</span>
-                <span>{Number(employees)}</span>
-              </div>
-              <div className="calc-row">
-                <span>Цена за порцию</span>
-                <span>{formatPrice(dish.price)}</span>
-              </div>
-              <div className="calc-row calc-total">
-                <span>Итого к оплате</span>
-                <span>{formatPrice(total)}</span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              className="btn btn-primary btn-lg"
-              onClick={handleOrder}
-            >
-              Оформить заказ
-            </button>
-            <button
-              type="button"
-              className="btn btn-ghost"
-              onClick={() => setScreen('welcome')}
-            >
-              Назад
-            </button>
-          </>
-        )}
-      </div>
+      {screen === 'success' && <Success onNewOrder={handleNewOrder} />}
     </div>
   )
 }
