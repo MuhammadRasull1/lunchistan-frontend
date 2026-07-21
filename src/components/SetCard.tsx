@@ -35,14 +35,22 @@ function SetCard({ set, quantity, beverage, onBeverageChange, onQuantityChange }
       <div className="set-card__actions">
         <div className="set-card__drink">
           <label className="set-card__drink-label">Напиток</label>
-          <select
-            className="set-card__drink-select"
-            value={beverage}
-            onChange={(e) => onBeverageChange(e.target.value)}
-          >
-            <option value="Вода">💧 Вода</option>
-            <option value="Компот в ассортименте">🧃 Компот в ассортименте</option>
-          </select>
+          <div className="pill-group">
+            <button
+              type="button"
+              className={`pill${beverage === 'Вода' ? ' pill--active' : ''}`}
+              onClick={() => onBeverageChange('Вода')}
+            >
+              💧 Вода
+            </button>
+            <button
+              type="button"
+              className={`pill${beverage === 'Компот в ассортименте' ? ' pill--active' : ''}`}
+              onClick={() => onBeverageChange('Компот в ассортименте')}
+            >
+              🧃 Компот
+            </button>
+          </div>
         </div>
 
         <div className="set-card__qty">

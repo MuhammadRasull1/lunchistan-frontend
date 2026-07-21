@@ -1,5 +1,6 @@
 import type { LunchSet, Beverage, CartState } from '../types'
-import { DRINK_OPTIONS, formatPrice } from '../types'
+import { formatPrice } from '../types'
+import SetCard from './SetCard'
 
 interface CatalogProps {
   sets: LunchSet[]
@@ -104,71 +105,14 @@ function Catalog({
           const beverage = cartItem?.beverage ?? 'Вода'
 
           return (
-            <article
+            <SetCard
               key={set.id}
-              className={`set-card${quantity > 0 ? ' set-card--active' : ''}`}
-            >
-              <div className="set-card__head">
-                <div className="set-card__badge" aria-hidden="true">🍱</div>
-                <div className="set-card__title-wrap">
-                  <h3 className="set-card__name">{set.name}</h3>
-                  <span className="set-card__tag">
-                    День {set.dayNumber} · {set.weekDay}
-                  </span>
-                </div>
-                {quantity > 0 && (
-                  <span className="set-card__qty-badge">{quantity}</span>
-                )}
-              </div>
-
-              <p className="set-card__description">{set.description}</p>
-
-              <div className="set-card__footer">
-                <span className="set-card__price">{formatPrice(set.price)}</span>
-                <span className="set-card__per-day">за день</span>
-              </div>
-
-              <div className="set-card__actions">
-                {/* Выбор напитка */}
-                <div className="set-card__drink">
-                  <label className="set-card__drink-label">Напиток</label>
-                  <select
-                    className="set-card__drink-select"
-                    value={beverage}
-                    onChange={(e) => onBeverageChange(set.id, e.target.value as Beverage)}
-                  >
-                    {DRINK_OPTIONS.map((b) => (
-                      <option key={b} value={b}>{b}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Количество */}
-                <div className="set-card__qty">
-                  <label className="set-card__drink-label">Кол-во</label>
-                  <div className="counter counter--sm">
-                    <button
-                      type="button"
-                      className="counter__btn"
-                      aria-label="Убрать один сет"
-                      disabled={quantity <= 0}
-                      onClick={() => onQuantityChange(set.id, -1)}
-                    >
-                      −
-                    </button>
-                    <span className="counter__value">{quantity}</span>
-                    <button
-                      type="button"
-                      className="counter__btn counter__btn--add"
-                      aria-label="Добавить один сет"
-                      onClick={() => onQuantityChange(set.id, 1)}
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </article>
+              set={set}
+              quantity={quantity}
+              beverage={beverage}
+              onBeverageChange={(beverage) => onBeverageChange(set.id, beverage as Beverage)}
+              onQuantityChange={(delta) => onQuantityChange(set.id, delta)}
+            />
           )
         })}
       </div>

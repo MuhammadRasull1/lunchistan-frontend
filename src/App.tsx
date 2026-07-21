@@ -12,12 +12,14 @@ function App() {
   const [employeeCount, setEmployeeCount] = useState<number>(1)
   const [cartState, setCartState] = useState<CartState>({})
 
+  // Инициализация: все 22 дня = employeeCount порций
   useEffect(() => {
     const initial: CartState = {}
     MONTHLY_SETS.forEach(set => {
-      initial[set.id] = { quantity: 0, beverage: 'Вода' }
+      initial[set.id] = { quantity: employeeCount, beverage: 'Вода' }
     })
     setCartState(initial)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleBeverageChange = (setId: string | number, beverage: Beverage) => {
@@ -48,7 +50,20 @@ function App() {
   }
 
   const handleEmployeeCountChange = (count: number) => {
-    setEmployeeCount(Math.max(1, count))
+    const newCount = Math.max(1, count)
+    setEmployeeCount(newCount)
+    // Синхронизируем количество порций во ВСЕХ днях с новым числом сотрудников
+    setCartState(prev => {
+      const updated: CartState = {}
+      MONTHLY_SETS.forEach(set => {
+        const existing = prev[set.id]
+        updated[set.id] = {
+          quantity: newCount,
+          beverage: existing?.beverage ?? 'Вода' as Beverage,
+        }
+      })
+      return updated
+    })
   }
 
   const totalMonthlyPrice = employeeCount * WORK_DAYS_COUNT * SET_PRICE
@@ -72,7 +87,7 @@ function App() {
   const handleNewOrder = () => {
     const reset: CartState = {}
     MONTHLY_SETS.forEach(set => {
-      reset[set.id] = { quantity: 0, beverage: 'Вода' }
+      reset[set.id] = { quantity: 1, beverage: 'Вода' }
     })
     setCartState(reset)
     setEmployeeCount(1)

@@ -512,22 +512,41 @@ body {
   margin-bottom: 4px;
 }
 
-.set-card__drink-select {
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  font-size: 13px;
-  background: #fff;
-  cursor: pointer;
-  color: var(--text);
-  transition: border-color 0.2s ease;
+.pill-group {
+  display: flex;
+  gap: 0;
+  background: #f3f4f6;
+  border-radius: 10px;
+  padding: 3px;
 }
 
-.set-card__drink-select:hover,
-.set-card__drink-select:focus {
-  border-color: var(--brand);
-  outline: none;
+.pill {
+  flex: 1;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+}
+
+.pill:hover {
+  color: var(--text);
+}
+
+.pill--active {
+  background: var(--brand);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+}
+
+.pill--active:hover {
+  background: var(--brand-dark);
+  color: #fff;
 }
 
 .set-card__qty {
