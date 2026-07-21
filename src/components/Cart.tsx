@@ -1,36 +1,51 @@
 import { useState } from 'react'
-import type { CartState, MealSet, PaymentMethod } from '../types'
+import type { CartState, LunchSet, PaymentMethod } from '../types'
 import { formatPrice } from '../types'
 
 interface CartLine {
-  set: MealSet
+  set: LunchSet
   quantity: number
+  beverage: string
 }
 
 interface CartProps {
-  sets: MealSet[]
-  cart: CartState
-  total: number
-  onIncrement: (set: MealSet) => void
-  onDecrement: (set: MealSet) => void
+  sets: LunchSet[]
+  cartState: CartState
+  totalMonthlyPrice: number
+  employeeCount: number
   onBack: () => void
-  onPay: (method: PaymentMethod) => void
+  onPlaceOrder: (method: PaymentMethod) => void
 }
 
 function Cart({
   sets,
-  cart,
-  total,
-  onIncrement,
-  onDecrement,
+  cartState,
+  totalMonthlyPrice,
+  employeeCount,
   onBack,
-  onPay,
+  onPlaceOrder,
 }: CartProps) {
-  const [method, setMethod] = useState<PaymentMethod>('corporate')
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('corporate')
 
   const lines: CartLine[] = sets
-    .filter((set) => (cart[set.id] ?? 0) > 0)
-    .map((set) => ({ set, quantity: cart[set.id] }))
+    .map((set) => ({
+      set,
+      cartItem: cartState[set.id],
+    }))
+    .filter(({ cartItem }) => cartItem && cartItem.quantity > 0)
+    .map(({ set, cartItem }) => ({
+      set,
+      quantity: cartItem!.quantity,
+      beverage: cartItem!.beverage,
+    }))
+
+  const totalItems = lines.reduce((sum, line) => sum + line.quantity, 0)
+
+  const paymentOptions: { value: PaymentMethod; label: string; icon: string }[] = [
+    { value: 'corporate', label: 'Перечислением (Для юрлиц)', icon: '🏢' },
+    { value: 'card', label: 'Перевод на карту (P2P)', icon: '💳' },
+    { value: 'cash', label: 'Наличными курьеру', icon: '💵' },
+  ]
 
   return (
     <div className="cart">
@@ -42,87 +57,63 @@ function Cart({
       </header>
 
       {lines.length === 0 ? (
-        <p className="catalog__status">Корзина пуста.</p>
+        <p className="catalog__status">Корзина пуста. Добавьте обеды из меню.</p>
       ) : (
         <>
+          <p style={{ fontSize: '15px', color: '#6b7280', marginBottom: '16px' }}>
+            {employeeCount} сотрудников · {totalItems} порций
+          </p>
+
           <ul className="cart__list">
-            {lines.map(({ set, quantity }) => (
+            {lines.map(({ set, quantity, beverage }) => (
               <li key={set.id} className="cart__item">
-                <div className="cart__item-icon" aria-hidden="true">
-                  🍱
-                </div>
+                <div className="cart__item-icon" aria-hidden="true">🍱</div>
                 <div className="cart__item-info">
                   <span className="cart__item-name">
-                    {set.name}{' — '}
-                    <span className="cart__item-price">
-                      {formatPrice(set.price)}
-                    </span>
+                    {set.name}
                   </span>
-                  <span className="cart__item-desc">{set.description}</span>
+                  <span className="cart__item-desc">
+                    День {set.dayNumber} · {set.weekDay} · {beverage}
+                  </span>
                 </div>
-                <div className="counter counter--sm">
-                  <button
-                    type="button"
-                    className="counter__btn"
-                    aria-label="Убрать один сет"
-                    onClick={() => onDecrement(set)}
-                  >
-                    −
-                  </button>
-                  <span className="counter__value">{quantity}</span>
-                  <button
-                    type="button"
-                    className="counter__btn counter__btn--add"
-                    aria-label="Добавить один сет"
-                    onClick={() => onIncrement(set)}
-                  >
-                    +
-                  </button>
+                <div className="cart__item-sum">
+                  <div>{quantity} × {formatPrice(set.price)}</div>
+                  <div style={{ color: '#f97316' }}>{formatPrice(set.price * quantity)}</div>
                 </div>
-                <span className="cart__item-sum">
-                  {formatPrice(set.price * quantity)}
-                </span>
               </li>
             ))}
           </ul>
 
+          {/* Способ оплаты */}
           <section className="payment">
             <h3 className="payment__title">Способ оплаты</h3>
-            <div className="payment__options">
-              <button
-                type="button"
-                className={`payment__option${
-                  method === 'corporate' ? ' payment__option--active' : ''
-                }`}
-                onClick={() => setMethod('corporate')}
-              >
-                <span className="payment__icon">🏢</span>
-                <span className="payment__label">Корпоративный счёт</span>
-              </button>
-              <button
-                type="button"
-                className={`payment__option${
-                  method === 'card' ? ' payment__option--active' : ''
-                }`}
-                onClick={() => setMethod('card')}
-              >
-                <span className="payment__icon">💳</span>
-                <span className="payment__label">Банковская карта</span>
-              </button>
+            <div className="payment__options" style={{ gridTemplateColumns: '1fr' }}>
+              {paymentOptions.map(({ value, label, icon }) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={`payment__option${paymentMethod === value ? ' payment__option--active' : ''}`}
+                  onClick={() => setPaymentMethod(value)}
+                >
+                  <span className="payment__icon">{icon}</span>
+                  <span className="payment__label">{label}</span>
+                </button>
+              ))}
             </div>
           </section>
 
+          {/* Итог */}
           <div className="cart__summary">
             <span>Итого к оплате</span>
-            <span className="cart__summary-total">{formatPrice(total)}</span>
+            <span className="cart__summary-total">{formatPrice(totalMonthlyPrice)}</span>
           </div>
 
           <button
             type="button"
             className="btn btn--primary btn--lg"
-            onClick={() => onPay(method)}
+            onClick={() => onPlaceOrder(paymentMethod)}
           >
-            Оплатить {formatPrice(total)}
+            Оплатить {formatPrice(totalMonthlyPrice)}
           </button>
         </>
       )}

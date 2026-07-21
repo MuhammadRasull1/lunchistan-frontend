@@ -273,6 +273,12 @@ body {
   color: var(--text);
 }
 
+.set-card__per-day {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
 /* ---------- Dish card ---------- */
 .dish-card {
   background: var(--card-bg);
@@ -481,6 +487,121 @@ body {
   width: 28px;
   height: 28px;
   font-size: 18px;
+}
+
+/* ---------- Set card actions ---------- */
+.set-card__actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--border);
+}
+
+.set-card__drink {
+  flex: 1;
+  min-width: 0;
+}
+
+.set-card__drink-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.set-card__drink-select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 13px;
+  background: #fff;
+  cursor: pointer;
+  color: var(--text);
+  transition: border-color 0.2s ease;
+}
+
+.set-card__drink-select:hover,
+.set-card__drink-select:focus {
+  border-color: var(--brand);
+  outline: none;
+}
+
+.set-card__qty {
+  text-align: center;
+}
+
+/* ---------- Subscription section ---------- */
+.subscription {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 28px;
+  box-shadow: var(--shadow-sm);
+}
+
+.subscription__title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 20px;
+}
+
+.subscription__field {
+  margin-bottom: 16px;
+}
+
+.subscription__label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.subscription__calc {
+  border-top: 1px dashed var(--border);
+  padding-top: 20px;
+}
+
+.subscription__calc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+.subscription__calc-value {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.subscription__calc-row--accent {
+  color: var(--brand-dark);
+  font-weight: 600;
+}
+
+.subscription__calc-row--accent .subscription__calc-value {
+  font-weight: 800;
+}
+
+.subscription__calc-row--total {
+  border-top: 2px solid var(--brand);
+  margin-top: 8px;
+  padding-top: 12px;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.subscription__calc-row--total .subscription__calc-value {
+  color: var(--brand);
+  font-weight: 800;
 }
 
 /* ---------- Sticky bar ---------- */

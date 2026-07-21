@@ -1,36 +1,32 @@
-import { useState } from 'react'
-import type { CartState, MealSet, WeekDay } from '../types'
-import { WEEK_DAYS, formatPrice } from '../types'
-import SetCard from './SetCard'
+import type { LunchSet, Beverage, CartState } from '../types'
+import { DRINK_OPTIONS, formatPrice } from '../types'
 
 interface CatalogProps {
-  sets: MealSet[]
-  cart: CartState
-  loading: boolean
-  error: string
-  total: number
-  itemsCount: number
-  onIncrement: (set: MealSet) => void
-  onDecrement: (set: MealSet) => void
+  sets: LunchSet[]
+  cartState: CartState
+  employeeCount: number
+  totalMonthlyPrice: number
+  workDaysCount: number
+  setPrice: number
+  onBeverageChange: (setId: string | number, beverage: Beverage) => void
+  onQuantityChange: (setId: string | number, delta: number) => void
+  onEmployeeCountChange: (count: number) => void
   onGoToCart: () => void
 }
 
 function Catalog({
   sets,
-  cart,
-  loading,
-  error,
-  total,
-  itemsCount,
-  onIncrement,
-  onDecrement,
+  cartState,
+  employeeCount,
+  totalMonthlyPrice,
+  workDaysCount,
+  setPrice,
+  onBeverageChange,
+  onQuantityChange,
+  onEmployeeCountChange,
   onGoToCart,
 }: CatalogProps) {
-  const [activeDay, setActiveDay] = useState<WeekDay>('Пн')
-
-  const visibleSets = sets.filter(
-    (set) => set.day == null || set.day === activeDay
-  )
+  const totalItems = Object.values(cartState).reduce((sum, item) => sum + item.quantity, 0)
 
   return (
     <div className="catalog">
@@ -41,57 +37,153 @@ function Catalog({
             Lunch<span className="brand__accent">istan</span>
           </span>
         </div>
+        <h1 className="catalog__heading">Корпоративная подписка на месяц</h1>
         <p className="catalog__subtitle">
-          Готовые сет-обеды для вашей команды
+          Сбалансированные комплексные обеды для вашей команды — 22 рабочих дня
         </p>
       </header>
 
-      <nav className="tabs" role="tablist" aria-label="Дни недели">
-        {WEEK_DAYS.map((day) => (
-          <button
-            key={day}
-            role="tab"
-            aria-selected={activeDay === day}
-            className={`tabs__tab${activeDay === day ? ' tabs__tab--active' : ''}`}
-            onClick={() => setActiveDay(day)}
-          >
-            {day}
-          </button>
-        ))}
-      </nav>
+      {/* Калькулятор стоимости */}
+      <section className="subscription">
+        <h2 className="subscription__title">Калькулятор стоимости</h2>
 
-      {loading && <p className="catalog__status">Загружаем меню…</p>}
-      {error && <p className="catalog__status catalog__status--error">{error}</p>}
+        <div className="subscription__field">
+          <span className="subscription__label">Количество сотрудников</span>
+          <div className="counter">
+            <button
+              type="button"
+              className="counter__btn"
+              aria-label="Уменьшить количество сотрудников"
+              disabled={employeeCount <= 1}
+              onClick={() => onEmployeeCountChange(employeeCount - 1)}
+            >
+              −
+            </button>
+            <span className="counter__value">{employeeCount}</span>
+            <button
+              type="button"
+              className="counter__btn counter__btn--add"
+              aria-label="Добавить сотрудника"
+              onClick={() => onEmployeeCountChange(employeeCount + 1)}
+            >
+              +
+            </button>
+          </div>
+        </div>
 
-      {!loading && (
-        <div className="catalog__grid catalog__grid--sets">
-          {visibleSets.length === 0 ? (
-            <p className="catalog__status">На этот день сетов пока нет.</p>
-          ) : (
-            visibleSets.map((set) => (
-              <SetCard
-                key={set.id}
-                set={set}
-                quantity={cart[set.id] ?? 0}
-                onIncrement={onIncrement}
-                onDecrement={onDecrement}
-              />
-            ))
+        <div className="subscription__calc">
+          <div className="subscription__calc-row">
+            <span>Рабочих дней в месяце</span>
+            <span className="subscription__calc-value">{workDaysCount}</span>
+          </div>
+          <div className="subscription__calc-row">
+            <span>Цена одного сета</span>
+            <span className="subscription__calc-value">{formatPrice(setPrice)}</span>
+          </div>
+          <div className="subscription__calc-row subscription__calc-row--accent">
+            <span>Подписка на 1 сотрудника</span>
+            <span className="subscription__calc-value">
+              {workDaysCount} × {formatPrice(setPrice)} = {formatPrice(setPrice * workDaysCount)}
+            </span>
+          </div>
+          {employeeCount > 1 && (
+            <div className="subscription__calc-row subscription__calc-row--total">
+              <span>Итого на {employeeCount} сотр.</span>
+              <span className="subscription__calc-value">{formatPrice(totalMonthlyPrice)}</span>
+            </div>
           )}
         </div>
-      )}
+      </section>
 
-      {itemsCount > 0 && (
+      {/* Список сетов */}
+      <h2 className="catalog__section-title">Меню на месяц</h2>
+      <div className="catalog__grid catalog__grid--sets">
+        {sets.map((set) => {
+          const cartItem = cartState[set.id]
+          const quantity = cartItem?.quantity ?? 0
+          const beverage = cartItem?.beverage ?? 'Вода'
+
+          return (
+            <article
+              key={set.id}
+              className={`set-card${quantity > 0 ? ' set-card--active' : ''}`}
+            >
+              <div className="set-card__head">
+                <div className="set-card__badge" aria-hidden="true">🍱</div>
+                <div className="set-card__title-wrap">
+                  <h3 className="set-card__name">{set.name}</h3>
+                  <span className="set-card__tag">
+                    День {set.dayNumber} · {set.weekDay}
+                  </span>
+                </div>
+                {quantity > 0 && (
+                  <span className="set-card__qty-badge">{quantity}</span>
+                )}
+              </div>
+
+              <p className="set-card__description">{set.description}</p>
+
+              <div className="set-card__footer">
+                <span className="set-card__price">{formatPrice(set.price)}</span>
+                <span className="set-card__per-day">за день</span>
+              </div>
+
+              <div className="set-card__actions">
+                {/* Выбор напитка */}
+                <div className="set-card__drink">
+                  <label className="set-card__drink-label">Напиток</label>
+                  <select
+                    className="set-card__drink-select"
+                    value={beverage}
+                    onChange={(e) => onBeverageChange(set.id, e.target.value as Beverage)}
+                  >
+                    {DRINK_OPTIONS.map((b) => (
+                      <option key={b} value={b}>{b}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Количество */}
+                <div className="set-card__qty">
+                  <label className="set-card__drink-label">Кол-во</label>
+                  <div className="counter counter--sm">
+                    <button
+                      type="button"
+                      className="counter__btn"
+                      aria-label="Убрать один сет"
+                      disabled={quantity <= 0}
+                      onClick={() => onQuantityChange(set.id, -1)}
+                    >
+                      −
+                    </button>
+                    <span className="counter__value">{quantity}</span>
+                    <button
+                      type="button"
+                      className="counter__btn counter__btn--add"
+                      aria-label="Добавить один сет"
+                      onClick={() => onQuantityChange(set.id, 1)}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </article>
+          )
+        })}
+      </div>
+
+      {/* Нижняя панель */}
+      {totalItems > 0 && (
         <div className="sticky-bar">
           <div className="sticky-bar__info">
             <span className="sticky-bar__count">
-              {itemsCount}{' '}
-              {itemsCount === 1 ? 'сет' : itemsCount < 5 ? 'сета' : 'сетов'}
+              {totalItems} порций · {employeeCount} сотрудников
             </span>
-            <span className="sticky-bar__total">{formatPrice(total)}</span>
+            <span className="sticky-bar__total">{formatPrice(totalMonthlyPrice)}</span>
           </div>
           <button type="button" className="btn btn--primary" onClick={onGoToCart}>
-            Перейти в корзину
+            Оформить предзаказ
           </button>
         </div>
       )}
