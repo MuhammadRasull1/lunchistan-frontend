@@ -17,6 +17,8 @@ export interface CartItem {
   beverage: Beverage;
   /** День включён в подписку (true) или пропущен (false) */
   active: boolean;
+  /** Количество порций на одного сотрудника для этого дня (0, если день неактивен) */
+  portions: number;
 }
 
 export type CartState = Record<string | number, CartItem>;

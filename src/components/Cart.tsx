@@ -4,6 +4,8 @@ import { formatPrice } from '../types'
 
 interface CartLine {
   set: LunchSet
+  portions: number
+  totalPortions: number
   beverage: string
 }
 
@@ -12,6 +14,7 @@ interface CartProps {
   cartState: CartState
   totalMonthlyPrice: number
   employeeCount: number
+  totalItems: number
   onBack: () => void
   onPlaceOrder: (method: PaymentMethod) => void
 }
@@ -21,6 +24,7 @@ function Cart({
   cartState,
   totalMonthlyPrice,
   employeeCount,
+  totalItems,
   onBack,
   onPlaceOrder,
 }: CartProps) {
@@ -28,13 +32,17 @@ function Cart({
 
   const activeLines: CartLine[] = sets
     .filter((set) => cartState[set.id]?.active)
-    .map((set) => ({
-      set,
-      beverage: cartState[set.id]?.beverage ?? 'Вода',
-    }))
+    .map((set) => {
+      const portions = cartState[set.id]?.portions ?? 1
+      return {
+        set,
+        portions,
+        totalPortions: portions * employeeCount,
+        beverage: cartState[set.id]?.beverage ?? 'Вода',
+      }
+    })
 
   const activeDays = activeLines.length
-  const totalPortions = activeDays * employeeCount
 
   const paymentOptions: { value: PaymentMethod; label: string; icon: string }[] = [
     { value: 'corporate', label: 'Перечислением (Для юрлиц)', icon: '🏢' },
@@ -56,11 +64,11 @@ function Cart({
       ) : (
         <>
           <p style={{ fontSize: '15px', color: '#6b7280', marginBottom: '16px' }}>
-            {activeDays} дней · {employeeCount} сотрудников · {totalPortions} порций
+            {activeDays} дней · {employeeCount} сотрудников · {totalItems} порций
           </p>
 
           <ul className="cart__list">
-            {activeLines.map(({ set, beverage }) => (
+            {activeLines.map(({ set, portions, totalPortions, beverage }) => (
               <li key={set.id} className="cart__item">
                 <div className="cart__item-icon" aria-hidden="true">🍱</div>
                 <div className="cart__item-info">
@@ -68,12 +76,12 @@ function Cart({
                     {set.name}
                   </span>
                   <span className="cart__item-desc">
-                    День {set.dayNumber} · {set.weekDay} · {beverage}
+                    День {set.dayNumber} · {set.weekDay} · {beverage} · {portions} порц./сотр.
                   </span>
                 </div>
                 <div className="cart__item-sum">
-                  <div>{employeeCount} × {formatPrice(set.price)}</div>
-                  <div style={{ color: '#f97316' }}>{formatPrice(set.price * employeeCount)}</div>
+                  <div>{totalPortions} × {formatPrice(set.price)}</div>
+                  <div style={{ color: '#f97316' }}>{formatPrice(set.price * totalPortions)}</div>
                 </div>
               </li>
             ))}

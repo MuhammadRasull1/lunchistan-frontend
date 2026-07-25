@@ -4,12 +4,14 @@ import { formatPrice } from '../types'
 interface SetCardProps {
   set: LunchSet
   active: boolean
+  portions: number
   beverage: string
   onBeverageChange: (beverage: string) => void
   onToggle: () => void
+  onPortionChange: (delta: number) => void
 }
 
-function SetCard({ set, active, beverage, onBeverageChange, onToggle }: SetCardProps) {
+function SetCard({ set, active, portions, beverage, onBeverageChange, onToggle, onPortionChange }: SetCardProps) {
   return (
     <article className={`set-card${active ? ' set-card--active' : ''}`}>
       <div className="set-card__head">
@@ -42,27 +44,59 @@ function SetCard({ set, active, beverage, onBeverageChange, onToggle }: SetCardP
       </div>
 
       <div className="set-card__actions">
-        <div className="set-card__drink">
-          <label className="set-card__drink-label">Напиток</label>
-          <div className="pill-group">
-            <button
-              type="button"
-              className={`pill${beverage === 'Вода' ? ' pill--active' : ''}`}
-              onClick={() => onBeverageChange('Вода')}
-              disabled={!active}
-            >
-              💧 Вода
-            </button>
-            <button
-              type="button"
-              className={`pill${beverage === 'Компот в ассортименте' ? ' pill--active' : ''}`}
-              onClick={() => onBeverageChange('Компот в ассортименте')}
-              disabled={!active}
-            >
-              🧃 Компот
-            </button>
+        {active ? (
+          <>
+            {/* Счётчик порций */}
+            <div className="set-card__qty">
+              <label className="set-card__drink-label">Порций</label>
+              <div className="counter counter--sm">
+                <button
+                  type="button"
+                  className="counter__btn"
+                  aria-label="Уменьшить количество порций"
+                  disabled={portions <= 1}
+                  onClick={() => onPortionChange(-1)}
+                >
+                  −
+                </button>
+                <span className="counter__value">{portions}</span>
+                <button
+                  type="button"
+                  className="counter__btn counter__btn--add"
+                  aria-label="Увеличить количество порций"
+                  onClick={() => onPortionChange(1)}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            {/* Выбор напитка */}
+            <div className="set-card__drink">
+              <label className="set-card__drink-label">Напиток</label>
+              <div className="pill-group">
+                <button
+                  type="button"
+                  className={`pill${beverage === 'Вода' ? ' pill--active' : ''}`}
+                  onClick={() => onBeverageChange('Вода')}
+                >
+                  💧 Вода
+                </button>
+                <button
+                  type="button"
+                  className={`pill${beverage === 'Компот в ассортименте' ? ' pill--active' : ''}`}
+                  onClick={() => onBeverageChange('Компот в ассортименте')}
+                >
+                  🧃 Компот
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="set-card__inactive-msg">
+            <span className="set-card__inactive-text">День пропущен</span>
           </div>
-        </div>
+        )}
       </div>
     </article>
   )
