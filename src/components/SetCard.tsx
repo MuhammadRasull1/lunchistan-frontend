@@ -3,16 +3,28 @@ import { formatPrice } from '../types'
 
 interface SetCardProps {
   set: LunchSet
-  quantity: number
+  active: boolean
   beverage: string
   onBeverageChange: (beverage: string) => void
-  onPortionChange: (delta: number) => void
+  onToggle: () => void
 }
 
-function SetCard({ set, quantity, beverage, onBeverageChange, onPortionChange }: SetCardProps) {
+function SetCard({ set, active, beverage, onBeverageChange, onToggle }: SetCardProps) {
   return (
-    <article className="set-card set-card--active">
+    <article className={`set-card${active ? ' set-card--active' : ''}`}>
       <div className="set-card__head">
+        <label className="set-card__toggle">
+          <input
+            type="checkbox"
+            className="set-card__checkbox"
+            checked={active}
+            onChange={onToggle}
+            aria-label={`${active ? 'Исключить' : 'Включить'} ${set.name}`}
+          />
+          <span className="set-card__toggle-track">
+            <span className="set-card__toggle-thumb" />
+          </span>
+        </label>
         <div className="set-card__badge" aria-hidden="true">🍱</div>
         <div className="set-card__title-wrap">
           <h3 className="set-card__name">{set.name}</h3>
@@ -20,7 +32,6 @@ function SetCard({ set, quantity, beverage, onBeverageChange, onPortionChange }:
             День {set.dayNumber} · {set.weekDay}
           </span>
         </div>
-        <span className="set-card__qty-badge">{quantity}</span>
       </div>
 
       <p className="set-card__description">{set.description}</p>
@@ -38,6 +49,7 @@ function SetCard({ set, quantity, beverage, onBeverageChange, onPortionChange }:
               type="button"
               className={`pill${beverage === 'Вода' ? ' pill--active' : ''}`}
               onClick={() => onBeverageChange('Вода')}
+              disabled={!active}
             >
               💧 Вода
             </button>
@@ -45,32 +57,9 @@ function SetCard({ set, quantity, beverage, onBeverageChange, onPortionChange }:
               type="button"
               className={`pill${beverage === 'Компот в ассортименте' ? ' pill--active' : ''}`}
               onClick={() => onBeverageChange('Компот в ассортименте')}
+              disabled={!active}
             >
               🧃 Компот
-            </button>
-          </div>
-        </div>
-
-        <div className="set-card__qty">
-          <label className="set-card__drink-label">Кол-во</label>
-          <div className="counter counter--sm">
-            <button
-              type="button"
-              className="counter__btn"
-              aria-label="Уменьшить количество порций"
-              disabled={quantity <= 0}
-              onClick={() => onPortionChange(-1)}
-            >
-              −
-            </button>
-            <span className="counter__value">{quantity}</span>
-            <button
-              type="button"
-              className="counter__btn counter__btn--add"
-              aria-label="Увеличить количество порций"
-              onClick={() => onPortionChange(1)}
-            >
-              +
             </button>
           </div>
         </div>

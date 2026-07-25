@@ -13,7 +13,7 @@ function App() {
   const [cartState, setCartState] = useState<CartState>(() => {
     const initial: CartState = {}
     MONTHLY_SETS.forEach(set => {
-      initial[set.id] = { beverage: 'Вода', quantity: 1 }
+      initial[set.id] = { beverage: 'Вода', active: true }
     })
     return initial
   })
@@ -23,20 +23,39 @@ function App() {
       const item = prev[setId]
       return {
         ...prev,
-        [setId]: { ...(item ?? { quantity: 1 }), beverage },
+        [setId]: { ...(item ?? { active: true }), beverage },
       }
     })
   }
 
-  const handlePortionChange = (setId: string | number, delta: number) => {
+  const handleToggleDay = (setId: string | number) => {
     setCartState(prev => {
       const item = prev[setId]
       if (!item) return prev
-      const newQty = Math.max(0, (item.quantity ?? 1) + delta)
       return {
         ...prev,
-        [setId]: { ...item, quantity: newQty },
+        [setId]: { ...item, active: !item.active },
       }
+    })
+  }
+
+  const handleSelectAll = () => {
+    setCartState(prev => {
+      const next: CartState = {}
+      for (const id of Object.keys(prev)) {
+        next[id] = { ...prev[id], active: true }
+      }
+      return next
+    })
+  }
+
+  const handleDeselectAll = () => {
+    setCartState(prev => {
+      const next: CartState = {}
+      for (const id of Object.keys(prev)) {
+        next[id] = { ...prev[id], active: false }
+      }
+      return next
     })
   }
 
@@ -44,12 +63,9 @@ function App() {
     setEmployeeCount(Math.max(1, count))
   }
 
-  // Динамический расчёт итоговой суммы
-  const totalPortions = Object.values(cartState).reduce(
-    (sum, item) => sum + (item?.quantity ?? 0),
-    0
-  )
-  const totalMonthlyPrice = totalPortions * employeeCount * SET_PRICE
+  // Динамический расчёт: (количество активных дней) × employeeCount × SET_PRICE
+  const activeDays = Object.values(cartState).filter(item => item?.active).length
+  const totalMonthlyPrice = activeDays * employeeCount * SET_PRICE
 
   const handlePlaceOrder = (method: PaymentMethod) => {
     const methodLabels: Record<PaymentMethod, string> = {
@@ -59,6 +75,7 @@ function App() {
     }
     console.log('Заказ оформлен:', {
       employeeCount,
+      activeDays,
       cartState,
       totalMonthlyPrice,
       paymentMethod: method,
@@ -70,7 +87,7 @@ function App() {
   const handleNewOrder = () => {
     const reset: CartState = {}
     MONTHLY_SETS.forEach(set => {
-      reset[set.id] = { beverage: 'Вода', quantity: 1 }
+      reset[set.id] = { beverage: 'Вода', active: true }
     })
     setCartState(reset)
     setEmployeeCount(1)
@@ -87,7 +104,9 @@ function App() {
           totalMonthlyPrice={totalMonthlyPrice}
           setPrice={SET_PRICE}
           onBeverageChange={handleBeverageChange}
-          onPortionChange={handlePortionChange}
+          onToggleDay={handleToggleDay}
+          onSelectAll={handleSelectAll}
+          onDeselectAll={handleDeselectAll}
           onEmployeeCountChange={handleEmployeeCountChange}
           onGoToCart={() => setScreen('cart')}
         />

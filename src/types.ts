@@ -15,7 +15,8 @@ export interface LunchSet {
 
 export interface CartItem {
   beverage: Beverage;
-  quantity: number;
+  /** День включён в подписку (true) или пропущен (false) */
+  active: boolean;
 }
 
 export type CartState = Record<string | number, CartItem>;

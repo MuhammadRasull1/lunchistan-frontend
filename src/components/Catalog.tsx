@@ -9,7 +9,9 @@ interface CatalogProps {
   totalMonthlyPrice: number
   setPrice: number
   onBeverageChange: (setId: string | number, beverage: Beverage) => void
-  onPortionChange: (setId: string | number, delta: number) => void
+  onToggleDay: (setId: string | number) => void
+  onSelectAll: () => void
+  onDeselectAll: () => void
   onEmployeeCountChange: (count: number) => void
   onGoToCart: () => void
 }
@@ -21,16 +23,15 @@ function Catalog({
   totalMonthlyPrice,
   setPrice,
   onBeverageChange,
-  onPortionChange,
+  onToggleDay,
+  onSelectAll,
+  onDeselectAll,
   onEmployeeCountChange,
   onGoToCart,
 }: CatalogProps) {
-  // Динамический подсчёт общего количества порций
-  const totalPortions = Object.values(cartState).reduce(
-    (sum, item) => sum + (item?.quantity ?? 0),
-    0
-  )
-  const totalItems = totalPortions * employeeCount
+  // Количество активных дней
+  const activeDays = Object.values(cartState).filter(item => item?.active).length
+  const totalPortions = activeDays * employeeCount
 
   return (
     <div className="catalog">
@@ -75,13 +76,39 @@ function Catalog({
           </div>
         </div>
 
+        {/* Быстрые действия */}
+        <div className="subscription__actions">
+          <button
+            type="button"
+            className="btn btn--outline"
+            onClick={onSelectAll}
+          >
+            ✅ Выбрать все 22 дня
+          </button>
+          <button
+            type="button"
+            className="btn btn--outline btn--outline-danger"
+            onClick={onDeselectAll}
+          >
+            ❌ Сбросить все
+          </button>
+        </div>
+
         <div className="subscription__calc">
           <div className="subscription__calc-row">
-            <span>Всего порций (на всех сотрудников)</span>
-            <span className="subscription__calc-value">{totalItems}</span>
+            <span>Выбрано дней</span>
+            <span className="subscription__calc-value">{activeDays} из {sets.length}</span>
           </div>
           <div className="subscription__calc-row">
-            <span>Цена одного сета</span>
+            <span>Сотрудников</span>
+            <span className="subscription__calc-value">{employeeCount}</span>
+          </div>
+          <div className="subscription__calc-row">
+            <span>Всего порций</span>
+            <span className="subscription__calc-value">{activeDays} × {employeeCount} = {totalPortions}</span>
+          </div>
+          <div className="subscription__calc-row">
+            <span>Цена одной порции</span>
             <span className="subscription__calc-value">{formatPrice(setPrice)}</span>
           </div>
           <div className="subscription__calc-row subscription__calc-row--total">
@@ -97,26 +124,27 @@ function Catalog({
         {sets.map((set) => {
           const cartItem = cartState[set.id]
           const beverage = cartItem?.beverage ?? 'Вода'
+          const active = cartItem?.active ?? true
 
           return (
             <SetCard
               key={set.id}
               set={set}
-              quantity={cartItem?.quantity ?? 1}
+              active={active}
               beverage={beverage}
               onBeverageChange={(beverage) => onBeverageChange(set.id, beverage as Beverage)}
-              onPortionChange={(delta) => onPortionChange(set.id, delta)}
+              onToggle={() => onToggleDay(set.id)}
             />
           )
         })}
       </div>
 
       {/* Нижняя панель */}
-      {totalItems > 0 && (
+      {activeDays > 0 && (
         <div className="sticky-bar">
           <div className="sticky-bar__info">
             <span className="sticky-bar__count">
-              {totalItems} порций · {employeeCount} сотрудников
+              {activeDays} из {sets.length} дней · {employeeCount} сотрудников · {totalPortions} порций
             </span>
             <span className="sticky-bar__total">{formatPrice(totalMonthlyPrice)}</span>
           </div>
