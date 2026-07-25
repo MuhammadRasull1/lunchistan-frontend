@@ -1,72 +1,55 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import './App.css'
 import Catalog from './components/Catalog'
 import Cart from './components/Cart'
 import Success from './components/Success'
-import { MONTHLY_SETS, SET_PRICE, WORK_DAYS_COUNT } from './data/mockMenu'
+import { MONTHLY_SETS, SET_PRICE } from './data/mockMenu'
 import type { CartState, Beverage, Screen, PaymentMethod } from './types'
 import { formatPrice } from './types'
 
 function App() {
   const [screen, setScreen] = useState<Screen>('catalog')
   const [employeeCount, setEmployeeCount] = useState<number>(1)
-  const [cartState, setCartState] = useState<CartState>({})
-
-  // Инициализация: все 22 дня = employeeCount порций
-  useEffect(() => {
+  const [cartState, setCartState] = useState<CartState>(() => {
     const initial: CartState = {}
     MONTHLY_SETS.forEach(set => {
-      initial[set.id] = { quantity: employeeCount, beverage: 'Вода' }
+      initial[set.id] = { beverage: 'Вода', quantity: 1 }
     })
-    setCartState(initial)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    return initial
+  })
 
   const handleBeverageChange = (setId: string | number, beverage: Beverage) => {
     setCartState(prev => {
-      const current = prev[setId] ?? { quantity: 0, beverage: 'Вода' as Beverage }
+      const item = prev[setId]
       return {
         ...prev,
-        [setId]: {
-          ...current,
-          beverage,
-        },
+        [setId]: { ...(item ?? { quantity: 1 }), beverage },
       }
     })
   }
 
-  const handleQuantityChange = (setId: string | number, delta: number) => {
+  const handlePortionChange = (setId: string | number, delta: number) => {
     setCartState(prev => {
-      const current = prev[setId] ?? { quantity: 0, beverage: 'Вода' as Beverage }
-      const newQuantity = Math.max(0, current.quantity + delta)
+      const item = prev[setId]
+      if (!item) return prev
+      const newQty = Math.max(0, (item.quantity ?? 1) + delta)
       return {
         ...prev,
-        [setId]: {
-          ...current,
-          quantity: newQuantity,
-        },
+        [setId]: { ...item, quantity: newQty },
       }
     })
   }
 
   const handleEmployeeCountChange = (count: number) => {
-    const newCount = Math.max(1, count)
-    setEmployeeCount(newCount)
-    // Синхронизируем количество порций во ВСЕХ днях с новым числом сотрудников
-    setCartState(prev => {
-      const updated: CartState = {}
-      MONTHLY_SETS.forEach(set => {
-        const existing = prev[set.id]
-        updated[set.id] = {
-          quantity: newCount,
-          beverage: existing?.beverage ?? 'Вода' as Beverage,
-        }
-      })
-      return updated
-    })
+    setEmployeeCount(Math.max(1, count))
   }
 
-  const totalMonthlyPrice = employeeCount * WORK_DAYS_COUNT * SET_PRICE
+  // Динамический расчёт итоговой суммы
+  const totalPortions = Object.values(cartState).reduce(
+    (sum, item) => sum + (item?.quantity ?? 0),
+    0
+  )
+  const totalMonthlyPrice = totalPortions * employeeCount * SET_PRICE
 
   const handlePlaceOrder = (method: PaymentMethod) => {
     const methodLabels: Record<PaymentMethod, string> = {
@@ -87,7 +70,7 @@ function App() {
   const handleNewOrder = () => {
     const reset: CartState = {}
     MONTHLY_SETS.forEach(set => {
-      reset[set.id] = { quantity: 1, beverage: 'Вода' }
+      reset[set.id] = { beverage: 'Вода', quantity: 1 }
     })
     setCartState(reset)
     setEmployeeCount(1)
@@ -102,10 +85,9 @@ function App() {
           cartState={cartState}
           employeeCount={employeeCount}
           totalMonthlyPrice={totalMonthlyPrice}
-          workDaysCount={WORK_DAYS_COUNT}
           setPrice={SET_PRICE}
           onBeverageChange={handleBeverageChange}
-          onQuantityChange={handleQuantityChange}
+          onPortionChange={handlePortionChange}
           onEmployeeCountChange={handleEmployeeCountChange}
           onGoToCart={() => setScreen('cart')}
         />

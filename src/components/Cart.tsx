@@ -5,6 +5,7 @@ import { formatPrice } from '../types'
 interface CartLine {
   set: LunchSet
   quantity: number
+  totalQuantity: number
   beverage: string
 }
 
@@ -28,18 +29,20 @@ function Cart({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('corporate')
 
   const lines: CartLine[] = sets
-    .map((set) => ({
-      set,
-      cartItem: cartState[set.id],
-    }))
-    .filter(({ cartItem }) => cartItem && cartItem.quantity > 0)
-    .map(({ set, cartItem }) => ({
-      set,
-      quantity: cartItem!.quantity,
-      beverage: cartItem!.beverage,
-    }))
+    .map((set) => {
+      const cartItem = cartState[set.id]
+      const qty = cartItem?.quantity ?? 0
+      return {
+        set,
+        quantity: qty,
+        totalQuantity: qty * employeeCount,
+        beverage: cartItem?.beverage ?? 'Вода',
+      }
+    })
+    .filter((line) => line.quantity > 0)
 
-  const totalItems = lines.reduce((sum, line) => sum + line.quantity, 0)
+  const totalPortions = lines.reduce((sum, line) => sum + line.quantity, 0)
+  const totalItems = totalPortions * employeeCount
 
   const paymentOptions: { value: PaymentMethod; label: string; icon: string }[] = [
     { value: 'corporate', label: 'Перечислением (Для юрлиц)', icon: '🏢' },
@@ -57,7 +60,7 @@ function Cart({
       </header>
 
       {lines.length === 0 ? (
-        <p className="catalog__status">Корзина пуста. Добавьте обеды из меню.</p>
+        <p className="catalog__status">Загрузка меню…</p>
       ) : (
         <>
           <p style={{ fontSize: '15px', color: '#6b7280', marginBottom: '16px' }}>
@@ -65,7 +68,7 @@ function Cart({
           </p>
 
           <ul className="cart__list">
-            {lines.map(({ set, quantity, beverage }) => (
+            {lines.map(({ set, quantity, totalQuantity, beverage }) => (
               <li key={set.id} className="cart__item">
                 <div className="cart__item-icon" aria-hidden="true">🍱</div>
                 <div className="cart__item-info">
@@ -73,12 +76,12 @@ function Cart({
                     {set.name}
                   </span>
                   <span className="cart__item-desc">
-                    День {set.dayNumber} · {set.weekDay} · {beverage}
+                    День {set.dayNumber} · {set.weekDay} · {beverage} · {quantity} порц./сотр.
                   </span>
                 </div>
                 <div className="cart__item-sum">
-                  <div>{quantity} × {formatPrice(set.price)}</div>
-                  <div style={{ color: '#f97316' }}>{formatPrice(set.price * quantity)}</div>
+                  <div>{totalQuantity} × {formatPrice(set.price)}</div>
+                  <div style={{ color: '#f97316' }}>{formatPrice(set.price * totalQuantity)}</div>
                 </div>
               </li>
             ))}

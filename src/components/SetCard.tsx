@@ -6,12 +6,12 @@ interface SetCardProps {
   quantity: number
   beverage: string
   onBeverageChange: (beverage: string) => void
-  onQuantityChange: (delta: number) => void
+  onPortionChange: (delta: number) => void
 }
 
-function SetCard({ set, quantity, beverage, onBeverageChange, onQuantityChange }: SetCardProps) {
+function SetCard({ set, quantity, beverage, onBeverageChange, onPortionChange }: SetCardProps) {
   return (
-    <article className={`set-card${quantity > 0 ? ' set-card--active' : ''}`}>
+    <article className="set-card set-card--active">
       <div className="set-card__head">
         <div className="set-card__badge" aria-hidden="true">🍱</div>
         <div className="set-card__title-wrap">
@@ -20,9 +20,7 @@ function SetCard({ set, quantity, beverage, onBeverageChange, onQuantityChange }
             День {set.dayNumber} · {set.weekDay}
           </span>
         </div>
-        {quantity > 0 && (
-          <span className="set-card__qty-badge">{quantity}</span>
-        )}
+        <span className="set-card__qty-badge">{quantity}</span>
       </div>
 
       <p className="set-card__description">{set.description}</p>
@@ -59,9 +57,9 @@ function SetCard({ set, quantity, beverage, onBeverageChange, onQuantityChange }
             <button
               type="button"
               className="counter__btn"
-              aria-label="Убрать один сет"
+              aria-label="Уменьшить количество порций"
               disabled={quantity <= 0}
-              onClick={() => onQuantityChange(-1)}
+              onClick={() => onPortionChange(-1)}
             >
               −
             </button>
@@ -69,8 +67,8 @@ function SetCard({ set, quantity, beverage, onBeverageChange, onQuantityChange }
             <button
               type="button"
               className="counter__btn counter__btn--add"
-              aria-label="Добавить один сет"
-              onClick={() => onQuantityChange(1)}
+              aria-label="Увеличить количество порций"
+              onClick={() => onPortionChange(1)}
             >
               +
             </button>

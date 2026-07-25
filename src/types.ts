@@ -13,15 +13,14 @@ export interface LunchSet {
   price: number;
 }
 
-export type MealSet = LunchSet;
+export interface CartItem {
+  beverage: Beverage;
+  quantity: number;
+}
 
-export type CartState = Record<string | number, { quantity: number; beverage: Beverage }>;
+export type CartState = Record<string | number, CartItem>;
 
 export type Screen = 'catalog' | 'cart' | 'success';
-
-export const WORK_DAYS: WeekDay[] = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт'];
-
-export const DRINK_OPTIONS: Beverage[] = ['Вода', 'Компот в ассортименте'];
 
 export function formatPrice(price: number): string {
   return price.toLocaleString('ru-RU') + ' сум';

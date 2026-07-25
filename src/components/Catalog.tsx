@@ -7,10 +7,9 @@ interface CatalogProps {
   cartState: CartState
   employeeCount: number
   totalMonthlyPrice: number
-  workDaysCount: number
   setPrice: number
   onBeverageChange: (setId: string | number, beverage: Beverage) => void
-  onQuantityChange: (setId: string | number, delta: number) => void
+  onPortionChange: (setId: string | number, delta: number) => void
   onEmployeeCountChange: (count: number) => void
   onGoToCart: () => void
 }
@@ -20,14 +19,18 @@ function Catalog({
   cartState,
   employeeCount,
   totalMonthlyPrice,
-  workDaysCount,
   setPrice,
   onBeverageChange,
-  onQuantityChange,
+  onPortionChange,
   onEmployeeCountChange,
   onGoToCart,
 }: CatalogProps) {
-  const totalItems = Object.values(cartState).reduce((sum, item) => sum + item.quantity, 0)
+  // Динамический подсчёт общего количества порций
+  const totalPortions = Object.values(cartState).reduce(
+    (sum, item) => sum + (item?.quantity ?? 0),
+    0
+  )
+  const totalItems = totalPortions * employeeCount
 
   return (
     <div className="catalog">
@@ -74,25 +77,17 @@ function Catalog({
 
         <div className="subscription__calc">
           <div className="subscription__calc-row">
-            <span>Рабочих дней в месяце</span>
-            <span className="subscription__calc-value">{workDaysCount}</span>
+            <span>Всего порций (на всех сотрудников)</span>
+            <span className="subscription__calc-value">{totalItems}</span>
           </div>
           <div className="subscription__calc-row">
             <span>Цена одного сета</span>
             <span className="subscription__calc-value">{formatPrice(setPrice)}</span>
           </div>
-          <div className="subscription__calc-row subscription__calc-row--accent">
-            <span>Подписка на 1 сотрудника</span>
-            <span className="subscription__calc-value">
-              {workDaysCount} × {formatPrice(setPrice)} = {formatPrice(setPrice * workDaysCount)}
-            </span>
+          <div className="subscription__calc-row subscription__calc-row--total">
+            <span>Итого к оплате</span>
+            <span className="subscription__calc-value">{formatPrice(totalMonthlyPrice)}</span>
           </div>
-          {employeeCount > 1 && (
-            <div className="subscription__calc-row subscription__calc-row--total">
-              <span>Итого на {employeeCount} сотр.</span>
-              <span className="subscription__calc-value">{formatPrice(totalMonthlyPrice)}</span>
-            </div>
-          )}
         </div>
       </section>
 
@@ -101,17 +96,16 @@ function Catalog({
       <div className="catalog__grid catalog__grid--sets">
         {sets.map((set) => {
           const cartItem = cartState[set.id]
-          const quantity = cartItem?.quantity ?? 0
           const beverage = cartItem?.beverage ?? 'Вода'
 
           return (
             <SetCard
               key={set.id}
               set={set}
-              quantity={quantity}
+              quantity={cartItem?.quantity ?? 1}
               beverage={beverage}
               onBeverageChange={(beverage) => onBeverageChange(set.id, beverage as Beverage)}
-              onQuantityChange={(delta) => onQuantityChange(set.id, delta)}
+              onPortionChange={(delta) => onPortionChange(set.id, delta)}
             />
           )
         })}
