@@ -203,13 +203,14 @@ body {
   opacity: 0.6;
 }
 
-/* ---------- Hero image section ---------- */
+/* ---------- Hero image section (full-width banner) ---------- */
 .set-card__hero {
   position: relative;
   width: 100%;
-  height: 160px;
+  height: 176px;
   overflow: hidden;
-  background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+  background: #f0f0f0;
+  border-radius: 20px 20px 0 0;
 }
 
 .set-card--inactive .set-card__hero {
@@ -1094,25 +1095,15 @@ body {
   flex: 1;
 }
 
-/* Изображение блюда */
-.modal-sheet__image-wrap {
-  padding: 8px 0 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 140px;
-  background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
-  border-radius: 20px;
-  margin: 0 24px;
-}
-
-.modal-sheet__image-img {
-  width: 140px;
-  height: 140px;
-  border-radius: 20px;
+/* Изображение блюда — сочная обложка во всю ширину */
+.modal-sheet__cover {
+  width: 100%;
+  height: 208px;
   object-fit: cover;
   display: block;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  border-radius: 16px;
+  margin-bottom: 16px;
+  background: #f0f0f0;
 }
 
 /* Заголовок */
@@ -1283,9 +1274,8 @@ body {
     padding: 4px 16px 16px;
   }
 
-  .modal-sheet__image-img {
-    width: 100px;
-    height: 100px;
+  .modal-sheet__cover {
+    height: 176px;
   }
 
   .modal-sheet__title {

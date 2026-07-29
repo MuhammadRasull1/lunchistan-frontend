@@ -1,7 +1,9 @@
 import { motion } from 'framer-motion'
-import { UtensilsCrossed, LeafyGreen, Croissant, Wine } from 'lucide-react'
+import { UtensilsCrossed, LeafyGreen, Croissant } from 'lucide-react'
 import type { LunchSet } from '../types'
 import { formatPrice } from '../types'
+
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'
 
 interface SetCardProps {
   set: LunchSet
@@ -13,7 +15,6 @@ interface SetCardProps {
 function getCompositionIcon(name: string) {
   if (name.includes('Салат')) return LeafyGreen
   if (name.includes('Лепёшка') || name.includes('хлеб')) return Croissant
-  if (name.includes('Напиток')) return Wine
   return UtensilsCrossed
 }
 
@@ -33,7 +34,7 @@ function SetCard({ set, index, active, onSelect }: SetCardProps) {
       onClick={onSelect}
       style={{ cursor: 'pointer' }}
     >
-      {/* Изображение сета (hero) */}
+      {/* Изображение сета — баннер во всю ширину */}
       <div className="set-card__hero">
         <img
           className="set-card__hero-img"
@@ -41,8 +42,11 @@ function SetCard({ set, index, active, onSelect }: SetCardProps) {
           alt={set.name}
           loading="lazy"
           onError={(e) => {
-            // Прячем битое изображение — фон hero прокинет градиент
-            e.currentTarget.style.display = 'none'
+            const target = e.currentTarget
+            if (!target.dataset.fallbackAttempted) {
+              target.dataset.fallbackAttempted = 'true'
+              target.src = FALLBACK_IMAGE
+            }
           }}
         />
         {active && (
@@ -61,10 +65,12 @@ function SetCard({ set, index, active, onSelect }: SetCardProps) {
         </h3>
         <span className="set-card__tag">День {set.dayNumber} · {set.weekDay}</span>
 
-        {/* Composition chips */}
+        {/* Composition chips (без напитка) */}
         {active && set.composition && (
           <div className="set-card__composition">
-            {set.composition.map((item) => {
+            {set.composition
+              .filter(item => !item.name.includes('Напиток'))
+              .map((item) => {
               const IconComp = getCompositionIcon(item.name)
               return (
                 <div key={item.name} className="set-card__chip">

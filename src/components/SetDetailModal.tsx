@@ -3,6 +3,8 @@ import { X, Flame, Beef, Droplets, Wheat, UtensilsCrossed, Check } from 'lucide-
 import type { LunchSet } from '../types'
 import { formatPrice } from '../types'
 
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'
+
 interface SetDetailModalProps {
   set: LunchSet | null
   isOpen: boolean
@@ -103,17 +105,19 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm }: SetDetailModalProps
 
             {/* Контент (с отступом снизу для фиксированной плашки) */}
             <div className="modal-sheet__scroll">
-              {/* Изображение блюда */}
-              <div className="modal-sheet__image-wrap">
-                <img
-                  className="modal-sheet__image-img"
-                  src={set.imageUrl || ''}
-                  alt={set.name}
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none'
-                  }}
-                />
-              </div>
+              {/* Изображение блюда — сочная обложка во всю ширину */}
+              <img
+                className="modal-sheet__cover"
+                src={set.imageUrl || ''}
+                alt={set.name}
+                onError={(e) => {
+                  const target = e.currentTarget
+                  if (!target.dataset.fallbackAttempted) {
+                    target.dataset.fallbackAttempted = 'true'
+                    target.src = FALLBACK_IMAGE
+                  }
+                }}
+              />
 
               {/* Заголовок */}
               <div className="modal-sheet__header">
