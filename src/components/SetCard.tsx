@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { UtensilsCrossed, LeafyGreen, Croissant } from 'lucide-react'
+import { UtensilsCrossed, LeafyGreen, Croissant, Wine } from 'lucide-react'
 import type { LunchSet } from '../types'
 import { formatPrice } from '../types'
 
@@ -15,6 +15,7 @@ interface SetCardProps {
 function getCompositionIcon(name: string) {
   if (name.includes('Салат')) return LeafyGreen
   if (name.includes('Лепёшка') || name.includes('хлеб')) return Croissant
+  if (name.includes('Напиток')) return Wine
   return UtensilsCrossed
 }
 
@@ -65,12 +66,10 @@ function SetCard({ set, index, active, onSelect }: SetCardProps) {
         </h3>
         <span className="set-card__tag">День {set.dayNumber} · {set.weekDay}</span>
 
-        {/* Composition chips (без напитка) */}
+        {/* Composition chips */}
         {active && set.composition && (
           <div className="set-card__composition">
-            {set.composition
-              .filter(item => !item.name.includes('Напиток'))
-              .map((item) => {
+            {set.composition.map((item) => {
               const IconComp = getCompositionIcon(item.name)
               return (
                 <div key={item.name} className="set-card__chip">

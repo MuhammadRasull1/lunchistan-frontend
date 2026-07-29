@@ -39,7 +39,7 @@ interface CartItem {
 {
   "1":  { beverage: "Вода",                   active: true,  portions: 2 },
   "2":  { beverage: "Компот в ассортименте",   active: true,  portions: 1 },
-  "3":  { beverage: "Вода",                   active: false, portions: 0 },
+  "3":  { beverage: "Вода",                   active: false, portions: 1 },
   // ...
 }
 ```
@@ -63,7 +63,7 @@ visibleSets           = MONTHLY_SETS.slice(0, workDaysCount)
 | Функция                         | Действие                                           |
 | ------------------------------- | -------------------------------------------------- |
 | `handleWorkDaysChange(delta)`   | Изменить количество отображаемых дней (1..22)      |
-| `handleBeverageChange(id, bev)` | Сменить напиток для дня                             |
+| `handleBeverageChange(id, bev)` | Сменить напиток для дня (мгновенно, через pill-кнопки в [[SetDetailModal]]) |
 | `handleToggleDay(id)`           | Включить/выключить день                             |
 | `handlePortionChange(id, delta)`| Увеличить/уменьшить порции для дня (мин. 1)        |
 | `handleSelectAll()`             | Включить все дни                                    |

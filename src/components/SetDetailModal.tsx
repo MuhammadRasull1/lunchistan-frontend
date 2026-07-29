@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Flame, Beef, Droplets, Wheat, UtensilsCrossed, Check } from 'lucide-react'
-import type { LunchSet } from '../types'
+import { X, Flame, Beef, Droplets, Wheat, UtensilsCrossed, Check, Wine, Droplet } from 'lucide-react'
+import type { LunchSet, Beverage } from '../types'
 import { formatPrice } from '../types'
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'
@@ -10,6 +10,8 @@ interface SetDetailModalProps {
   isOpen: boolean
   onClose: () => void
   onConfirm: () => void
+  beverage: Beverage
+  onBeverageChange: (beverage: Beverage) => void
 }
 
 /** Форматирование макроса */
@@ -39,6 +41,11 @@ function MacroCard({ icon: Icon, label, value, unit, color }: {
   )
 }
 
+const BEVERAGE_OPTIONS: { value: Beverage; label: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number }> }[] = [
+  { value: 'Вода', label: 'Вода', icon: Droplet },
+  { value: 'Компот в ассортименте', label: 'Компот', icon: Wine },
+]
+
 const OVERLAY_VARIANTS = {
   hidden: { opacity: 0 },
   visible: { opacity: 1 },
@@ -56,7 +63,7 @@ const SHEET_VARIANTS = {
   },
 }
 
-function SetDetailModal({ set, isOpen, onClose, onConfirm }: SetDetailModalProps) {
+function SetDetailModal({ set, isOpen, onClose, onConfirm, beverage, onBeverageChange }: SetDetailModalProps) {
   return (
     <AnimatePresence>
       {isOpen && set && (
@@ -133,6 +140,33 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm }: SetDetailModalProps
                     <span>{item.name}</span>
                   </div>
                 ))}
+              </div>
+
+              {/* Выбор напитка — стильные pill-кнопки */}
+              <div className="beverage-select">
+                <span className="beverage-select__label">
+                  <Wine size={14} strokeWidth={2.5} />
+                  Напиток
+                </span>
+                <div className="beverage-select__pills">
+                  {BEVERAGE_OPTIONS.map(opt => {
+                    const active = beverage === opt.value
+                    const Icon = opt.icon
+                    return (
+                      <motion.button
+                        key={opt.value}
+                        type="button"
+                        className={`beverage-pill${active ? ' beverage-pill--active' : ''}`}
+                        onClick={() => onBeverageChange(opt.value)}
+                        whileTap={{ scale: 0.94 }}
+                        transition={{ duration: 0.15 }}
+                      >
+                        <Icon size={16} strokeWidth={active ? 2.8 : 2.2} />
+                        <span>{opt.label}</span>
+                      </motion.button>
+                    )
+                  })}
+                </div>
               </div>
 
               {/* KBJU — Пищевая ценность */}

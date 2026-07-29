@@ -6,6 +6,8 @@ import SetCard from './SetCard'
 import SetDetailModal from './SetDetailModal'
 import AnimatedCount from './AnimatedCount'
 
+import type { Beverage } from '../types'
+
 interface CatalogProps {
   sets: LunchSet[]
   allSetsCount: number
@@ -19,6 +21,7 @@ interface CatalogProps {
   onDeselectAll: () => void
   onEmployeeCountChange: (count: number) => void
   onWorkDaysChange: (delta: number) => void
+  onBeverageChange: (setId: string | number, beverage: Beverage) => void
   onGoToCart: () => void
 }
 
@@ -35,6 +38,7 @@ function Catalog({
   onDeselectAll,
   onEmployeeCountChange,
   onWorkDaysChange,
+  onBeverageChange,
   onGoToCart,
 }: CatalogProps) {
   // Статистика
@@ -256,13 +260,16 @@ function Catalog({
         </motion.div>
       )}
 
-      {/* Модальное окно детализации сета */}
-      <SetDetailModal
-        set={selectedSet}
-        isOpen={selectedSetId !== null}
-        onClose={handleCloseModal}
-        onConfirm={handleModalConfirm}
-      />
+      {/* Модальное окно детализации сета */}        <SetDetailModal
+          set={selectedSet}
+          isOpen={selectedSetId !== null}
+          onClose={handleCloseModal}
+          onConfirm={handleModalConfirm}
+          beverage={selectedSetId ? cartState[selectedSetId]?.beverage ?? 'Вода' : 'Вода'}
+          onBeverageChange={(beverage) => {
+            if (selectedSetId) onBeverageChange(selectedSetId, beverage)
+          }}
+        />
     </div>
   )
 }

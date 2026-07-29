@@ -4,7 +4,7 @@ import Catalog from './components/Catalog'
 import Cart from './components/Cart'
 import Success from './components/Success'
 import { MONTHLY_SETS, SET_PRICE } from './data/mockMenu'
-import type { CartState, Screen, PaymentMethod } from './types'
+import type { CartState, Screen, PaymentMethod, Beverage } from './types'
 import { formatPrice } from './types'
 
 const MAX_WORK_DAYS = MONTHLY_SETS.length
@@ -16,7 +16,7 @@ function App() {
   const [cartState, setCartState] = useState<CartState>(() => {
     const initial: CartState = {}
     MONTHLY_SETS.forEach(set => {
-      initial[set.id] = { active: true, portions: 1 }
+      initial[set.id] = { active: true, portions: 1, beverage: 'Вода' }
     })
     return initial
   })
@@ -28,6 +28,17 @@ function App() {
     setWorkDaysCount(prev => {
       const next = prev + delta
       return Math.max(1, Math.min(MAX_WORK_DAYS, next))
+    })
+  }
+
+  const handleBeverageChange = (setId: string | number, beverage: Beverage) => {
+    setCartState(prev => {
+      const item = prev[setId]
+      if (!item) return prev
+      return {
+        ...prev,
+        [setId]: { ...item, beverage },
+      }
     })
   }
 
@@ -95,7 +106,7 @@ function App() {
   const handleNewOrder = () => {
     const reset: CartState = {}
     MONTHLY_SETS.forEach(set => {
-      reset[set.id] = { active: true, portions: 1 }
+      reset[set.id] = { active: true, portions: 1, beverage: 'Вода' }
     })
     setCartState(reset)
     setEmployeeCount(1)
@@ -119,6 +130,7 @@ function App() {
           onDeselectAll={handleDeselectAll}
           onEmployeeCountChange={handleEmployeeCountChange}
           onWorkDaysChange={handleWorkDaysChange}
+          onBeverageChange={handleBeverageChange}
           onGoToCart={() => setScreen('cart')}
         />
       )}

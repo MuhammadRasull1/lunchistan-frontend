@@ -33,8 +33,10 @@ export interface LunchSet {
 export interface CartItem {
   /** День включён в подписку (true) или пропущен (false) */
   active: boolean;
-  /** Количество порций на одного сотрудника для этого дня (0, если день неактивен) */
+  /** Количество порций на одного сотрудника для этого дня */
   portions: number;
+  /** Выбранный напиток для этого дня */
+  beverage: Beverage;
 }
 
 export type CartState = Record<string | number, CartItem>;
