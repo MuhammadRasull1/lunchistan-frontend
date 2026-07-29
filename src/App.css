@@ -165,46 +165,49 @@ body {
   }
 }
 
-/* ---------- Set card ---------- */
+/* ---------- Set card (Premium B2B / Apple-style) ---------- */
 .set-card {
   background: var(--card-bg);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-  padding: 24px;
+  border-radius: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  padding: 20px 24px 20px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  gap: 10px;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.set-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
+.set-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: transparent;
+  transition: background 0.3s ease;
+}
+
+.set-card--active::before {
+  background: linear-gradient(90deg, var(--brand), #fbbf24);
 }
 
 .set-card--active {
-  border-color: var(--brand);
-  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2), var(--shadow-md);
+  border-color: rgba(249, 115, 22, 0.3);
+  box-shadow: 0 4px 20px rgba(249, 115, 22, 0.08);
+}
+
+.set-card--inactive {
+  opacity: 0.6;
 }
 
 .set-card__head {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 6px;
-}
-
-.set-card__badge {
-  width: 56px;
-  height: 56px;
-  flex-shrink: 0;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 30px;
-  background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+  gap: 12px;
 }
 
 .set-card__title-wrap {
@@ -215,68 +218,209 @@ body {
 }
 
 .set-card__name {
-  font-size: 20px;
-  font-weight: 800;
+  font-size: 17px;
+  font-weight: 700;
   margin: 0;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.set-card__name--strikethrough {
+  text-decoration: line-through;
+  color: var(--text-muted);
 }
 
 .set-card__tag {
   color: var(--text-muted);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 500;
 }
 
-.set-card__qty-badge {
-  min-width: 28px;
-  height: 28px;
-  padding: 0 8px;
+.set-card__day-badge {
+  flex-shrink: 0;
+  padding: 4px 10px;
   border-radius: 999px;
-  background: var(--brand);
-  color: #fff;
-  font-size: 15px;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-brand);
+  background: var(--brand-light);
+  border: 1px solid rgba(249, 115, 22, 0.2);
 }
 
-.set-card__composition-label {
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+.set-card__day-badge-text {
   font-size: 11px;
   font-weight: 700;
   color: var(--brand-dark);
-  margin: 4px 0 0;
+  white-space: nowrap;
+}
+
+/* ---------- Composition chips ---------- */
+.set-card__composition {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 0 4px;
+}
+
+.set-card__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px 5px 8px;
+  background: #f3f4f6;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.set-card__chip:hover {
+  background: #e5e7eb;
+  transform: translateY(-1px);
+}
+
+.set-card__chip-text {
+  white-space: nowrap;
 }
 
 .set-card__description {
   color: var(--text);
-  font-size: 15px;
-  line-height: 1.55;
-  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 4px 0 0;
   flex: 1;
 }
 
+/* ---------- Set card footer ---------- */
 .set-card__footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding-top: 14px;
-  border-top: 1px dashed var(--border);
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.set-card__price-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
 
 .set-card__price {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 800;
   color: var(--text);
 }
 
 .set-card__per-day {
   color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ---------- Set card actions ---------- */
+.set-card__actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.set-card__qty {
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.set-card__drink {
+  flex: 1;
+  min-width: 0;
+}
+
+.set-card__drink-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.set-card__inactive-msg {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 0;
+}
+
+.set-card__inactive-text {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ---------- Premium pill group for beverage ---------- */
+.pill-group--premium {
+  display: flex;
+  gap: 4px;
+  background: #f3f4f6;
+  border-radius: 10px;
+  padding: 3px;
+  position: relative;
+}
+
+.pill--premium {
+  flex: 1;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 10px;
   font-size: 13px;
   font-weight: 600;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  position: relative;
+  transition: color 0.2s ease;
+  white-space: nowrap;
+}
+
+.pill--premium:hover:not(:disabled) {
+  color: var(--text);
+}
+
+.pill--premium.pill--active {
+  background: #fff;
+  color: var(--brand-dark);
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.02);
+}
+
+.pill__dot {
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--brand);
+}
+
+.pill__icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.pill:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 /* ---------- Dish card ---------- */
@@ -567,50 +711,9 @@ body {
   margin-bottom: 4px;
 }
 
-.pill-group {
-  display: flex;
-  gap: 0;
-  background: #f3f4f6;
-  border-radius: 10px;
-  padding: 3px;
-}
-
-.pill {
-  flex: 1;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 13px;
-  font-weight: 700;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.15s ease, opacity 0.2s ease;
-  white-space: nowrap;
-}
-
-.pill:hover:not(:disabled) {
-  color: var(--text);
-}
-
 .pill:disabled {
   opacity: 0.35;
   cursor: not-allowed;
-}
-
-.pill--active {
-  background: var(--brand);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
-}
-
-.pill--active:hover {
-  background: var(--brand-dark);
-  color: #fff;
-}
-
-.pill--active:disabled {
-  opacity: 0.5;
 }
 
 .set-card__qty {
@@ -622,14 +725,17 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 0;
+  padding: 6px 0;
 }
 
 .set-card__inactive-text {
   color: var(--text-muted);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* ---------- Subscription section ---------- */
@@ -736,52 +842,80 @@ body {
   font-weight: 800;
 }
 
-/* ---------- Sticky bar ---------- */
+/* ---------- Sticky bar (Telegram Mini App compatible) ---------- */
 .sticky-bar {
   position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 20px;
+  right: 20px;
   bottom: 20px;
-  width: min(640px, calc(100% - 40px));
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-md);
-  padding: 14px 20px;
+  margin: 0 auto;
+  max-width: 640px;
+  width: auto;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(229, 231, 235, 0.6);
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1), 0 1px 4px rgba(0, 0, 0, 0.04);
+  padding: 14px 18px;
   display: flex;
+  flex-direction: row;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  z-index: 20;
-  animation: slideUp 0.28s ease;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translate(-50%, 24px);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
+  gap: 12px;
+  z-index: 100;
 }
 
 .sticky-bar__info {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
 }
 
 .sticky-bar__count {
   color: var(--text-muted);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sticky-bar__total {
   font-size: 20px;
   font-weight: 800;
   color: var(--text);
+  line-height: 1.2;
+}
+
+/* Адаптация для Telegram Mini App / узких экранов */
+@media (max-width: 480px) {
+  .sticky-bar {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    padding: 12px 14px;
+    flex-direction: column;
+    gap: 10px;
+    border-radius: 16px;
+  }
+
+  .sticky-bar__info {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .sticky-bar__total {
+    font-size: 18px;
+  }
+
+  .sticky-bar .btn--primary {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 15px;
+  }
 }
 
 /* ---------- Cart (with glassmorphism) ---------- */
@@ -828,13 +962,6 @@ body {
   background: radial-gradient(circle, rgba(251, 191, 36, 0.1) 0%, transparent 70%);
   pointer-events: none;
   z-index: -1;
-}
-
-.cart__header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 20px;
 }
 
 .cart__header {

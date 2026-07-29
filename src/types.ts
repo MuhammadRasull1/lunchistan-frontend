@@ -4,6 +4,11 @@ export type Beverage = 'Вода' | 'Компот в ассортименте';
 
 export type PaymentMethod = 'corporate' | 'card' | 'cash';
 
+export interface CompositionItem {
+  name: string
+  icon: string
+}
+
 export interface LunchSet {
   id: string | number;
   dayNumber: number;
@@ -11,6 +16,8 @@ export interface LunchSet {
   name: string;
   description: string;
   price: number;
+  /** Разобранный состав обеда для премиум-отображения */
+  composition: CompositionItem[];
 }
 
 export interface CartItem {

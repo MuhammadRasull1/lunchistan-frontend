@@ -14,6 +14,7 @@
 | **Типизация**    | TypeScript                          | ~6.0.2     |
 | **Стилизация**   | Pure CSS (CSS Custom Properties) + Glassmorphism | —          |
 | **Анимации**     | Framer Motion (framer-motion)       | ^12.x      |
+| **Иконки**       | Lucide React (lucide-react)         | ^0.x       |
 | **Линтер**       | ESLint + typescript-eslint          | ^10.6.0    |
 | **Линтер (alt)** | oxlint (конфиг .oxlintrc.json)      | —          |
 | **HTTP**         | axios (установлен, в проекте не используется) | ^1.18.1 |
@@ -52,7 +53,7 @@ lunchistan-frontend/
 │   │   └── mockMenu.ts               # Мок-данные: 22 обеда на месяц
 │   ││       └── components/
 │           ├── Catalog.tsx               # Главный экран: калькулятор + сетка сетов
-│           ├── SetCard.tsx               # Карточка одного дня/сета
+│           ├── SetCard.tsx               # Карточка дня/сета (премиум B2B, lucide-иконки, композиция)
 │           ├── Cart.tsx                  # Экран корзины/оформления заказа (glassmorphism)
 │           ├── Success.tsx               # Экран успешного оформления
 │           └── AnimatedCount.tsx          # Компонент плавной анимации числовых значений
@@ -134,6 +135,11 @@ type Beverage      = 'Вода' | 'Компот в ассортименте';
 type PaymentMethod = 'corporate' | 'card' | 'cash';
 type Screen        = 'catalog' | 'cart' | 'success';
 
+interface CompositionItem {
+  name: string;
+  icon: string;         // emoji-иконка для визуализации состава
+}
+
 interface LunchSet {
   id: string | number;
   dayNumber: number;
@@ -141,6 +147,7 @@ interface LunchSet {
   name: string;
   description: string;
   price: number;        // Фиксировано: 55 000 сум
+  composition: CompositionItem[];  // Разобранный состав для premium чипсов
 }
 
 interface CartItem {
@@ -214,27 +221,40 @@ visibleSets           = MONTHLY_SETS.slice(0, workDaysCount)
 - **БЭМ-подобная нотация:** `.set-card__head`, `.set-card__toggle-track`, `.pill--active`.
 - **Glassmorphism:** `.cart--glass` использует `backdrop-filter: blur(12px)` + полупрозрачный фон с декоративными градиентными орбами через `::before`/`::after`.
 
-### 6.2. Framer Motion анимации
+### 6.2. Премиум-стиль карточек (SetCard.tsx — Apple/B2B)
 
-Библиотека **framer-motion** добавлена для трёх типов анимаций:
+- Дизайн в стиле Apple/B2B: скруглённые углы (20px), тонкие тени, акцентная линия градиента сверху
+- **Composition chips**: каждый элемент обеда отображается в виде чипса с lucide-react иконкой (`UtensilsCrossed`, `LeafyGreen`, `Croissant`, `Wine`)
+- **whileHover**: при наведении карточка поднимается на -4px и масштабируется до 1.01
+- **Премиум pill-кнопки напитков**: белая плашка для активного выбора, `LayoutGroup` для плавного `layoutId` перехода активной точки между кнопками
+- Неактивные дни затемнены (opacity 0.6) с зачёркнутым названием
 
-#### 6.2.1. Scroll-анимация карточек (SetCard.tsx)
+### 6.3. Framer Motion анимации
+
+#### 6.3.1. Scroll-анимация карточек (SetCard.tsx)
 - Каждая карточка обеда появляется при скролле с эффектом fade-in + slide-up
 - `whileInView` с `viewport: { once: true }` — анимация срабатывает один раз
 - Stagger по формуле `delay: (index % 6) * 0.08` — волна появления
 - Cubic bezier `[0.25, 0.46, 0.45, 0.94]` для плавности
 
-#### 6.2.2. Entrance-анимация корзины (Cart.tsx)
+#### 6.3.2. Entrance-анимация корзины (Cart.tsx)
 - Вся карточка корзины появляется с fade-in + slide-up
 - Список сетов использует `staggerChildren: 0.05` для последовательного появления
 - Кнопки имеют `whileHover` и `whileTap` для тактильной обратной связи
 - Все секции (заголовок, способ оплаты, итог, кнопка) появляются с нарастающей задержкой
 
-#### 6.2.3. Анимация цифр калькулятора (AnimatedCount.tsx)
-- Новый компонент для плавного изменения чисел в блоке «Калькулятор стоимости»
+#### 6.3.3. Анимация цифр калькулятора (AnimatedCount.tsx)
+- Компонент для плавного изменения чисел в блоке «Калькулятор стоимости»
 - Использует `useMotionValue` + `useSpring` (stiffness: 120, damping: 24) для физической анимации
 - `useTransform(rounded)` форматирует число в строку для отображения
 - Применён к полям: `activeDays`, `employeeCount`, `totalPortions`, `totalItems`
+
+### 6.4. Адаптив stikcy-bar для Telegram Mini App
+
+- Sticky bar использует `backdrop-filter: blur(16px)` вместо сплошного фона
+- На мобильных (< 480px) перестраивается в `flex-direction: column`
+- Кнопка «Оформить» становится на всю ширину
+- Поля left/right вместо transform: translateX для надёжного позиционирования в WebView
 
 ---
 
