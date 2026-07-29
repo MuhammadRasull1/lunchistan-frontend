@@ -1,6 +1,8 @@
+import { motion } from 'framer-motion'
 import type { LunchSet, Beverage, CartState } from '../types'
 import { formatPrice } from '../types'
 import SetCard from './SetCard'
+import AnimatedCount from './AnimatedCount'
 
 interface CatalogProps {
   sets: LunchSet[]
@@ -64,55 +66,69 @@ function Catalog({
         <h2 className="subscription__title">Калькулятор стоимости</h2>
 
         {/* Рабочие дни */}
-        <div className="subscription__field">
+        <motion.div
+          className="subscription__field"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.05, duration: 0.4 }}
+        >
           <span className="subscription__label">Рабочих дней в месяце</span>
           <div className="counter">
-            <button
+            <motion.button
               type="button"
               className="counter__btn"
               aria-label="Уменьшить количество дней"
               disabled={workDaysCount <= 1}
               onClick={() => onWorkDaysChange(-1)}
+              whileTap={{ scale: 0.88 }}
             >
               −
-            </button>
+            </motion.button>
             <span className="counter__value">{workDaysCount}</span>
-            <button
+            <motion.button
               type="button"
               className="counter__btn counter__btn--add"
               aria-label="Добавить дней"
               disabled={workDaysCount >= allSetsCount}
               onClick={() => onWorkDaysChange(1)}
+              whileTap={{ scale: 0.88 }}
             >
               +
-            </button>
+            </motion.button>
           </div>
-        </div>
+        </motion.div>
 
         {/* Количество сотрудников */}
-        <div className="subscription__field">
+        <motion.div
+          className="subscription__field"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.1, duration: 0.4 }}
+        >
           <span className="subscription__label">Количество сотрудников</span>
           <div className="counter">
-            <button
+            <motion.button
               type="button"
               className="counter__btn"
               aria-label="Уменьшить количество сотрудников"
               disabled={employeeCount <= 1}
               onClick={() => onEmployeeCountChange(employeeCount - 1)}
+              whileTap={{ scale: 0.88 }}
             >
               −
-            </button>
+            </motion.button>
             <span className="counter__value">{employeeCount}</span>
-            <button
+            <motion.button
               type="button"
               className="counter__btn counter__btn--add"
               aria-label="Добавить сотрудника"
               onClick={() => onEmployeeCountChange(employeeCount + 1)}
+              whileTap={{ scale: 0.88 }}
             >
               +
-            </button>
+            </motion.button>
           </div>
-        </div>
+        </motion.div>
 
         {/* Быстрые действия */}
         <div className="subscription__actions">
@@ -132,22 +148,35 @@ function Catalog({
           </button>
         </div>
 
-        <div className="subscription__calc">
+        <motion.div
+          className="subscription__calc"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.15, duration: 0.5 }}
+        >
           <div className="subscription__calc-row">
             <span>Выбрано дней</span>
-            <span className="subscription__calc-value">{activeDays} из {workDaysCount}</span>
+            <span className="subscription__calc-value">
+              <AnimatedCount value={activeDays} /> из {workDaysCount}
+            </span>
           </div>
           <div className="subscription__calc-row">
             <span>Сотрудников</span>
-            <span className="subscription__calc-value">{employeeCount}</span>
+            <span className="subscription__calc-value">
+              <AnimatedCount value={employeeCount} />
+            </span>
           </div>
           <div className="subscription__calc-row">
             <span>Всего порций (на сотр.)</span>
-            <span className="subscription__calc-value">{totalPortions}</span>
+            <span className="subscription__calc-value">
+              <AnimatedCount value={totalPortions} />
+            </span>
           </div>
           <div className="subscription__calc-row">
             <span>Всего порций (на всех)</span>
-            <span className="subscription__calc-value">{totalPortions} × {employeeCount} = {totalItems}</span>
+            <span className="subscription__calc-value">
+              <AnimatedCount value={totalPortions} /> × <AnimatedCount value={employeeCount} /> = <AnimatedCount value={totalItems} />
+            </span>
           </div>
           <div className="subscription__calc-row">
             <span>Цена одной порции</span>
@@ -157,13 +186,13 @@ function Catalog({
             <span>Итого к оплате</span>
             <span className="subscription__calc-value">{formatPrice(totalMonthlyPrice)}</span>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* Список сетов */}
       <h2 className="catalog__section-title">Меню на месяц ({sets.length} дней)</h2>
       <div className="catalog__grid catalog__grid--sets">
-        {sets.map((set) => {
+        {sets.map((set, index) => {
           const cartItem = cartState[set.id]
           const beverage = cartItem?.beverage ?? 'Вода'
           const active = cartItem?.active ?? true
@@ -172,6 +201,7 @@ function Catalog({
           return (
             <SetCard
               key={set.id}
+              index={index}
               set={set}
               active={active}
               portions={portions}
@@ -186,17 +216,28 @@ function Catalog({
 
       {/* Нижняя панель */}
       {activeDays > 0 && totalPortions > 0 && (
-        <div className="sticky-bar">
+        <motion.div
+          className="sticky-bar"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+        >
           <div className="sticky-bar__info">
             <span className="sticky-bar__count">
               {activeDays} из {workDaysCount} дней · {employeeCount} сотрудников · {totalItems} порций
             </span>
             <span className="sticky-bar__total">{formatPrice(totalMonthlyPrice)}</span>
           </div>
-          <button type="button" className="btn btn--primary" onClick={onGoToCart}>
+          <motion.button
+            type="button"
+            className="btn btn--primary"
+            onClick={onGoToCart}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+          >
             Оформить предзаказ
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       )}
     </div>
   )

@@ -1,8 +1,10 @@
+import { motion } from 'framer-motion'
 import type { LunchSet } from '../types'
 import { formatPrice } from '../types'
 
 interface SetCardProps {
   set: LunchSet
+  index: number
   active: boolean
   portions: number
   beverage: string
@@ -11,9 +13,19 @@ interface SetCardProps {
   onPortionChange: (delta: number) => void
 }
 
-function SetCard({ set, active, portions, beverage, onBeverageChange, onToggle, onPortionChange }: SetCardProps) {
+function SetCard({ set, index, active, portions, beverage, onBeverageChange, onToggle, onPortionChange }: SetCardProps) {
   return (
-    <article className={`set-card${active ? ' set-card--active' : ''}`}>
+    <motion.article
+      className={`set-card${active ? ' set-card--active' : ''}`}
+      initial={{ opacity: 0, y: 40, scale: 0.97 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{
+        duration: 0.5,
+        delay: (index % 6) * 0.08,
+        ease: [0.25, 0.46, 0.45, 0.94],
+      }}
+    >
       <div className="set-card__head">
         <label className="set-card__toggle">
           <input
@@ -98,7 +110,7 @@ function SetCard({ set, active, portions, beverage, onBeverageChange, onToggle, 
           </div>
         )}
       </div>
-    </article>
+    </motion.article>
   )
 }
 

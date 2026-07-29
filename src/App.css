@@ -57,11 +57,11 @@ body {
   font-size: 16px;
   cursor: pointer;
   padding: 14px 22px;
-  transition: transform 0.12s ease, background 0.2s ease, box-shadow 0.2s ease;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .btn:active {
-  transform: scale(0.98);
+  /* Transform управляется через framer-motion whileTap */
 }
 
 .btn--primary {
@@ -784,15 +784,57 @@ body {
   color: var(--text);
 }
 
-/* ---------- Cart ---------- */
+/* ---------- Cart (with glassmorphism) ---------- */
 .cart {
   max-width: 640px;
   margin: 0 auto;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
   padding: 28px;
+  border-radius: var(--radius);
+  position: relative;
+}
+
+.cart--glass {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* Фоновое свечение за карточкой корзины */
+.cart--glass::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.cart--glass::after {
+  content: '';
+  position: absolute;
+  bottom: -40px;
+  left: -40px;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.1) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.cart__header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
 .cart__header {
