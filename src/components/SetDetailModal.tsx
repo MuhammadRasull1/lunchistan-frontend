@@ -1,25 +1,23 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Flame, Beef, Droplets, Wheat, UtensilsCrossed } from 'lucide-react'
-import type { LunchSet, Beverage } from '../types'
+import { X, Flame, Beef, Droplets, Wheat, UtensilsCrossed, Check } from 'lucide-react'
+import type { LunchSet } from '../types'
 import { formatPrice } from '../types'
 
 interface SetDetailModalProps {
   set: LunchSet | null
-  beverage: string
   isOpen: boolean
   onClose: () => void
-  onBeverageChange: (beverage: Beverage) => void
   onConfirm: () => void
 }
 
-/** Плавный перевод числового значения в строку с единицей */
+/** Форматирование макроса */
 function formatMacro(value: number | undefined, suffix: string): string {
   if (value === undefined || value === null) return '—'
   return `${value} ${suffix}`
 }
 
-/** Иконка для макроса */
-function MacroIcon({ icon: Icon, label, value, unit, color }: {
+/** Карточка макроса */
+function MacroCard({ icon: Icon, label, value, unit, color }: {
   icon: React.ComponentType<{ size?: number; strokeWidth?: number }>
   label: string
   value: number | undefined
@@ -56,12 +54,12 @@ const SHEET_VARIANTS = {
   },
 }
 
-function SetDetailModal({ set, beverage, isOpen, onClose, onBeverageChange, onConfirm }: SetDetailModalProps) {
+function SetDetailModal({ set, isOpen, onClose, onConfirm }: SetDetailModalProps) {
   return (
     <AnimatePresence>
       {isOpen && set && (
         <>
-          {/* Оверлей с backdrop-blur */}
+          {/* Оверлей */}
           <motion.div
             className="modal-overlay"
             key="modal-overlay"
@@ -103,87 +101,64 @@ function SetDetailModal({ set, beverage, isOpen, onClose, onBeverageChange, onCo
               <X size={20} strokeWidth={2.5} />
             </button>
 
-            {/* Изображение блюда */}
-            <div className="modal-sheet__image-wrap">
-              <div className="modal-sheet__image">
-                <span className="modal-sheet__emoji">{set.imageUrl || '🍽️'}</span>
+            {/* Контент (с отступом снизу для фиксированной плашки) */}
+            <div className="modal-sheet__scroll">
+              {/* Изображение блюда */}
+              <div className="modal-sheet__image-wrap">
+                <div className="modal-sheet__image">
+                  <span className="modal-sheet__emoji">{set.imageUrl || '🍽️'}</span>
+                </div>
               </div>
-            </div>
 
-            {/* Контент */}
-            <div className="modal-sheet__content">
               {/* Заголовок */}
               <div className="modal-sheet__header">
                 <h2 className="modal-sheet__title">{set.name}</h2>
                 <span className="modal-sheet__day">День {set.dayNumber} · {set.weekDay}</span>
               </div>
 
-              {/* Composition chips */}
+              {/* Состав — аккуратные плашки */}
               <div className="modal-sheet__composition">
                 {set.composition.map((item) => (
                   <div key={item.name} className="modal-sheet__chip">
-                    <UtensilsCrossed size={13} strokeWidth={2.2} />
+                    <UtensilsCrossed size={14} strokeWidth={2.2} />
                     <span>{item.name}</span>
                   </div>
                 ))}
               </div>
 
-              {/* KBJU блок */}
+              {/* KBJU — Пищевая ценность */}
               <div className="modal-sheet__kbju">
                 <div className="modal-sheet__kbju-header">
                   <Flame size={16} strokeWidth={2.5} />
-                  <span>Пищевая ценность</span>
-                  <span className="modal-sheet__kbju-cal">{formatMacro(set.calories, 'ккал')}</span>
+                  <span>Пищевая ценность на порцию</span>
                 </div>
                 <div className="modal-sheet__kbju-grid">
-                  <MacroIcon icon={Beef} label="Белки" value={set.proteins} unit="г" color="rgba(239, 68, 68, 0.12)" />
-                  <MacroIcon icon={Droplets} label="Жиры" value={set.fats} unit="г" color="rgba(245, 158, 11, 0.12)" />
-                  <MacroIcon icon={Wheat} label="Углеводы" value={set.carbs} unit="г" color="rgba(59, 130, 246, 0.12)" />
-                  <MacroIcon icon={Flame} label="Калории" value={set.calories} unit="ккал" color="rgba(249, 115, 22, 0.12)" />
+                  <MacroCard icon={Beef} label="Белки" value={set.proteins} unit="г" color="rgba(239, 68, 68, 0.12)" />
+                  <MacroCard icon={Droplets} label="Жиры" value={set.fats} unit="г" color="rgba(245, 158, 11, 0.12)" />
+                  <MacroCard icon={Wheat} label="Углеводы" value={set.carbs} unit="г" color="rgba(59, 130, 246, 0.12)" />
+                  <MacroCard icon={Flame} label="Калории" value={set.calories} unit="ккал" color="rgba(249, 115, 22, 0.12)" />
                 </div>
               </div>
+            </div>
 
-              {/* Выбор напитка */}
-              <div className="modal-sheet__beverage">
-                <label className="modal-sheet__beverage-label">Напиток</label>
-                <div className="modal-sheet__pill-group">
-                  <button
-                    type="button"
-                    className={`modal-sheet__pill${beverage === 'Вода' ? ' modal-sheet__pill--active' : ''}`}
-                    onClick={() => onBeverageChange('Вода')}
-                  >
-                    <span className="modal-sheet__pill-icon">💧</span>
-                    <span>Вода</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`modal-sheet__pill${beverage === 'Компот в ассортименте' ? ' modal-sheet__pill--active' : ''}`}
-                    onClick={() => onBeverageChange('Компот в ассортименте')}
-                  >
-                    <span className="modal-sheet__pill-icon">🧃</span>
-                    <span>Компот</span>
-                  </button>
-                </div>
+            {/* Фиксированная нижняя плашка */}
+            <div className="modal-sheet__bar">
+              <div className="modal-sheet__bar-price">
+                <span className="modal-sheet__bar-price-label">Цена за порцию</span>
+                <span className="modal-sheet__bar-price-value">{formatPrice(set.price)}</span>
               </div>
-
-              {/* Цена */}
-              <div className="modal-sheet__price">
-                <span className="modal-sheet__price-label">Цена за порцию</span>
-                <span className="modal-sheet__price-value">{formatPrice(set.price)}</span>
-              </div>
-
-              {/* Кнопка подтверждения */}
               <motion.button
                 type="button"
-                className="modal-sheet__confirm"
+                className="modal-sheet__bar-btn"
                 onClick={() => {
                   onConfirm()
                   onClose()
                 }}
-                whileHover={{ scale: 1.02 }}
+                whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
               >
-                Выбрать этот обед
+                <Check size={18} strokeWidth={3} />
+                Выбрать
               </motion.button>
             </div>
           </motion.div>

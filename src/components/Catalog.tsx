@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import type { LunchSet, Beverage, CartState } from '../types'
+import type { LunchSet, CartState } from '../types'
 import { formatPrice } from '../types'
 import SetCard from './SetCard'
 import SetDetailModal from './SetDetailModal'
@@ -14,9 +14,7 @@ interface CatalogProps {
   workDaysCount: number
   totalMonthlyPrice: number
   setPrice: number
-  onBeverageChange: (setId: string | number, beverage: Beverage) => void
   onToggleDay: (setId: string | number) => void
-  onPortionChange: (setId: string | number, delta: number) => void
   onSelectAll: () => void
   onDeselectAll: () => void
   onEmployeeCountChange: (count: number) => void
@@ -32,9 +30,7 @@ function Catalog({
   workDaysCount,
   totalMonthlyPrice,
   setPrice,
-  onBeverageChange,
   onToggleDay,
-  onPortionChange,
   onSelectAll,
   onDeselectAll,
   onEmployeeCountChange,
@@ -50,15 +46,12 @@ function Catalog({
 
   // Состояние модалки детализации сета
   const [selectedSetId, setSelectedSetId] = useState<string | number | null>(null)
-  const [modalBeverage, setModalBeverage] = useState<Beverage>('Вода')
 
   const selectedSet = selectedSetId
     ? sets.find(s => s.id === selectedSetId) ?? null
     : null
 
   const handleOpenModal = (setId: string | number) => {
-    const cartItem = cartState[setId]
-    setModalBeverage(cartItem?.beverage ?? 'Вода')
     setSelectedSetId(setId)
   }
 
@@ -68,7 +61,6 @@ function Catalog({
 
   const handleModalConfirm = () => {
     if (selectedSetId) {
-      onBeverageChange(selectedSetId, modalBeverage)
       // Убеждаемся, что день активен
       if (!cartState[selectedSetId]?.active) {
         onToggleDay(selectedSetId)
@@ -224,9 +216,7 @@ function Catalog({
       <div className="catalog__grid catalog__grid--sets">
         {sets.map((set, index) => {
           const cartItem = cartState[set.id]
-          const beverage = cartItem?.beverage ?? 'Вода'
           const active = cartItem?.active ?? true
-          const portions = cartItem?.portions ?? 1
 
           return (
             <SetCard
@@ -234,11 +224,6 @@ function Catalog({
               index={index}
               set={set}
               active={active}
-              portions={portions}
-              beverage={beverage}
-              onBeverageChange={(beverage) => onBeverageChange(set.id, beverage as Beverage)}
-              onToggle={() => onToggleDay(set.id)}
-              onPortionChange={(delta) => onPortionChange(set.id, delta)}
               onSelect={() => handleOpenModal(set.id)}
             />
           )
@@ -274,10 +259,8 @@ function Catalog({
       {/* Модальное окно детализации сета */}
       <SetDetailModal
         set={selectedSet}
-        beverage={modalBeverage}
         isOpen={selectedSetId !== null}
         onClose={handleCloseModal}
-        onBeverageChange={setModalBeverage}
         onConfirm={handleModalConfirm}
       />
     </div>

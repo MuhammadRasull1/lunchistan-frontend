@@ -154,9 +154,9 @@ body {
   align-items: start;
 }
 
-/* Широкие карточки сетов — чтобы состав читался комфортно */
+/* Карточки сетов — компактные, с изображением */
 .catalog__grid--sets {
-  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 }
 
 @media (max-width: 520px) {
@@ -165,17 +165,15 @@ body {
   }
 }
 
-/* ---------- Set card (Premium B2B / Apple-style) ---------- */
+/* ---------- Set card (Image-first compact design) ---------- */
 .set-card {
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  padding: 20px 24px 20px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.25s ease;
   position: relative;
   overflow: hidden;
 }
@@ -189,6 +187,7 @@ body {
   height: 3px;
   background: transparent;
   transition: background 0.3s ease;
+  z-index: 2;
 }
 
 .set-card--active::before {
@@ -204,25 +203,79 @@ body {
   opacity: 0.6;
 }
 
-.set-card__head {
+/* ---------- Hero image section ---------- */
+.set-card__hero {
+  position: relative;
+  width: 100%;
+  height: 160px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+  overflow: hidden;
 }
 
-.set-card__title-wrap {
+.set-card--inactive .set-card__hero {
+  filter: grayscale(0.6);
+}
+
+.set-card__hero-bg {
+  width: 100px;
+  height: 100px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  transition: transform 0.3s ease;
+}
+
+.set-card:hover .set-card__hero-bg {
+  transform: scale(1.06) rotate(-2deg);
+}
+
+.set-card__hero-emoji {
+  font-size: 48px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+}
+
+.set-card__hero-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--brand);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.35);
+}
+
+/* ---------- Body section ---------- */
+.set-card__body {
+  padding: 14px 16px 16px;
   display: flex;
   flex-direction: column;
+  gap: 6px;
   flex: 1;
-  min-width: 0;
 }
 
 .set-card__name {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   margin: 0;
   letter-spacing: -0.01em;
   color: var(--text);
+  line-height: 1.3;
 }
 
 .set-card__name--strikethrough {
@@ -236,47 +289,26 @@ body {
   font-weight: 500;
 }
 
-.set-card__day-badge {
-  flex-shrink: 0;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--brand-light);
-  border: 1px solid rgba(249, 115, 22, 0.2);
-}
-
-.set-card__day-badge-text {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--brand-dark);
-  white-space: nowrap;
-}
-
 /* ---------- Composition chips ---------- */
 .set-card__composition {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  padding: 10px 0 4px;
+  gap: 4px;
+  margin: 4px 0 2px;
 }
 
 .set-card__chip {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 10px 5px 8px;
+  gap: 4px;
+  padding: 4px 8px 4px 6px;
   background: rgba(0, 0, 0, 0.045);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--text);
-  transition: background 0.2s ease, transform 0.2s ease;
-}
-
-.set-card__chip:hover {
-  background: rgba(0, 0, 0, 0.07);
-  transform: translateY(-1px);
 }
 
 .set-card__chip-text {
@@ -285,24 +317,19 @@ body {
 
 .set-card__description {
   color: var(--text);
-  font-size: 14px;
-  line-height: 1.5;
-  margin: 4px 0 0;
-  flex: 1;
+  font-size: 13px;
+  line-height: 1.4;
+  margin: 2px 0 0;
 }
 
-/* ---------- Set card footer ---------- */
-.set-card__footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-}
-
-.set-card__price-wrap {
+/* ---------- Price row ---------- */
+.set-card__price-row {
   display: flex;
   align-items: baseline;
   gap: 8px;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
 }
 
 .set-card__price {
@@ -313,118 +340,8 @@ body {
 
 .set-card__per-day {
   color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 500;
-}
-
-/* ---------- Set card actions ---------- */
-.set-card__actions {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  padding-top: 12px;
-  border-top: 1px solid #f0f0f0;
-}
-
-.set-card__qty {
-  text-align: center;
-  flex-shrink: 0;
-}
-
-.set-card__drink {
-  flex: 1;
-  min-width: 0;
-}
-
-.set-card__drink-label {
-  display: block;
   font-size: 11px;
-  font-weight: 600;
-  color: var(--text-muted);
-  margin-bottom: 5px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.set-card__inactive-msg {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 0;
-}
-
-.set-card__inactive-text {
-  color: var(--text-muted);
-  font-size: 13px;
   font-weight: 500;
-  font-style: italic;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* ---------- Premium pill group for beverage ---------- */
-.pill-group--premium {
-  display: flex;
-  gap: 4px;
-  background: rgba(0, 0, 0, 0.035);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  border-radius: 10px;
-  padding: 3px;
-  position: relative;
-}
-
-.pill--premium {
-  flex: 1;
-  border: none;
-  border-radius: 8px;
-  padding: 7px 10px;
-  font-size: 13px;
-  font-weight: 600;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  position: relative;
-  transition: color 0.2s ease;
-  white-space: nowrap;
-}
-
-.pill--premium:hover:not(:disabled) {
-  color: var(--text);
-}
-
-.pill--premium.pill--active {
-  background: #fff;
-  color: var(--brand-dark);
-  font-weight: 700;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.02);
-}
-
-.pill__dot {
-  position: absolute;
-  bottom: -2px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--brand);
-}
-
-.pill__icon {
-  font-size: 14px;
-  line-height: 1;
-}
-
-.pill:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
 }
 
 /* ---------- Dish card ---------- */
@@ -637,110 +554,7 @@ body {
   font-size: 18px;
 }
 
-/* ---------- Set card actions ---------- */
-/* ---------- Toggle switch ---------- */
-.set-card__toggle {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  flex-shrink: 0;
-}
 
-.set-card__checkbox {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.set-card__toggle-track {
-  position: relative;
-  width: 44px;
-  height: 26px;
-  background: #d1d5db;
-  border-radius: 999px;
-  transition: background 0.25s ease;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.set-card__checkbox:checked + .set-card__toggle-track {
-  background: var(--brand);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15), 0 0 0 3px rgba(249, 115, 22, 0.15);
-}
-
-.set-card__toggle-thumb {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 20px;
-  height: 20px;
-  background: #fff;
-  border-radius: 50%;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.set-card__checkbox:checked + .set-card__toggle-track .set-card__toggle-thumb {
-  transform: translateX(18px);
-}
-
-.set-card__toggle:hover .set-card__toggle-track {
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15);
-}
-
-.set-card__toggle:hover .set-card__checkbox:checked + .set-card__toggle-track {
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15), 0 0 0 4px rgba(249, 115, 22, 0.2);
-}
-
-/* ---------- Set card actions ---------- */
-.set-card__actions {
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px dashed var(--border);
-}
-
-.set-card__drink {
-  flex: 1;
-  min-width: 0;
-}
-
-.set-card__drink-label {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
-  margin-bottom: 4px;
-}
-
-.pill:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.set-card__qty {
-  text-align: center;
-}
-
-.set-card__inactive-msg {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 0;
-}
-
-.set-card__inactive-text {
-  color: var(--text-muted);
-  font-size: 13px;
-  font-weight: 500;
-  font-style: italic;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
 
 /* ---------- Subscription section ---------- */
 .subscription {
@@ -1245,9 +1059,8 @@ body {
   background: #ffffff;
   border-radius: 24px 24px 0 0;
   box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.12);
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Свайп-индикатор */
@@ -1288,16 +1101,24 @@ body {
   transform: scale(0.92);
 }
 
+/* Скроллируемый контент */
+.modal-sheet__scroll {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 24px 20px;
+  flex: 1;
+}
+
 /* Изображение блюда */
 .modal-sheet__image-wrap {
-  padding: 16px 20px 0;
+  padding: 8px 0 0;
   display: flex;
   justify-content: center;
 }
 
 .modal-sheet__image {
-  width: 120px;
-  height: 120px;
+  width: 100px;
+  height: 100px;
   border-radius: 24px;
   background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
   display: flex;
@@ -1307,22 +1128,15 @@ body {
 }
 
 .modal-sheet__emoji {
-  font-size: 56px;
+  font-size: 48px;
   line-height: 1;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
-}
-
-/* Контент */
-.modal-sheet__content {
-  padding: 16px 24px 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
 }
 
 /* Заголовок */
 .modal-sheet__header {
   text-align: center;
+  margin: 10px 0 4px;
 }
 
 .modal-sheet__title {
@@ -1334,7 +1148,7 @@ body {
 }
 
 .modal-sheet__day {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-muted);
 }
@@ -1345,6 +1159,7 @@ body {
   flex-wrap: wrap;
   gap: 6px;
   justify-content: center;
+  margin-bottom: 4px;
 }
 
 .modal-sheet__chip {
@@ -1379,12 +1194,6 @@ body {
   margin-bottom: 10px;
   padding-bottom: 8px;
   border-bottom: 1px solid #eee;
-}
-
-.modal-sheet__kbju-cal {
-  margin-left: auto;
-  font-size: 15px;
-  color: var(--brand-dark);
 }
 
 .modal-sheet__kbju-grid {
@@ -1434,113 +1243,71 @@ body {
   letter-spacing: 0.03em;
 }
 
-/* Выбор напитка в модалке */
-.modal-sheet__beverage {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.modal-sheet__beverage-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.modal-sheet__pill-group {
-  display: flex;
-  gap: 8px;
-}
-
-.modal-sheet__pill {
-  flex: 1;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 12px 14px;
-  font-size: 14px;
-  font-weight: 600;
-  background: #fff;
-  color: var(--text-muted);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.modal-sheet__pill:hover {
-  border-color: var(--brand);
-  background: var(--brand-light);
-  color: var(--brand-dark);
-}
-
-.modal-sheet__pill--active {
-  border-color: var(--brand);
-  background: var(--brand-light);
-  color: var(--brand-dark);
-  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12);
-}
-
-.modal-sheet__pill-icon {
-  font-size: 18px;
-}
-
-/* Цена */
-.modal-sheet__price {
+/* Фиксированная нижняя плашка с ценой и кнопкой */
+.modal-sheet__bar {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 0;
+  gap: 14px;
+  padding: 14px 20px;
+  border-top: 1px solid #f0f0f0;
+  background: #fff;
+  border-radius: 0 0 24px 24px;
 }
 
-.modal-sheet__price-label {
-  font-size: 14px;
+.modal-sheet__bar-price {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-sheet__bar-price-label {
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-muted);
 }
 
-.modal-sheet__price-value {
+.modal-sheet__bar-price-value {
   font-size: 22px;
   font-weight: 800;
   color: var(--brand);
+  line-height: 1.2;
 }
 
-/* Кнопка подтверждения */
-.modal-sheet__confirm {
-  width: 100%;
+.modal-sheet__bar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   border: none;
   border-radius: 14px;
-  padding: 16px 20px;
+  padding: 14px 28px;
   background: var(--brand);
   color: #fff;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 4px 16px rgba(249, 115, 22, 0.3);
   transition: background 0.2s ease;
+  white-space: nowrap;
 }
 
-.modal-sheet__confirm:hover {
+.modal-sheet__bar-btn:hover {
   background: var(--brand-dark);
 }
 
 /* Адаптация для мобильных */
 @media (max-width: 480px) {
-  .modal-sheet__content {
-    padding: 12px 16px 28px;
-    gap: 14px;
+  .modal-sheet__scroll {
+    padding: 4px 16px 16px;
   }
 
   .modal-sheet__image {
-    width: 100px;
-    height: 100px;
+    width: 88px;
+    height: 88px;
   }
 
   .modal-sheet__emoji {
-    font-size: 48px;
+    font-size: 42px;
   }
 
   .modal-sheet__title {
@@ -1551,7 +1318,16 @@ body {
     gap: 6px;
   }
 
-  .modal-sheet__price-value {
+  .modal-sheet__bar {
+    padding: 12px 16px;
+  }
+
+  .modal-sheet__bar-price-value {
     font-size: 20px;
+  }
+
+  .modal-sheet__bar-btn {
+    padding: 12px 20px;
+    font-size: 15px;
   }
 }

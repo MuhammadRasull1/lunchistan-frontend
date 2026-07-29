@@ -7,7 +7,6 @@ interface CartLine {
   set: LunchSet
   portions: number
   totalPortions: number
-  beverage: string
 }
 
 interface CartProps {
@@ -39,7 +38,6 @@ function Cart({
         set,
         portions,
         totalPortions: portions * employeeCount,
-        beverage: cartState[set.id]?.beverage ?? 'Вода',
       }
     })
 
@@ -105,7 +103,7 @@ function Cart({
               visible: { transition: { staggerChildren: 0.05 } },
             }}
           >
-            {activeLines.map(({ set, portions, totalPortions, beverage }) => (
+            {activeLines.map(({ set, portions, totalPortions }) => (
               <motion.li
                 key={set.id}
                 className="cart__item"
@@ -121,7 +119,7 @@ function Cart({
                     {set.name}
                   </span>
                   <span className="cart__item-desc">
-                    День {set.dayNumber} · {set.weekDay} · {beverage} · {portions} порц./сотр.
+                    День {set.dayNumber} · {set.weekDay} · {portions} порц./сотр.
                   </span>
                 </div>
                 <div className="cart__item-sum">

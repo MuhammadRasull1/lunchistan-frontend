@@ -4,7 +4,7 @@ import Catalog from './components/Catalog'
 import Cart from './components/Cart'
 import Success from './components/Success'
 import { MONTHLY_SETS, SET_PRICE } from './data/mockMenu'
-import type { CartState, Beverage, Screen, PaymentMethod } from './types'
+import type { CartState, Screen, PaymentMethod } from './types'
 import { formatPrice } from './types'
 
 const MAX_WORK_DAYS = MONTHLY_SETS.length
@@ -16,7 +16,7 @@ function App() {
   const [cartState, setCartState] = useState<CartState>(() => {
     const initial: CartState = {}
     MONTHLY_SETS.forEach(set => {
-      initial[set.id] = { beverage: 'Вода', active: true, portions: 1 }
+      initial[set.id] = { active: true, portions: 1 }
     })
     return initial
   })
@@ -31,16 +31,6 @@ function App() {
     })
   }
 
-  const handleBeverageChange = (setId: string | number, beverage: Beverage) => {
-    setCartState(prev => {
-      const item = prev[setId]
-      return {
-        ...prev,
-        [setId]: { ...(item ?? { active: true, portions: 1 }), beverage },
-      }
-    })
-  }
-
   const handleToggleDay = (setId: string | number) => {
     setCartState(prev => {
       const item = prev[setId]
@@ -48,18 +38,6 @@ function App() {
       return {
         ...prev,
         [setId]: { ...item, active: !item.active },
-      }
-    })
-  }
-
-  const handlePortionChange = (setId: string | number, delta: number) => {
-    setCartState(prev => {
-      const item = prev[setId]
-      if (!item || !item.active) return prev
-      const newPortions = Math.max(1, (item.portions ?? 1) + delta)
-      return {
-        ...prev,
-        [setId]: { ...item, portions: newPortions },
       }
     })
   }
@@ -117,7 +95,7 @@ function App() {
   const handleNewOrder = () => {
     const reset: CartState = {}
     MONTHLY_SETS.forEach(set => {
-      reset[set.id] = { beverage: 'Вода', active: true, portions: 1 }
+      reset[set.id] = { active: true, portions: 1 }
     })
     setCartState(reset)
     setEmployeeCount(1)
@@ -136,9 +114,7 @@ function App() {
           workDaysCount={workDaysCount}
           totalMonthlyPrice={totalMonthlyPrice}
           setPrice={SET_PRICE}
-          onBeverageChange={handleBeverageChange}
           onToggleDay={handleToggleDay}
-          onPortionChange={handlePortionChange}
           onSelectAll={handleSelectAll}
           onDeselectAll={handleDeselectAll}
           onEmployeeCountChange={handleEmployeeCountChange}

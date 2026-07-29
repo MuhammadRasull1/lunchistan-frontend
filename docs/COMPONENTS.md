@@ -40,13 +40,12 @@ App (state owner)
 
 ### 3.1. Секции
 
-1. **Шапка** — бренд + заголовок + подзаголовок
-2. **Калькулятор стоимости** — счётчики рабочих дней и сотрудников
-3. **Быстрые действия** — «Выбрать все» / «Сбросить все»
-4. **Детализация расчёта** — порции, множители, итоговая цена
-5. **Сетка SetCard × workDaysCount** — карточки дней
-6. **StickyBar** — фиксированная панель с итогом + кнопка «Оформить»
-7. **SetDetailModal** — выплывающее окно детализации сета
+1. **Шапка** — бренд + заголовок + подзаголовок  2. **Калькулятор стоимости** — счётчики рабочих дней и сотрудников
+  3. **Быстрые действия** — «Выбрать все» / «Сбросить все»
+  4. **Детализация расчёта** — порции, множители, итоговая цена
+  5. **Сетка SetCard × workDaysCount** — карточки дней (Image → Name → Chips → Price)
+  6. **StickyBar** — фиксированная панель с итогом + кнопка «Оформить»
+  7. **SetDetailModal** — выплывающее окно детализации сета
 
 ### 3.2. Props
 
@@ -59,9 +58,7 @@ interface CatalogProps {
   workDaysCount: number
   totalMonthlyPrice: number
   setPrice: number
-  onBeverageChange: (setId: string | number, beverage: Beverage) => void
   onToggleDay: (setId: string | number) => void
-  onPortionChange: (setId: string | number, delta: number) => void
   onSelectAll: () => void
   onDeselectAll: () => void
   onEmployeeCountChange: (count: number) => void
@@ -72,18 +69,17 @@ interface CatalogProps {
 
 ---
 
-## 4. SetCard.tsx — Карточка дня/сета
+## 4. SetCard.tsx — Карточка дня/сета (Image-first)
 
 ### 4.1. Визуальные элементы
 
-- **Toggle-переключатель** — CSS-only, включение/исключение дня
+- **Hero-изображение** — крупный эмодзи/плейсхолдер на градиентном фоне 160px
+- **DayBadge** — оранжевый кружок с номером дня поверх изображения
 - **Название сета** — с зачёркиванием для неактивных дней
-- **DayBadge** — оранжевый чипс «День N»
 - **Composition chips** — полупрозрачные чипсы с lucide-иконками (`UtensilsCrossed`, `LeafyGreen`, `Croissant`, `Wine`)
-- **Цена** — `formatPrice(55000)` + подпись «за день / порцию»
-- **Счётчик порций** — кнопки `−`/`+` с framer-motion-анимацией
-- **Pill-кнопки напитка** — премиум-группа с `LayoutGroup` и `layoutId`
-- **Обёртка в `motion.article`** — анимация при скролле
+- **Цена** — `formatPrice(55000)` + подпись «за порцию» (отделена border-top)
+- **Обёртка в `motion.article`** — анимация при скролле, клик → модалка
+- ❌ **Удалено**: переключатель напитков, счётчик порций, toggle
 
 ### 4.2. Props
 
@@ -92,11 +88,7 @@ interface SetCardProps {
   set: LunchSet
   index: number
   active: boolean
-  portions: number
-  beverage: string
-  onBeverageChange: (beverage: string) => void
-  onToggle: () => void
-  onPortionChange: (delta: number) => void
+  onSelect?: () => void  // клик → открыть SetDetailModal
 }
 ```
 
@@ -104,8 +96,8 @@ interface SetCardProps {
 
 - **Scroll entrance**: fade-in + slide-up с `whileInView`
 - **Stagger**: `delay: (index % 6) * 0.08` — волна появления
-- **Hover**: `whileHover` подъём на -4px и масштаб 1.01 (только для активных)
-- **Pill-кнопки**: `layoutId="pillDot"` для плавного перехода активной точки
+- **Hero hover**: при наведении эмодзи-контейнер масштабируется + поворот
+- **Inactive**: grayscale-фильтр на hero-изображении для неактивных
 
 ---
 
@@ -119,31 +111,29 @@ interface SetCardProps {
 - **Overlay** — полупрозрачный фон с `backdrop-filter: blur(8px)`
 - **Bottom Sheet** — панель на половину экрана с скруглёнными верхними углами
 - **Кнопка закрытия** — крестик (X) в правом верхнем углу
-- **Изображение блюда** — эмодзи/плейсхолдер
+- **Изображение блюда** — эмодзи/плейсхолдер на градиентном фоне
 - **Название и день** — заголовок + подзаголовок
-- **Composition chips** — переиспользование стиля из SetCard
-- **KBJU-блок** — калории, белки, жиры, углеводы в сетке 2×2
-- **Выбор напитка** — переиспользование pill-группы
-- **Кнопка подтверждения** — «Выбрать этот обед»
+- **Состав** — аккуратные плашки с lucide-иконкой и названием
+- **KBJU-блок** — калории, белки, жиры, углеводы в сетке 2×2 с цветными иконками
+- **Фиксированная нижняя плашка** — цена слева + кнопка «Выбрать» справа
+- ❌ **Удалено**: выбор напитка
 
 ### 5.2. Props
 
 ```typescript
 interface SetDetailModalProps {
   set: LunchSet | null
-  beverage: string
   isOpen: boolean
   onClose: () => void
-  onBeverageChange: (beverage: Beverage) => void
-  onConfirm: () => void
+  onConfirm: () => void  // активирует день + закрывает
 }
 ```
 
 ### 5.3. Анимации (framer-motion)
 
-- **Enter**: `y: '100%' → y: 0` + overlay fade-in
+- **Enter**: `y: '100%' → y: 0` + overlay fade-in (spring, stiffness 300)
 - **Exit**: `y: 0 → y: '100%'` + overlay fade-out
-- **Drag-to-close**: `drag="y"` с `dragConstraints={{ top: 0 }}` и `onDragEnd`
+- **Drag-to-close**: `drag="y"` с `dragConstraints={{ top: 0 }}` и `onDragEnd` (при свайпе > 100px)
 - **Overlay click**: закрытие по клику на фон
 
 ---

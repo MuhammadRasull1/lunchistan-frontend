@@ -82,7 +82,7 @@ lunchistan-frontend/
 | `Beverage`           | `'Вода' | 'Компот в ассортименте'`     |
 | `PaymentMethod`      | `'corporate' | 'card' | 'cash'`        |
 | `LunchSet`           | Сет с KBJU + composition                |
-| `CartItem`           | Элемент корзины (beverage, active, portions) |
+| `CartItem`           | Элемент корзины (active, portions) |
 | `CartState`          | `Record<string | number, CartItem>`    |
 | `formatPrice(n)`     | `"55 000 сум"`                         |
 
