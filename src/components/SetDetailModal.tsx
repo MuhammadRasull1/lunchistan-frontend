@@ -105,9 +105,14 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm }: SetDetailModalProps
             <div className="modal-sheet__scroll">
               {/* Изображение блюда */}
               <div className="modal-sheet__image-wrap">
-                <div className="modal-sheet__image">
-                  <span className="modal-sheet__emoji">{set.imageUrl || '🍽️'}</span>
-                </div>
+                <img
+                  className="modal-sheet__image-img"
+                  src={set.imageUrl || ''}
+                  alt={set.name}
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none'
+                  }}
+                />
               </div>
 
               {/* Заголовок */}

@@ -83,7 +83,7 @@ export const MONTHLY_SETS: LunchSet[] = MAIN_DISHES.map((main, index) => {
     name: `Обед День ${dayNumber} (${WEEK_DAYS[weekDayIndex]})`,
     description: `${main.name} + Салат + Лепёшка + Напиток`,
     price: SET_PRICE,
-    imageUrl: main.icon, // используем эмодзи как плейсхолдер изображения
+    imageUrl: `https://loremflickr.com/400/300/food,dish?lock=${dayNumber}`, // реальное фуд-фото с LoremFlickr
     calories: kbju.calories,
     proteins: kbju.proteins,
     fats: kbju.fats,

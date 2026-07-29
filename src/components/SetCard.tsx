@@ -35,9 +35,16 @@ function SetCard({ set, index, active, onSelect }: SetCardProps) {
     >
       {/* Изображение сета (hero) */}
       <div className="set-card__hero">
-        <div className="set-card__hero-bg">
-          <span className="set-card__hero-emoji">{set.imageUrl || '🍽️'}</span>
-        </div>
+        <img
+          className="set-card__hero-img"
+          src={set.imageUrl || ''}
+          alt={set.name}
+          loading="lazy"
+          onError={(e) => {
+            // Прячем битое изображение — фон hero прокинет градиент
+            e.currentTarget.style.display = 'none'
+          }}
+        />
         {active && (
           <div className="set-card__hero-badge">{set.dayNumber}</div>
         )}
