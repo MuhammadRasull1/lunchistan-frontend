@@ -42,6 +42,32 @@ const MAIN_DISHES: MainDish[] = [
   { name: 'Азу по-татарски с картофелем', icon: '🥘' },
 ];
 
+/** Примерные значения КБАУ для каждого блюда (на 1 порцию ~350-400 г) */
+const KBJU_DATA: { calories: number; proteins: number; fats: number; carbs: number }[] = [
+  { calories: 520, proteins: 28, fats: 18, carbs: 58 },
+  { calories: 480, proteins: 32, fats: 14, carbs: 52 },
+  { calories: 510, proteins: 30, fats: 16, carbs: 54 },
+  { calories: 540, proteins: 26, fats: 20, carbs: 56 },
+  { calories: 590, proteins: 24, fats: 28, carbs: 48 },
+  { calories: 440, proteins: 34, fats: 10, carbs: 50 },
+  { calories: 610, proteins: 22, fats: 22, carbs: 68 },
+  { calories: 500, proteins: 30, fats: 16, carbs: 52 },
+  { calories: 560, proteins: 26, fats: 24, carbs: 50 },
+  { calories: 470, proteins: 24, fats: 14, carbs: 60 },
+  { calories: 490, proteins: 32, fats: 12, carbs: 56 },
+  { calories: 530, proteins: 28, fats: 20, carbs: 46 },
+  { calories: 550, proteins: 30, fats: 22, carbs: 48 },
+  { calories: 600, proteins: 22, fats: 20, carbs: 66 },
+  { calories: 460, proteins: 26, fats: 16, carbs: 54 },
+  { calories: 580, proteins: 28, fats: 26, carbs: 50 },
+  { calories: 510, proteins: 30, fats: 18, carbs: 52 },
+  { calories: 430, proteins: 32, fats: 12, carbs: 48 },
+  { calories: 540, proteins: 28, fats: 20, carbs: 52 },
+  { calories: 470, proteins: 34, fats: 14, carbs: 44 },
+  { calories: 490, proteins: 24, fats: 18, carbs: 50 },
+  { calories: 520, proteins: 28, fats: 18, carbs: 56 },
+];
+
 /**
  * 22 рабочих дня (Пн-Пт) корпоративной подписки на месяц.
  * Каждый день — уникальное основное блюдо + салат + лепёшка + напиток.
@@ -49,6 +75,7 @@ const MAIN_DISHES: MainDish[] = [
 export const MONTHLY_SETS: LunchSet[] = MAIN_DISHES.map((main, index) => {
   const dayNumber = index + 1;
   const weekDayIndex = index % 5;
+  const kbju = KBJU_DATA[index];
   return {
     id: dayNumber,
     dayNumber,
@@ -56,6 +83,11 @@ export const MONTHLY_SETS: LunchSet[] = MAIN_DISHES.map((main, index) => {
     name: `Обед День ${dayNumber} (${WEEK_DAYS[weekDayIndex]})`,
     description: `${main.name} + Салат + Лепёшка + Напиток`,
     price: SET_PRICE,
+    imageUrl: main.icon, // используем эмодзи как плейсхолдер изображения
+    calories: kbju.calories,
+    proteins: kbju.proteins,
+    fats: kbju.fats,
+    carbs: kbju.carbs,
     composition: [
       { name: main.name, icon: main.icon },
       ...FIXED_COMPOSITION.map(item => ({ name: item.name, icon: item.icon })),

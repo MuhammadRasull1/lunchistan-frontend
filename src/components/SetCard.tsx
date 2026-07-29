@@ -12,6 +12,7 @@ interface SetCardProps {
   onBeverageChange: (beverage: string) => void
   onToggle: () => void
   onPortionChange: (delta: number) => void
+  onSelect?: () => void
 }
 
 function getCompositionIcon(name: string) {
@@ -21,7 +22,7 @@ function getCompositionIcon(name: string) {
   return UtensilsCrossed
 }
 
-function SetCard({ set, index, active, portions, beverage, onBeverageChange, onToggle, onPortionChange }: SetCardProps) {
+function SetCard({ set, index, active, portions, beverage, onBeverageChange, onToggle, onPortionChange, onSelect }: SetCardProps) {
   return (
     <motion.article
       className={`set-card${active ? ' set-card--active' : ' set-card--inactive'}`}
@@ -34,6 +35,17 @@ function SetCard({ set, index, active, portions, beverage, onBeverageChange, onT
         ease: [0.25, 0.46, 0.45, 0.94],
       }}
       whileHover={active ? { y: -4, scale: 1.01, transition: { duration: 0.25, ease: 'easeOut' } } : undefined}
+      onClick={(e) => {
+        // Открываем модалку только если кликнули не на интерактивный элемент
+        const target = e.target as HTMLElement
+        if (
+          target.closest('.set-card__toggle') ||
+          target.closest('.counter') ||
+          target.closest('.pill-group')
+        ) return
+        onSelect?.()
+      }}
+      style={{ cursor: 'pointer' }}
     >
       {/* Шапка: toggle + название */}
       <div className="set-card__head">

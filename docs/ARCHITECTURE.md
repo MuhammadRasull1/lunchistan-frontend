@@ -1,7 +1,8 @@
 # 🏗️ Архитектура Lunchistan Frontend
 
-> Версия: 1.0  
-> Последнее обновление: 29.07.2026
+> Версия: 2.0  
+> Последнее обновление: 29.07.2026  
+> Связанные файлы: [[COMPONENTS]], [[STATE_MANAGEMENT]], [[B2B_RULES]], [[CHECKOUT_FLOW]]
 
 ---
 
@@ -40,7 +41,10 @@ lunchistan-frontend/
 │
 ├── docs/                             # 📁 Хранилище Obsidian-контекста
 │   ├── ARCHITECTURE.md               #   Данный файл
-│   └── B2B_RULES.md                  #   Бизнес-правила B2B
+│   ├── COMPONENTS.md                 #   Детали компонентов и анимаций → [[COMPONENTS]]
+│   ├── STATE_MANAGEMENT.md           #   Управление состоянием → [[STATE_MANAGEMENT]]
+│   ├── B2B_RULES.md                  #   Бизнес-правила → [[B2B_RULES]]
+│   └── CHECKOUT_FLOW.md              #   Процесс оформления → [[CHECKOUT_FLOW]]
 │
 ├── src/
 │   ├── main.tsx                      # Точка входа React (StrictMode + App)
@@ -51,214 +55,40 @@ lunchistan-frontend/
 │   │
 │   ├── data/
 │   │   └── mockMenu.ts               # Мок-данные: 22 обеда на месяц
-│   ││       └── components/
-│           ├── Catalog.tsx               # Главный экран: калькулятор + сетка сетов
-│           ├── SetCard.tsx               # Карточка дня/сета (премиум B2B, lucide-иконки, композиция)
-│           ├── Cart.tsx                  # Экран корзины/оформления заказа (glassmorphism)
-│           ├── Success.tsx               # Экран успешного оформления
-│           └── AnimatedCount.tsx          # Компонент плавной анимации числовых значений
+│   │
+│   └── components/
+│       ├── Catalog.tsx               # Главный экран: калькулятор + сетка сетов
+│       ├── SetCard.tsx               # Карточка дня/сета (премиум B2B, lucide-иконки)
+│       ├── SetDetailModal.tsx        # Выплывающее окно детализации сета
+│       ├── Cart.tsx                  # Экран корзины/оформления заказа (glassmorphism)
+│       ├── Success.tsx               # Экран успешного оформления
+│       └── AnimatedCount.tsx         # Плавная анимация числовых значений
 │
 └── README.md                         # Описание шаблона (Vite + React + TS)
 ```
 
 ---
 
-## 3. Структура компонентов и их связи
+## 3. Типы данных (src/types.ts)
 
-### 3.1. App.tsx — Корневой компонент (State Owner)
+Подробное описание типов → [[COMPONENTS#4-setcardtsx]] и [[STATE_MANAGEMENT#2-структура-apptsx]].
 
-```
-App
-├── screen: Screen                  # 'catalog' | 'cart' | 'success'
-├── employeeCount: number           # Количество сотрудников (множитель)
-├── workDaysCount: number           # Рабочих дней в подписке
-├── cartState: CartState            # Словарь { id => CartItem }
-│
-├── Screen === 'catalog'
-│   └── <Catalog />
-│       ├── Блок «Калькулятор стоимости»
-│       │   ├── Счётчик рабочих дней
-│       │   ├── Счётчик сотрудников
-│       │   ├── Кнопки «Выбрать все» / «Сбросить все»
-│       │   └── Детализация расчёта
-│       ├── Сетка <SetCard /> × workDaysCount
-│       └── StickyBar (итоговая цена + кнопка «Оформить»)
-│
-├── Screen === 'cart'
-│   └── <Cart />
-│       ├── Список выбранных сетов
-│       ├── Выбор способа оплаты
-│       ├── Итоговая сумма
-│       └── Кнопка «Оплатить»
-│
-└── Screen === 'success'
-    └── <Success />
-        ├── Анимация галочки (SVG)
-        ├── Номер заказа
-        └── Кнопка «Новый заказ»
-```
+Ключевые экспорты:
 
-### 3.2. Props-поток (строго сверху вниз)
-
-Все состояние находится в **`App.tsx`**. Дочерние компоненты ничего не хранят, только получают `props` и вызывают колбэки.
-
-```
-App (state owner)
-  │
-  ├──→ Catalog
-  │     ├──→ SetCard (×N)
-  │     │     onBeverageChange → App.handleBeverageChange
-  │     │     onToggle        → App.handleToggleDay
-  │     │     onPortionChange → App.handlePortionChange
-  │     │
-  │     onSelectAll           → App.handleSelectAll
-  │     onDeselectAll         → App.handleDeselectAll
-  │     onEmployeeCountChange → App.handleEmployeeCountChange
-  │     onWorkDaysChange      → App.handleWorkDaysChange
-  │     onGoToCart            → setScreen('cart')
-  │
-  ├──→ Cart
-  │     onBack                → setScreen('catalog')
-  │     onPlaceOrder(method)  → App.handlePlaceOrder
-  │
-  └──→ Success
-        onNewOrder            → App.handleNewOrder (сброс + catalog)
-```
+| Тип / Функция        | Назначение                              |
+| -------------------- | --------------------------------------- |
+| `Screen`             | `'catalog' | 'cart' | 'success'`       |
+| `WeekDay`            | `'Пн' | 'Вт' | 'Ср' | 'Чт' | 'Пт'`    |
+| `Beverage`           | `'Вода' | 'Компот в ассортименте'`     |
+| `PaymentMethod`      | `'corporate' | 'card' | 'cash'`        |
+| `LunchSet`           | Сет с KBJU + composition                |
+| `CartItem`           | Элемент корзины (beverage, active, portions) |
+| `CartState`          | `Record<string | number, CartItem>`    |
+| `formatPrice(n)`     | `"55 000 сум"`                         |
 
 ---
 
-## 4. Типы данных (src/types.ts)
-
-```typescript
-type WeekDay       = 'Пн' | 'Вт' | 'Ср' | 'Чт' | 'Пт';
-type Beverage      = 'Вода' | 'Компот в ассортименте';
-type PaymentMethod = 'corporate' | 'card' | 'cash';
-type Screen        = 'catalog' | 'cart' | 'success';
-
-interface CompositionItem {
-  name: string;
-  icon: string;         // emoji-иконка для визуализации состава
-}
-
-interface LunchSet {
-  id: string | number;
-  dayNumber: number;
-  weekDay: WeekDay;
-  name: string;
-  description: string;
-  price: number;        // Фиксировано: 55 000 сум
-  composition: CompositionItem[];  // Разобранный состав для premium чипсов
-}
-
-interface CartItem {
-  beverage: Beverage;
-  active: boolean;      // День включён в подписку?
-  portions: number;     // Порций на одного сотрудника
-}
-
-type CartState = Record<string | number, CartItem>;
-
-function formatPrice(price: number): string;  // "55 000 сум"
-```
-
----
-
-## 5. Управление состоянием (Cart State)
-
-### 5.1. Структура состояния
-
-```typescript
-// Пример cartState для 22 дней:
-{
-  "1": { beverage: "Вода", active: true,  portions: 2 },
-  "2": { beverage: "Компот в ассортименте", active: true,  portions: 1 },
-  "3": { beverage: "Вода", active: false, portions: 0 },
-  // ... остальные дни
-}
-```
-
-### 5.2. Ключевые переменные в App.tsx
-
-| Переменная           | Тип        | Начальное значение | Описание                              |
-| -------------------- | ---------- | ------------------ | ------------------------------------- |
-| `screen`             | `Screen`   | `'catalog'`        | Текущий экран                         |
-| `employeeCount`      | `number`   | `1`                | Множитель стоимости (сотрудники)      |
-| `workDaysCount`      | `number`   | `22`               | Отображаемое количество рабочих дней  |
-| `cartState`          | `CartState` | Все дни active:true, portions:1, beverage:'Вода' | Состояние корзины |
-
-### 5.3. Вычисляемые значения (derived state)
-
-```typescript
-activeDays            = cartState.filter(item => item.active).length
-totalPortionsFromActive = cartState.active.reduce(sum portions)
-totalItems            = totalPortionsFromActive * employeeCount
-totalMonthlyPrice     = totalPortionsFromActive * employeeCount * SET_PRICE
-visibleSets           = MONTHLY_SETS.slice(0, workDaysCount)
-```
-
-### 5.4. Обработчики событий
-
-| Функция                         | Действие                                           |
-| ------------------------------- | -------------------------------------------------- |
-| `handleWorkDaysChange(delta)`   | Изменить количество отображаемых дней (1..22)      |
-| `handleBeverageChange(id, bev)` | Сменить напиток для дня                             |
-| `handleToggleDay(id)`           | Включить/выключить день                             |
-| `handlePortionChange(id, delta)`| Увеличить/уменьшить порции для дня (мин. 1)        |
-| `handleSelectAll()`             | Включить все дни                                    |
-| `handleDeselectAll()`           | Выключить все дни                                   |
-| `handleEmployeeCountChange(n)`  | Установить количество сотрудников (мин. 1)          |
-| `handlePlaceOrder(method)`      | Оформить заказ → success                            |
-| `handleNewOrder()`              | Сбросить всё → catalog                              |
-
----
-
-## 6. Стилизация и анимации
-
-### 6.1. CSS-стилизация
-
-- **Single CSS-файл:** `src/App.css` (≈850 строк).
-- **CSS Custom Properties:** переменные в `:root` для брендового цвета, теней, радиусов.
-- **БЭМ-подобная нотация:** `.set-card__head`, `.set-card__toggle-track`, `.pill--active`.
-- **Glassmorphism:** `.cart--glass` использует `backdrop-filter: blur(12px)` + полупрозрачный фон с декоративными градиентными орбами через `::before`/`::after`.
-
-### 6.2. Премиум-стиль карточек (SetCard.tsx — Apple/B2B)
-
-- Дизайн в стиле Apple/B2B: скруглённые углы (20px), тонкие тени, акцентная линия градиента сверху
-- **Composition chips**: каждый элемент обеда отображается в виде чипса с lucide-react иконкой (`UtensilsCrossed`, `LeafyGreen`, `Croissant`, `Wine`)
-- **whileHover**: при наведении карточка поднимается на -4px и масштабируется до 1.01
-- **Премиум pill-кнопки напитков**: белая плашка для активного выбора, `LayoutGroup` для плавного `layoutId` перехода активной точки между кнопками
-- Неактивные дни затемнены (opacity 0.6) с зачёркнутым названием
-
-### 6.3. Framer Motion анимации
-
-#### 6.3.1. Scroll-анимация карточек (SetCard.tsx)
-- Каждая карточка обеда появляется при скролле с эффектом fade-in + slide-up
-- `whileInView` с `viewport: { once: true }` — анимация срабатывает один раз
-- Stagger по формуле `delay: (index % 6) * 0.08` — волна появления
-- Cubic bezier `[0.25, 0.46, 0.45, 0.94]` для плавности
-
-#### 6.3.2. Entrance-анимация корзины (Cart.tsx)
-- Вся карточка корзины появляется с fade-in + slide-up
-- Список сетов использует `staggerChildren: 0.05` для последовательного появления
-- Кнопки имеют `whileHover` и `whileTap` для тактильной обратной связи
-- Все секции (заголовок, способ оплаты, итог, кнопка) появляются с нарастающей задержкой
-
-#### 6.3.3. Анимация цифр калькулятора (AnimatedCount.tsx)
-- Компонент для плавного изменения чисел в блоке «Калькулятор стоимости»
-- Использует `useMotionValue` + `useSpring` (stiffness: 120, damping: 24) для физической анимации
-- `useTransform(rounded)` форматирует число в строку для отображения
-- Применён к полям: `activeDays`, `employeeCount`, `totalPortions`, `totalItems`
-
-### 6.4. Адаптив stikcy-bar для Telegram Mini App
-
-- Sticky bar использует `backdrop-filter: blur(16px)` вместо сплошного фона
-- На мобильных (< 480px) перестраивается в `flex-direction: column`
-- Кнопка «Оформить» становится на всю ширину
-- Поля left/right вместо transform: translateX для надёжного позиционирования в WebView
-
----
-
-## 7. Маршрутизация
+## 4. Маршрутизация
 
 **Роутинг отсутствует.** Используется условный рендеринг на основе `screen`:
 
@@ -272,7 +102,7 @@ visibleSets           = MONTHLY_SETS.slice(0, workDaysCount)
 
 ---
 
-## 8. Начало работы
+## 5. Начало работы
 
 ```bash
 npm install        # Установка зависимостей
@@ -284,7 +114,7 @@ npm run preview    # Превью продакшн-сборки
 
 ---
 
-## 9. Известные ограничения (TODOs)
+## 6. Известные ограничения (TODOs)
 
 1. ❌ Нет бэкенда — данные из `mockMenu.ts`
 2. ❌ Нет интеграции с Telegram Bot

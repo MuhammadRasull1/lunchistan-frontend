@@ -1219,3 +1219,339 @@ body {
     min-width: 72px;
   }
 }
+
+/* =============================================================
+   SetDetailModal — Bottom Sheet / Half-Screen Modal
+   ============================================================= */
+
+/* Overlay с backdrop-blur */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Bottom Sheet */
+.modal-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 210;
+  max-height: 85vh;
+  background: #ffffff;
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.12);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Свайп-индикатор */
+.modal-sheet__handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 4px;
+  background: #d1d5db;
+  margin: 10px auto 4px;
+  flex-shrink: 0;
+}
+
+/* Кнопка закрытия */
+.modal-sheet__close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.06);
+  color: #374151;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.modal-sheet__close:hover {
+  background: rgba(0, 0, 0, 0.1);
+  transform: scale(1.08);
+}
+
+.modal-sheet__close:active {
+  transform: scale(0.92);
+}
+
+/* Изображение блюда */
+.modal-sheet__image-wrap {
+  padding: 16px 20px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.modal-sheet__image {
+  width: 120px;
+  height: 120px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.15);
+}
+
+.modal-sheet__emoji {
+  font-size: 56px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+}
+
+/* Контент */
+.modal-sheet__content {
+  padding: 16px 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Заголовок */
+.modal-sheet__header {
+  text-align: center;
+}
+
+.modal-sheet__title {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0 0 4px;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.modal-sheet__day {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* Composition chips */
+.modal-sheet__composition {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.modal-sheet__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px 6px 10px;
+  background: rgba(0, 0, 0, 0.045);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* KBJU блок */
+.modal-sheet__kbju {
+  background: #fafafa;
+  border: 1px solid #f0f0f0;
+  border-radius: 16px;
+  padding: 14px 16px;
+}
+
+.modal-sheet__kbju-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-sheet__kbju-cal {
+  margin-left: auto;
+  font-size: 15px;
+  color: var(--brand-dark);
+}
+
+.modal-sheet__kbju-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+/* Макро-карточка */
+.modal-macro {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #f3f4f6;
+}
+
+.modal-macro__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.modal-macro__info {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-macro__value {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.modal-macro__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Выбор напитка в модалке */
+.modal-sheet__beverage {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-sheet__beverage-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.modal-sheet__pill-group {
+  display: flex;
+  gap: 8px;
+}
+
+.modal-sheet__pill {
+  flex: 1;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  background: #fff;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.modal-sheet__pill:hover {
+  border-color: var(--brand);
+  background: var(--brand-light);
+  color: var(--brand-dark);
+}
+
+.modal-sheet__pill--active {
+  border-color: var(--brand);
+  background: var(--brand-light);
+  color: var(--brand-dark);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12);
+}
+
+.modal-sheet__pill-icon {
+  font-size: 18px;
+}
+
+/* Цена */
+.modal-sheet__price {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+}
+
+.modal-sheet__price-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.modal-sheet__price-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--brand);
+}
+
+/* Кнопка подтверждения */
+.modal-sheet__confirm {
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  padding: 16px 20px;
+  background: var(--brand);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.3);
+  transition: background 0.2s ease;
+}
+
+.modal-sheet__confirm:hover {
+  background: var(--brand-dark);
+}
+
+/* Адаптация для мобильных */
+@media (max-width: 480px) {
+  .modal-sheet__content {
+    padding: 12px 16px 28px;
+    gap: 14px;
+  }
+
+  .modal-sheet__image {
+    width: 100px;
+    height: 100px;
+  }
+
+  .modal-sheet__emoji {
+    font-size: 48px;
+  }
+
+  .modal-sheet__title {
+    font-size: 18px;
+  }
+
+  .modal-sheet__kbju-grid {
+    gap: 6px;
+  }
+
+  .modal-sheet__price-value {
+    font-size: 20px;
+  }
+}

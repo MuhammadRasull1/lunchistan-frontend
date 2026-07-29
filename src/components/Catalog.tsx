@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import type { LunchSet, Beverage, CartState } from '../types'
 import { formatPrice } from '../types'
 import SetCard from './SetCard'
+import SetDetailModal from './SetDetailModal'
 import AnimatedCount from './AnimatedCount'
 
 interface CatalogProps {
@@ -45,6 +47,34 @@ function Catalog({
     .filter(item => item?.active)
     .reduce((sum, item) => sum + (item?.portions ?? 1), 0)
   const totalItems = totalPortions * employeeCount
+
+  // Состояние модалки детализации сета
+  const [selectedSetId, setSelectedSetId] = useState<string | number | null>(null)
+  const [modalBeverage, setModalBeverage] = useState<Beverage>('Вода')
+
+  const selectedSet = selectedSetId
+    ? sets.find(s => s.id === selectedSetId) ?? null
+    : null
+
+  const handleOpenModal = (setId: string | number) => {
+    const cartItem = cartState[setId]
+    setModalBeverage(cartItem?.beverage ?? 'Вода')
+    setSelectedSetId(setId)
+  }
+
+  const handleCloseModal = () => {
+    setSelectedSetId(null)
+  }
+
+  const handleModalConfirm = () => {
+    if (selectedSetId) {
+      onBeverageChange(selectedSetId, modalBeverage)
+      // Убеждаемся, что день активен
+      if (!cartState[selectedSetId]?.active) {
+        onToggleDay(selectedSetId)
+      }
+    }
+  }
 
   return (
     <div className="catalog">
@@ -209,6 +239,7 @@ function Catalog({
               onBeverageChange={(beverage) => onBeverageChange(set.id, beverage as Beverage)}
               onToggle={() => onToggleDay(set.id)}
               onPortionChange={(delta) => onPortionChange(set.id, delta)}
+              onSelect={() => handleOpenModal(set.id)}
             />
           )
         })}
@@ -239,6 +270,16 @@ function Catalog({
           </motion.button>
         </motion.div>
       )}
+
+      {/* Модальное окно детализации сета */}
+      <SetDetailModal
+        set={selectedSet}
+        beverage={modalBeverage}
+        isOpen={selectedSetId !== null}
+        onClose={handleCloseModal}
+        onBeverageChange={setModalBeverage}
+        onConfirm={handleModalConfirm}
+      />
     </div>
   )
 }

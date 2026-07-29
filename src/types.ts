@@ -16,6 +16,16 @@ export interface LunchSet {
   name: string;
   description: string;
   price: number;
+  /** Изображение блюда (URL или эмодзи-плейсхолдер) */
+  imageUrl?: string;
+  /** Калорийность, ккал */
+  calories?: number;
+  /** Белки, г */
+  proteins?: number;
+  /** Жиры, г */
+  fats?: number;
+  /** Углеводы, г */
+  carbs?: number;
   /** Разобранный состав обеда для премиум-отображения */
   composition: CompositionItem[];
 }
