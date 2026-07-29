@@ -74,7 +74,7 @@ interface CatalogProps {
 
 ### 4.1. Визуальные элементы
 
-- **Hero-изображение (баннер)** — `<img>` во всю ширину (`h-44 = 176px`), `object-fit: cover`, локальный JPG-файл `/images/sets/day-N.jpg`, `loading="lazy"`, fallback на Unsplash фото при ошибке
+- **Hero-изображение (баннер)** — `<img>` во всю ширину (`h-44 = 176px`), `object-fit: cover`, уникальные Unsplash-фото для каждого из 22 блюд (прямые ссылки `UNSPLASH_IMAGES` в [[mockMenu.ts]]), `loading="lazy"`, fallback на резервное Unsplash фото при ошибке
 - **DayBadge** — оранжевый кружок с номером дня поверх изображения
 - **Название сета** — с зачёркиванием для неактивных дней
 - **Composition chips** — полупрозрачные чипсы с lucide-иконками (`UtensilsCrossed`, `LeafyGreen`, `Croissant`). Чип «Напиток» скрыт в карточке (показан только в модалке)
