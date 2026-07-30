@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import type { LunchSet, CartState } from '../types'
+import type { LunchSet, CartState, Lang } from '../types'
 import { formatPrice } from '../types'
+import { t } from '../locales/translations'
 import SetCard from './SetCard'
 import SetDetailModal from './SetDetailModal'
 import AnimatedCount from './AnimatedCount'
@@ -16,6 +17,7 @@ interface CatalogProps {
   workDaysCount: number
   totalMonthlyPrice: number
   setPrice: number
+  lang: Lang
   onToggleDay: (setId: string | number) => void
   onSelectAll: () => void
   onDeselectAll: () => void
@@ -23,6 +25,7 @@ interface CatalogProps {
   onWorkDaysChange: (delta: number) => void
   onBeverageChange: (setId: string | number, beverage: Beverage) => void
   onGoToCart: () => void
+  onLangChange: (lang: Lang) => void
 }
 
 function Catalog({
@@ -33,6 +36,7 @@ function Catalog({
   workDaysCount,
   totalMonthlyPrice,
   setPrice,
+  lang,
   onToggleDay,
   onSelectAll,
   onDeselectAll,
@@ -40,12 +44,16 @@ function Catalog({
   onWorkDaysChange,
   onBeverageChange,
   onGoToCart,
+  onLangChange,
 }: CatalogProps) {
-  // Статистика
-  const activeDays = Object.values(cartState).filter(item => item?.active).length
-  const totalPortions = Object.values(cartState)
-    .filter(item => item?.active)
-    .reduce((sum, item) => sum + (item?.portions ?? 1), 0)
+  // Статистика — только по видимым сетам
+  const visibleIds = new Set(sets.map(s => String(s.id)))
+  const activeDays = Object.entries(cartState)
+    .filter(([id, item]) => visibleIds.has(id) && item?.active)
+    .length
+  const totalPortions = Object.entries(cartState)
+    .filter(([id, item]) => visibleIds.has(id) && item?.active)
+    .reduce((sum, [_, item]) => sum + (item?.portions ?? 1), 0)
   const totalItems = totalPortions * employeeCount
 
   // Состояние модалки детализации сета
@@ -75,21 +83,44 @@ function Catalog({
   return (
     <div className="catalog">
       <header className="catalog__header">
-        <div className="brand">
-          <span className="brand__logo">🍽️</span>
-          <span>
-            Lunch<span className="brand__accent">istan</span>
-          </span>
+        <div className="catalog__header-top">
+          <div className="brand">
+            <span className="brand__logo">🍽️</span>
+            <span>
+              Lunch<span className="brand__accent">istan</span>
+            </span>
+          </div>
+
+          {/* Language switcher */}
+          <div className="lang-switcher">
+            <button
+              type="button"
+              className={`lang-btn${lang === 'ru' ? ' lang-btn--active' : ''}`}
+              onClick={() => onLangChange('ru')}
+              aria-label="Русский"
+            >
+              RU
+            </button>
+            <span className="lang-switcher__sep">|</span>
+            <button
+              type="button"
+              className={`lang-btn${lang === 'uz' ? ' lang-btn--active' : ''}`}
+              onClick={() => onLangChange('uz')}
+              aria-label="O'zbek"
+            >
+              UZ
+            </button>
+          </div>
         </div>
-        <h1 className="catalog__heading">Корпоративная подписка на месяц</h1>
+        <h1 className="catalog__heading">{t(lang, 'headerTitle')}</h1>
         <p className="catalog__subtitle">
-          Сбалансированные комплексные обеды для вашей команды — до {allSetsCount} рабочих дней
+          {t(lang, 'headerSubtitle', { n: allSetsCount })}
         </p>
       </header>
 
       {/* Калькулятор стоимости */}
       <section className="subscription">
-        <h2 className="subscription__title">Калькулятор стоимости</h2>
+        <h2 className="subscription__title">{t(lang, 'calculatorTitle')}</h2>
 
         {/* Рабочие дни */}
         <motion.div
@@ -98,7 +129,7 @@ function Catalog({
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.05, duration: 0.4 }}
         >
-          <span className="subscription__label">Рабочих дней в месяце</span>
+          <span className="subscription__label">{t(lang, 'workingDays')}</span>
           <div className="counter">
             <motion.button
               type="button"
@@ -131,7 +162,7 @@ function Catalog({
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1, duration: 0.4 }}
         >
-          <span className="subscription__label">Количество сотрудников</span>
+          <span className="subscription__label">{t(lang, 'employees')}</span>
           <div className="counter">
             <motion.button
               type="button"
@@ -163,14 +194,14 @@ function Catalog({
             className="btn btn--outline"
             onClick={onSelectAll}
           >
-            ✅ Выбрать все {workDaysCount} дней
+            {t(lang, 'selectAll', { n: workDaysCount })}
           </button>
           <button
             type="button"
             className="btn btn--outline btn--outline-danger"
             onClick={onDeselectAll}
           >
-            ❌ Сбросить все
+            {t(lang, 'deselectAll')}
           </button>
         </div>
 
@@ -181,42 +212,42 @@ function Catalog({
           transition={{ delay: 0.15, duration: 0.5 }}
         >
           <div className="subscription__calc-row">
-            <span>Выбрано дней</span>
+            <span>{t(lang, 'selectedDays')}</span>
             <span className="subscription__calc-value">
-              <AnimatedCount value={activeDays} /> из {workDaysCount}
+              <AnimatedCount value={activeDays} /> {t(lang, 'from')} {workDaysCount}
             </span>
           </div>
           <div className="subscription__calc-row">
-            <span>Сотрудников</span>
+            <span>{t(lang, 'employeesShort')}</span>
             <span className="subscription__calc-value">
               <AnimatedCount value={employeeCount} />
             </span>
           </div>
           <div className="subscription__calc-row">
-            <span>Всего порций (на сотр.)</span>
+            <span>{t(lang, 'totalPortions')}</span>
             <span className="subscription__calc-value">
               <AnimatedCount value={totalPortions} />
             </span>
           </div>
           <div className="subscription__calc-row">
-            <span>Всего порций (на всех)</span>
+            <span>{t(lang, 'totalPortionsAll')}</span>
             <span className="subscription__calc-value">
               <AnimatedCount value={totalPortions} /> × <AnimatedCount value={employeeCount} /> = <AnimatedCount value={totalItems} />
             </span>
           </div>
           <div className="subscription__calc-row">
-            <span>Цена одной порции</span>
+            <span>{t(lang, 'pricePerPortion')}</span>
             <span className="subscription__calc-value">{formatPrice(setPrice)}</span>
           </div>
           <div className="subscription__calc-row subscription__calc-row--total">
-            <span>Итого к оплате</span>
+            <span>{t(lang, 'totalToPay')}</span>
             <span className="subscription__calc-value">{formatPrice(totalMonthlyPrice)}</span>
           </div>
         </motion.div>
       </section>
 
       {/* Список сетов */}
-      <h2 className="catalog__section-title">Меню на месяц ({sets.length} дней)</h2>
+      <h2 className="catalog__section-title">{t(lang, 'menuTitle', { n: sets.length })}</h2>
       <div className="catalog__grid catalog__grid--sets">
         {sets.map((set, index) => {
           const cartItem = cartState[set.id]
@@ -228,6 +259,7 @@ function Catalog({
               index={index}
               set={set}
               active={active}
+              lang={lang}
               onSelect={() => handleOpenModal(set.id)}
             />
           )
@@ -244,7 +276,7 @@ function Catalog({
         >
           <div className="sticky-bar__info">
             <span className="sticky-bar__count">
-              {activeDays} из {workDaysCount} дней · {employeeCount} сотрудников · {totalItems} порций
+              {t(lang, 'stickyBarLabel', { active: activeDays, total: workDaysCount, employees: employeeCount, portions: totalItems })}
             </span>
             <span className="sticky-bar__total">{formatPrice(totalMonthlyPrice)}</span>
           </div>
@@ -255,21 +287,23 @@ function Catalog({
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
           >
-            Оформить предзаказ
+            {t(lang, 'order')}
           </motion.button>
         </motion.div>
       )}
 
-      {/* Модальное окно детализации сета */}        <SetDetailModal
-          set={selectedSet}
-          isOpen={selectedSetId !== null}
-          onClose={handleCloseModal}
-          onConfirm={handleModalConfirm}
-          beverage={selectedSetId ? cartState[selectedSetId]?.beverage ?? 'Вода' : 'Вода'}
-          onBeverageChange={(beverage) => {
-            if (selectedSetId) onBeverageChange(selectedSetId, beverage)
-          }}
-        />
+      {/* Модальное окно детализации сета */}
+      <SetDetailModal
+        set={selectedSet}
+        isOpen={selectedSetId !== null}
+        onClose={handleCloseModal}
+        onConfirm={handleModalConfirm}
+        lang={lang}
+        beverage={selectedSetId ? cartState[selectedSetId]?.beverage ?? 'Вода' : 'Вода'}
+        onBeverageChange={(beverage) => {
+          if (selectedSetId) onBeverageChange(selectedSetId, beverage)
+        }}
+      />
     </div>
   )
 }

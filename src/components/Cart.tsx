@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import type { CartState, LunchSet, PaymentMethod } from '../types'
+import type { CartState, LunchSet, PaymentMethod, Lang } from '../types'
 import { formatPrice } from '../types'
+import { t } from '../locales/translations'
 
 interface CartLine {
   set: LunchSet
@@ -15,6 +16,7 @@ interface CartProps {
   totalMonthlyPrice: number
   employeeCount: number
   totalItems: number
+  lang: Lang
   onBack: () => void
   onPlaceOrder: (method: PaymentMethod) => void
 }
@@ -25,6 +27,7 @@ function Cart({
   totalMonthlyPrice,
   employeeCount,
   totalItems,
+  lang,
   onBack,
   onPlaceOrder,
 }: CartProps) {
@@ -44,9 +47,9 @@ function Cart({
   const activeDays = activeLines.length
 
   const paymentOptions: { value: PaymentMethod; label: string; icon: string }[] = [
-    { value: 'corporate', label: 'Перечислением (Для юрлиц)', icon: '🏢' },
-    { value: 'card', label: 'Перевод на карту (P2P)', icon: '💳' },
-    { value: 'cash', label: 'Наличными курьеру', icon: '💵' },
+    { value: 'corporate', label: t(lang, 'corporate'), icon: '🏢' },
+    { value: 'card', label: t(lang, 'card'), icon: '💳' },
+    { value: 'cash', label: t(lang, 'cash'), icon: '💵' },
   ]
 
   return (
@@ -69,9 +72,9 @@ function Cart({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          ← Назад
+          {t(lang, 'back')}
         </motion.button>
-        <h2 className="cart__title">Оформление заказа</h2>
+        <h2 className="cart__title">{t(lang, 'cartTitle')}</h2>
       </motion.header>
 
       {activeLines.length === 0 ? (
@@ -81,7 +84,7 @@ function Cart({
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          Нет выбранных дней
+          {t(lang, 'noSelectedDays')}
         </motion.p>
       ) : (
         <>
@@ -91,7 +94,7 @@ function Cart({
             animate={{ opacity: 1 }}
             transition={{ delay: 0.15, duration: 0.4 }}
           >
-            {activeDays} дней · {employeeCount} сотрудников · {totalItems} порций
+            {activeDays} {t(lang, 'days')} · {employeeCount} {t(lang, 'employeesPlural')} · {totalItems} {t(lang, 'portionsPlural')}
           </motion.p>
 
           <motion.ul
@@ -119,7 +122,7 @@ function Cart({
                     {set.name}
                   </span>
                   <span className="cart__item-desc">
-                    День {set.dayNumber} · {set.weekDay} · {portions} порц./сотр.
+                    {t(lang, 'day')} {set.dayNumber} · {set.weekDay} · {portions} {t(lang, 'portionsPerEmployee')}
                   </span>
                 </div>
                 <div className="cart__item-sum">
@@ -137,7 +140,7 @@ function Cart({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25, duration: 0.4 }}
           >
-            <h3 className="payment__title">Способ оплаты</h3>
+            <h3 className="payment__title">{t(lang, 'paymentMethod')}</h3>
             <div className="payment__options" style={{ gridTemplateColumns: '1fr' }}>
               {paymentOptions.map(({ value, label, icon }) => (
                 <motion.button
@@ -162,7 +165,7 @@ function Cart({
             animate={{ opacity: 1 }}
             transition={{ delay: 0.35, duration: 0.4 }}
           >
-            <span>Итого к оплате</span>
+            <span>{t(lang, 'totalToPay')}</span>
             <span className="cart__summary-total">{formatPrice(totalMonthlyPrice)}</span>
           </motion.div>
 
@@ -176,7 +179,7 @@ function Cart({
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            Оплатить {formatPrice(totalMonthlyPrice)}
+            {t(lang, 'pay', { price: formatPrice(totalMonthlyPrice) })}
           </motion.button>
         </>
       )}

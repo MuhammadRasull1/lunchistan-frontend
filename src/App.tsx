@@ -4,8 +4,9 @@ import Catalog from './components/Catalog'
 import Cart from './components/Cart'
 import Success from './components/Success'
 import { MONTHLY_SETS, SET_PRICE } from './data/mockMenu'
-import type { CartState, Screen, PaymentMethod, Beverage } from './types'
+import type { CartState, Screen, PaymentMethod, Beverage, Lang } from './types'
 import { formatPrice } from './types'
+import { t } from './locales/translations'
 
 const MAX_WORK_DAYS = MONTHLY_SETS.length
 
@@ -13,6 +14,7 @@ function App() {
   const [screen, setScreen] = useState<Screen>('catalog')
   const [employeeCount, setEmployeeCount] = useState<number>(1)
   const [workDaysCount, setWorkDaysCount] = useState<number>(MAX_WORK_DAYS)
+  const [lang, setLang] = useState<Lang>('ru')
   const [cartState, setCartState] = useState<CartState>(() => {
     const initial: CartState = {}
     MONTHLY_SETS.forEach(set => {
@@ -25,10 +27,26 @@ function App() {
   const visibleSets = MONTHLY_SETS.slice(0, workDaysCount)
 
   const handleWorkDaysChange = (delta: number) => {
-    setWorkDaysCount(prev => {
-      const next = prev + delta
-      return Math.max(1, Math.min(MAX_WORK_DAYS, next))
-    })
+    const newCount = Math.max(1, Math.min(MAX_WORK_DAYS, workDaysCount + delta))
+    setWorkDaysCount(newCount)
+
+    // Если уменьшили число дней — деактивируем дни за пределами лимита
+    if (newCount < workDaysCount) {
+      setCartState(prev => {
+        let changed = false
+        const updated: CartState = {}
+        for (const [id, item] of Object.entries(prev)) {
+          const numId = Number(id)
+          if (numId > newCount && item.active) {
+            updated[id] = { ...item, active: false }
+            changed = true
+          } else {
+            updated[id] = item
+          }
+        }
+        return changed ? updated : prev
+      })
+    }
   }
 
   const handleBeverageChange = (setId: string | number, beverage: Beverage) => {
@@ -56,8 +74,9 @@ function App() {
   const handleSelectAll = () => {
     setCartState(prev => {
       const next: CartState = {}
-      for (const id of Object.keys(prev)) {
-        next[id] = { ...prev[id], active: true }
+      for (const [id, item] of Object.entries(prev)) {
+        const numId = Number(id)
+        next[id] = { ...item, active: numId <= workDaysCount }
       }
       return next
     })
@@ -66,8 +85,9 @@ function App() {
   const handleDeselectAll = () => {
     setCartState(prev => {
       const next: CartState = {}
-      for (const id of Object.keys(prev)) {
-        next[id] = { ...prev[id], active: false }
+      for (const [id, item] of Object.entries(prev)) {
+        const numId = Number(id)
+        next[id] = { ...item, active: numId > workDaysCount ? item.active : false }
       }
       return next
     })
@@ -87,9 +107,9 @@ function App() {
 
   const handlePlaceOrder = (method: PaymentMethod) => {
     const methodLabels: Record<PaymentMethod, string> = {
-      corporate: 'Перечислением (Для юрлиц)',
-      card: 'Перевод на карту (P2P)',
-      cash: 'Наличными курьеру',
+      corporate: t(lang, 'corporateLabel'),
+      card: t(lang, 'cardLabel'),
+      cash: t(lang, 'cashLabel'),
     }
     console.log('Заказ оформлен:', {
       employeeCount,
@@ -99,7 +119,11 @@ function App() {
       totalMonthlyPrice,
       paymentMethod: method,
     })
-    alert(`Предзаказ на ${employeeCount} сотрудников оформлен!\nСпособ оплаты: ${methodLabels[method]}\nОбщая сумма: ${formatPrice(totalMonthlyPrice)}`)
+    alert(t(lang, 'orderAlert', {
+      employees: employeeCount,
+      method: methodLabels[method],
+      price: formatPrice(totalMonthlyPrice),
+    }))
     setScreen('success')
   }
 
@@ -114,6 +138,10 @@ function App() {
     setScreen('catalog')
   }
 
+  const handleLangChange = (newLang: Lang) => {
+    setLang(newLang)
+  }
+
   return (
     <div className="app">
       {screen === 'catalog' && (
@@ -125,6 +153,7 @@ function App() {
           workDaysCount={workDaysCount}
           totalMonthlyPrice={totalMonthlyPrice}
           setPrice={SET_PRICE}
+          lang={lang}
           onToggleDay={handleToggleDay}
           onSelectAll={handleSelectAll}
           onDeselectAll={handleDeselectAll}
@@ -132,6 +161,7 @@ function App() {
           onWorkDaysChange={handleWorkDaysChange}
           onBeverageChange={handleBeverageChange}
           onGoToCart={() => setScreen('cart')}
+          onLangChange={handleLangChange}
         />
       )}
 
@@ -142,13 +172,14 @@ function App() {
           totalMonthlyPrice={totalMonthlyPrice}
           employeeCount={employeeCount}
           totalItems={totalItems}
+          lang={lang}
           onBack={() => setScreen('catalog')}
           onPlaceOrder={handlePlaceOrder}
         />
       )}
 
       {screen === 'success' && (
-        <Success onNewOrder={handleNewOrder} />
+        <Success lang={lang} onNewOrder={handleNewOrder} />
       )}
     </div>
   )

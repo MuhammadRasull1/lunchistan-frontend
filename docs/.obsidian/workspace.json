@@ -181,8 +181,10 @@
   },
   "active": "f2d32ec142acf7cb",
   "lastOpenFiles": [
-    "Unsplash.md",
+    "SetDetailModal.md",
     "STATE_MANAGEMENT.md",
+    "mockMenu.ts.md",
+    "Unsplash.md",
     "COMPONENTS.md",
     "CHECKOUT_FLOW.md",
     "ARCHITECTURE.md",

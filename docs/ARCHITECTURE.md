@@ -1,7 +1,7 @@
 # 🏗️ Архитектура Lunchistan Frontend
 
-> Версия: 2.0  
-> Последнее обновление: 29.07.2026  
+> Версия: 2.1  \
+> Последнее обновление: 30.07.2026  \
 > Связанные файлы: [[COMPONENTS]], [[STATE_MANAGEMENT]], [[B2B_RULES]], [[CHECKOUT_FLOW]]
 
 ---
@@ -18,11 +18,12 @@
 | **Иконки**       | Lucide React (lucide-react)         | ^0.x       |
 | **Линтер**       | ESLint + typescript-eslint          | ^10.6.0    |
 | **Линтер (alt)** | oxlint (конфиг .oxlintrc.json)      | —          |
+| **Интернационализация** | Кастомный словарь (src/locales/translations.ts) | —          |
 | **HTTP**         | axios (установлен, в проекте не используется) | ^1.18.1 |
 | **Бэкенд**       | Отсутствует (заглушка mockMenu.ts)  | —          |
 | **Telegram Bot** | Отсутствует                         | —          |
 
-> **Примечание:** На данный момент проект является чистым фронтендом. Данные берутся из `src/data/mockMenu.ts`. Бэкенд и Telegram Bot не реализованы. Изображения сетов — локальные JPG-файлы в `/images/sets/day-N.jpg` с fallback на [[Unsplash]] при ошибке загрузки (подробнее → [[COMPONENTS]]).
+> **Примечание:** На данный момент проект является чистым фронтендом. Данные берутся из `src/data/mockMenu.ts`. Бэкенд и Telegram Bot не реализованы. Изображения сетов — локальные JPG-файлы в `/images/sets/day-N.jpg` с fallback на [[Unsplash]] при ошибке загрузки (подробнее → [[COMPONENTS]]). Добавлена мультиязычность RU/UZ через `src/locales/translations.ts` (подробнее → [[COMPONENTS#10-мультиязычность]]).
 
 ---
 
@@ -51,7 +52,10 @@ lunchistan-frontend/
 │   ├── App.tsx                       # Главный компонент, состояние, маршрутизация
 │   ├── App.css                       # Все стили проекта (single CSS)
 │   ├── index.css                     # Пустой (резерв)
-│   ├── types.ts                      # TypeScript-типы + formatPrice()
+│   ├── types.ts                      # TypeScript-типы + formatPrice() + Lang
+│   │
+│   ├── locales/
+│   │   └── translations.ts           # 🆕 Словарь RU/UZ с функцией t()
 │   │
 │   ├── data/
 │   │   └── mockMenu.ts               # Мок-данные: 22 обеда на месяц
@@ -81,6 +85,7 @@ lunchistan-frontend/
 | `WeekDay`            | `'Пн' | 'Вт' | 'Ср' | 'Чт' | 'Пт'`    |
 | `Beverage`           | `'Вода' | 'Компот в ассортименте'`     |
 | `PaymentMethod`      | `'corporate' | 'card' | 'cash'`        |
+| `Lang`               | `'ru' | 'uz'` — языки интерфейса     |
 | `LunchSet`           | Сет с KBJU + composition                |
 | `CartItem`           | Элемент корзины (active, portions) |
 | `CartState`          | `Record<string | number, CartItem>`    |

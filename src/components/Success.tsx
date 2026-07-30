@@ -1,6 +1,9 @@
 import { useState } from 'react'
+import type { Lang } from '../types'
+import { t } from '../locales/translations'
 
 interface SuccessProps {
+  lang: Lang
   onNewOrder: () => void
 }
 
@@ -9,7 +12,7 @@ function generateOrderNumber() {
   return `#ORD-${num}`
 }
 
-function Success({ onNewOrder }: SuccessProps) {
+function Success({ lang, onNewOrder }: SuccessProps) {
   // Генерируем номер один раз при монтировании экрана.
   const [orderNumber] = useState(generateOrderNumber)
 
@@ -26,18 +29,18 @@ function Success({ onNewOrder }: SuccessProps) {
         </svg>
       </div>
 
-      <h2 className="success__title">Заказ оформлен!</h2>
+      <h2 className="success__title">{t(lang, 'orderTitle')}</h2>
       <p className="success__text">
-        Спасибо! Мы уже передали заказ на кухню Lunchistan.
+        {t(lang, 'orderText')}
       </p>
 
       <div className="success__order">
-        <span className="success__order-label">Номер заказа</span>
+        <span className="success__order-label">{t(lang, 'orderNumber')}</span>
         <span className="success__order-number">{orderNumber}</span>
       </div>
 
       <button type="button" className="btn btn--primary btn--lg" onClick={onNewOrder}>
-        Сделать новый заказ
+        {t(lang, 'newOrder')}
       </button>
     </div>
   )

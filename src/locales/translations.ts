@@ -1,0 +1,160 @@
+export type Lang = 'ru' | 'uz'
+
+const translations: Record<Lang, Record<string, string>> = {
+  ru: {
+    // Brand & Header
+    brand: 'Lunchistan',
+    headerTitle: 'Корпоративная подписка на месяц',
+    headerSubtitle: 'Сбалансированные комплексные обеды для вашей команды — до {n} рабочих дней',
+
+    // Calculator
+    calculatorTitle: 'Калькулятор стоимости',
+    workingDays: 'Рабочих дней в месяце',
+    employees: 'Количество сотрудников',
+    selectAll: '✅ Выбрать все {n} дней',
+    deselectAll: '❌ Сбросить все',
+    selectedDays: 'Выбрано дней',
+    employeesShort: 'Сотрудников',
+    totalPortions: 'Всего порций (на сотр.)',
+    totalPortionsAll: 'Всего порций (на всех)',
+    pricePerPortion: 'Цена одной порции',
+    totalToPay: 'Итого к оплате',
+    menuTitle: 'Меню на месяц ({n} дней)',
+    from: 'из',
+
+    // Set card
+    perPortion: 'за порцию',
+
+    // Detail modal
+    close: 'Закрыть',
+    beverage: 'Напиток',
+    water: 'Вода',
+    compote: 'Компот',
+    nutritionalValue: 'Пищевая ценность на порцию',
+    proteins: 'Белки',
+    fats: 'Жиры',
+    carbs: 'Углеводы',
+    calories: 'Калории',
+    priceLabel: 'Цена за порцию',
+    choose: 'Выбрать',
+
+    // Cart
+    back: '← Назад',
+    cartTitle: 'Оформление заказа',
+    noSelectedDays: 'Нет выбранных дней',
+    days: 'дней',
+    employeesPlural: 'сотрудников',
+    portionsPlural: 'порций',
+    paymentMethod: 'Способ оплаты',
+    corporate: 'Перечислением (Для юрлиц)',
+    card: 'Перевод на карту (P2P)',
+    cash: 'Наличными курьеру',
+    pay: 'Оплатить {price}',
+    day: 'День',
+    portionsPerEmployee: 'порц./сотр.',
+
+    // Success
+    orderTitle: 'Заказ оформлен!',
+    orderText: 'Спасибо! Мы уже передали заказ на кухню Lunchistan.',
+    orderNumber: 'Номер заказа',
+    newOrder: 'Сделать новый заказ',
+
+    // Sticky bar label
+    stickyBarLabel: '{active} из {total} дней · {employees} сотрудников · {portions} порций',
+
+    // Order alert
+    orderAlert: 'Предзаказ на {employees} сотрудников оформлен!\nСпособ оплаты: {method}\nОбщая сумма: {price}',
+    corporateLabel: 'Перечислением (Для юрлиц)',
+    cardLabel: 'Перевод на карту (P2P)',
+    cashLabel: 'Наличными курьеру',
+
+    // Language
+    langRu: 'RU',
+    langUz: 'UZ',
+  },
+
+  uz: {
+    // Brand & Header
+    brand: 'Lunchistan',
+    headerTitle: 'Bir oylik korporativ obuna',
+    headerSubtitle: 'Jamoangiz uchun muvozanatli tushliklar — {n} ish kunigacha',
+
+    // Calculator
+    calculatorTitle: 'Narx hisoblagichi',
+    workingDays: 'Oylik ish kunlari',
+    employees: 'Xodimlar soni',
+    selectAll: '✅ Barcha {n} kunni tanlash',
+    deselectAll: '❌ Bekor qilish',
+    selectedDays: 'Tanlangan kunlar',
+    employeesShort: 'Xodimlar',
+    totalPortions: 'Jami porsiyalar (1 xodimga)',
+    totalPortionsAll: 'Jami porsiyalar (barchaga)',
+    pricePerPortion: 'Bir porsiya narxi',
+    totalToPay: "To'lov summasi",
+    menuTitle: "Oylik menyu ({n} kun)",
+    from: 'dan',
+
+    // Set card
+    perPortion: "porsiya uchun",
+
+    // Detail modal
+    close: 'Yopish',
+    beverage: 'Ichimlik',
+    water: 'Suv',
+    compote: 'Kompot',
+    nutritionalValue: "Bir porsiyaning ozuqaviy qiymati",
+    proteins: 'Oqsillar',
+    fats: "Yog'lar",
+    carbs: 'Uglevodlar',
+    calories: 'Kaloriyalar',
+    priceLabel: 'Porsiya narxi',
+    choose: 'Tanlash',
+
+    // Cart
+    back: '← Orqaga',
+    cartTitle: "Buyurtma rasmiylashtirish",
+    noSelectedDays: 'Kunlar tanlanmagan',
+    days: 'kun',
+    employeesPlural: 'xodim',
+    portionsPlural: 'porsiya',
+    paymentMethod: "To'lov usuli",
+    corporate: "Ko'chirma orqali (Yuridik shaxslar uchun)",
+    card: "Kartaga o'tkazma (P2P)",
+    cash: "Naqd pul",
+    pay: "{price} to'lash",
+    day: 'Kun',
+    portionsPerEmployee: 'pors./xod.',
+
+    // Success
+    orderTitle: "Buyurtma qabul qilindi!",
+    orderText: "Rahmat! Buyurtmangiz Lunchistan oshxonasiga topshirildi.",
+    orderNumber: "Buyurtma raqami",
+    newOrder: 'Yangi buyurtma',
+
+    // Sticky bar label
+    stickyBarLabel: '{active}/{total} kun · {employees} xodim · {portions} porsiya',
+
+    // Order alert
+    orderAlert: "{employees} xodim uchun buyurtma rasmiylashtirildi!\nTo'lov usuli: {method}\nUmumiy summa: {price}",
+    corporateLabel: "Ko'chirma orqali",
+    cardLabel: "Kartaga o'tkazma",
+    cashLabel: "Naqd pul",
+
+    // Language
+    langRu: 'RU',
+    langUz: 'UZ',
+  },
+}
+
+export function t(lang: Lang, key: string, params?: Record<string, string | number>): string {
+  let text = translations[lang]?.[key]
+  if (text === undefined) {
+    text = translations.ru[key] ?? key
+  }
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      text = text.replace(`{${k}}`, String(v))
+    }
+  }
+  return text
+}

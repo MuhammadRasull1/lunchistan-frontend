@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion'
 import { UtensilsCrossed, LeafyGreen, Croissant, Wine } from 'lucide-react'
-import type { LunchSet } from '../types'
+import type { LunchSet, Lang } from '../types'
 import { formatPrice } from '../types'
+import { t } from '../locales/translations'
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'
 
@@ -9,6 +10,7 @@ interface SetCardProps {
   set: LunchSet
   index: number
   active: boolean
+  lang: Lang
   onSelect?: () => void
 }
 
@@ -19,7 +21,7 @@ function getCompositionIcon(name: string) {
   return UtensilsCrossed
 }
 
-function SetCard({ set, index, active, onSelect }: SetCardProps) {
+function SetCard({ set, index, active, lang, onSelect }: SetCardProps) {
   return (
     <motion.article
       className={`set-card${active ? ' set-card--active' : ' set-card--inactive'}`}
@@ -88,7 +90,7 @@ function SetCard({ set, index, active, onSelect }: SetCardProps) {
         {/* Цена */}
         <div className="set-card__price-row">
           <span className="set-card__price">{formatPrice(set.price)}</span>
-          <span className="set-card__per-day">за порцию</span>
+          <span className="set-card__per-day">{t(lang, 'perPortion')}</span>
         </div>
       </div>
     </motion.article>

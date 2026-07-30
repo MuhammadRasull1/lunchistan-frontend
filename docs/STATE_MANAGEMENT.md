@@ -1,7 +1,7 @@
 # ⚙️ Управление состоянием (State Management)
 
-> Версия: 1.0  
-> Последнее обновление: 29.07.2026  
+> Версия: 1.1  \
+> Последнее обновление: 30.07.2026  \
 > Связанные файлы: [[ARCHITECTURE]], [[COMPONENTS]], [[B2B_RULES]]
 
 ---
@@ -23,6 +23,7 @@
 | `employeeCount`  | `number`   | `1`                | Множитель стоимости (сотрудники)      |
 | `workDaysCount`  | `number`   | `22`               | Отображаемое количество рабочих дней  |
 | `cartState`      | `CartState`| Все `active: true`, `portions: 1`, `beverage: 'Вода'` | Состояние корзины |
+| `lang`           | `Lang`     | `'ru'`             | 🆕 Текущий язык интерфейса (RU/UZ)   |
 
 ### 2.2. CartState — детальная структура
 
@@ -49,12 +50,14 @@ interface CartItem {
 ## 3. Вычисляемые значения (Derived State)
 
 ```typescript
+visibleSets           = MONTHLY_SETS.slice(0, workDaysCount)
 activeDays            = Object.values(cartState).filter(item => item.active).length
 totalPortionsFromActive = activeItems.reduce(sum of portions)
 totalItems            = totalPortionsFromActive × employeeCount
 totalMonthlyPrice     = totalPortionsFromActive × employeeCount × SET_PRICE
-visibleSets           = MONTHLY_SETS.slice(0, workDaysCount)
 ```
+
+> **Важно (v1.1):** В `Catalog.tsx` `activeDays` и `totalPortions` считаются **только по видимым сетам** (первые `workDaysCount`), чтобы «X из Y» отображалось корректно. При уменьшении `workDaysCount` дни за пределами лимита автоматически деактивируются в `cartState` через `handleWorkDaysChange`.
 
 ---
 
@@ -62,15 +65,16 @@ visibleSets           = MONTHLY_SETS.slice(0, workDaysCount)
 
 | Функция                         | Действие                                           |
 | ------------------------------- | -------------------------------------------------- |
-| `handleWorkDaysChange(delta)`   | Изменить количество отображаемых дней (1..22)      |
-| `handleBeverageChange(id, bev)` | Сменить напиток для дня (мгновенно, через pill-кнопки в [[SetDetailModal]]) |
+| `handleWorkDaysChange(delta)`   | Изменить количество дней (1..22); при уменьшении — деактивировать дни за лимитом |
+| `handleBeverageChange(id, bev)` | Сменить напиток для дня |
 | `handleToggleDay(id)`           | Включить/выключить день                             |
 | `handlePortionChange(id, delta)`| Увеличить/уменьшить порции для дня (мин. 1)        |
-| `handleSelectAll()`             | Включить все дни                                    |
-| `handleDeselectAll()`           | Выключить все дни                                   |
+| `handleSelectAll()`             | Включить все дни **в пределах workDaysCount**       |
+| `handleDeselectAll()`           | Выключить все дни **в пределах workDaysCount**      |
 | `handleEmployeeCountChange(n)`  | Установить количество сотрудников (мин. 1)          |
 | `handlePlaceOrder(method)`      | Оформить заказ → screen = 'success'                 |
 | `handleNewOrder()`              | Сбросить всё → screen = 'catalog'                   |
+| `handleLangChange(newLang)`     | 🆕 Сменить язык интерфейса                          |
 
 ---
 
@@ -93,17 +97,18 @@ const [selectedSetId, setSelectedSetId] = useState<string | number | null>(null)
 
 ```
 App (state owner — useState)
+  │  lang → Catalog, Cart, Success
   │
   ├──→ Catalog
-  │     ├──→ SetCard (×N) — read-only display + callbacks
-  │     └──→ SetDetailModal — локальный state + колбэк onConfirm
+  │     ├──→ SetCard (×N) — read-only display + lang
+  │     └──→ SetDetailModal — lang + локальный state
   │
-  ├──→ Cart — read-only display + onPlaceOrder
-  └──→ Success — onNewOrder callback → полный reset
+  ├──→ Cart — lang + read-only display + onPlaceOrder
+  └──→ Success — lang + onNewOrder callback → полный reset
 ```
 
 **Роутинг**: условный рендеринг (`screen === 'catalog' && <Catalog />`).  
-React Router не используется → [[ARCHITECTURE#7-маршрутизация]]
+React Router не используется → [[ARCHITECTURE#4-маршрутизация]]
 
 ---
 
@@ -127,3 +132,4 @@ const handleNewOrder = () => {
 - `employeeCount` → 1
 - `workDaysCount` → 22 (максимум)
 - `screen` → `'catalog'`
+- `lang` **не сбрасывается** (язык сохраняется между заказами)

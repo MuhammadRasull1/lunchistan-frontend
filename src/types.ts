@@ -41,6 +41,8 @@ export interface CartItem {
 
 export type CartState = Record<string | number, CartItem>;
 
+export type Lang = 'ru' | 'uz';
+
 export type Screen = 'catalog' | 'cart' | 'success';
 
 export function formatPrice(price: number): string {

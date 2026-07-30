@@ -1,7 +1,8 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Flame, Beef, Droplets, Wheat, UtensilsCrossed, Check, Wine, Droplet } from 'lucide-react'
-import type { LunchSet, Beverage } from '../types'
+import type { LunchSet, Beverage, Lang } from '../types'
 import { formatPrice } from '../types'
+import { t } from '../locales/translations'
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'
 
@@ -10,6 +11,7 @@ interface SetDetailModalProps {
   isOpen: boolean
   onClose: () => void
   onConfirm: () => void
+  lang: Lang
   beverage: Beverage
   onBeverageChange: (beverage: Beverage) => void
 }
@@ -63,7 +65,7 @@ const SHEET_VARIANTS = {
   },
 }
 
-function SetDetailModal({ set, isOpen, onClose, onConfirm, beverage, onBeverageChange }: SetDetailModalProps) {
+function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, beverage, onBeverageChange }: SetDetailModalProps) {
   return (
     <AnimatePresence>
       {isOpen && set && (
@@ -105,7 +107,7 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, beverage, onBeverageC
               type="button"
               className="modal-sheet__close"
               onClick={onClose}
-              aria-label="Закрыть"
+              aria-label={t(lang, 'close')}
             >
               <X size={20} strokeWidth={2.5} />
             </button>
@@ -129,7 +131,7 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, beverage, onBeverageC
               {/* Заголовок */}
               <div className="modal-sheet__header">
                 <h2 className="modal-sheet__title">{set.name}</h2>
-                <span className="modal-sheet__day">День {set.dayNumber} · {set.weekDay}</span>
+                <span className="modal-sheet__day">{t(lang, 'day')} {set.dayNumber} · {set.weekDay}</span>
               </div>
 
               {/* Состав — аккуратные плашки */}
@@ -146,7 +148,7 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, beverage, onBeverageC
               <div className="beverage-select">
                 <span className="beverage-select__label">
                   <Wine size={14} strokeWidth={2.5} />
-                  Напиток
+                  {t(lang, 'beverage')}
                 </span>
                 <div className="beverage-select__pills">
                   {BEVERAGE_OPTIONS.map(opt => {
@@ -162,7 +164,7 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, beverage, onBeverageC
                         transition={{ duration: 0.15 }}
                       >
                         <Icon size={16} strokeWidth={active ? 2.8 : 2.2} />
-                        <span>{opt.label}</span>
+                        <span>{t(lang, opt.value === 'Вода' ? 'water' : 'compote')}</span>
                       </motion.button>
                     )
                   })}
@@ -173,13 +175,13 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, beverage, onBeverageC
               <div className="modal-sheet__kbju">
                 <div className="modal-sheet__kbju-header">
                   <Flame size={16} strokeWidth={2.5} />
-                  <span>Пищевая ценность на порцию</span>
+                  <span>{t(lang, 'nutritionalValue')}</span>
                 </div>
                 <div className="modal-sheet__kbju-grid">
-                  <MacroCard icon={Beef} label="Белки" value={set.proteins} unit="г" color="rgba(239, 68, 68, 0.12)" />
-                  <MacroCard icon={Droplets} label="Жиры" value={set.fats} unit="г" color="rgba(245, 158, 11, 0.12)" />
-                  <MacroCard icon={Wheat} label="Углеводы" value={set.carbs} unit="г" color="rgba(59, 130, 246, 0.12)" />
-                  <MacroCard icon={Flame} label="Калории" value={set.calories} unit="ккал" color="rgba(249, 115, 22, 0.12)" />
+                  <MacroCard icon={Beef} label={t(lang, 'proteins')} value={set.proteins} unit="г" color="rgba(239, 68, 68, 0.12)" />
+                  <MacroCard icon={Droplets} label={t(lang, 'fats')} value={set.fats} unit="г" color="rgba(245, 158, 11, 0.12)" />
+                  <MacroCard icon={Wheat} label={t(lang, 'carbs')} value={set.carbs} unit="г" color="rgba(59, 130, 246, 0.12)" />
+                  <MacroCard icon={Flame} label={t(lang, 'calories')} value={set.calories} unit="ккал" color="rgba(249, 115, 22, 0.12)" />
                 </div>
               </div>
             </div>
@@ -187,7 +189,7 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, beverage, onBeverageC
             {/* Фиксированная нижняя плашка */}
             <div className="modal-sheet__bar">
               <div className="modal-sheet__bar-price">
-                <span className="modal-sheet__bar-price-label">Цена за порцию</span>
+                <span className="modal-sheet__bar-price-label">{t(lang, 'priceLabel')}</span>
                 <span className="modal-sheet__bar-price-value">{formatPrice(set.price)}</span>
               </div>
               <motion.button
@@ -201,7 +203,7 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, beverage, onBeverageC
                 whileTap={{ scale: 0.97 }}
               >
                 <Check size={18} strokeWidth={3} />
-                Выбрать
+                {t(lang, 'choose')}
               </motion.button>
             </div>
           </motion.div>
