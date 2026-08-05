@@ -2,7 +2,7 @@ import type { LunchSet, WeekDay, SetCategory } from '../types';
 
 export const SET_PRICE = 55000;
 
-export const WORK_DAYS_COUNT = 22;
+export const WORK_DAYS_COUNT = 24;
 
 const WEEK_DAYS: WeekDay[] = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт'];
 
@@ -22,7 +22,8 @@ interface MainDish {
  * Категории сетов:
  * - meat    — «Мясо» (говядина/баранина, красное мясо)
  * - chicken — «Курица» (блюда из курицы)
- * - poultry — «Птица» (лёгкая категория: рыба и белое мясо)
+ * - poultry — «Птица» (блюда из птицы: индейка)
+ * - fish    — «Рыба» (блюда из рыбы)
  */
 const MAIN_DISHES: MainDish[] = [
   { name: 'Гушт сай с лепёшкой', icon: '🥩', category: 'meat' },
@@ -30,7 +31,7 @@ const MAIN_DISHES: MainDish[] = [
   { name: 'Куриный стейк в кисло-сладком соусе, гречка', icon: '🍗', category: 'chicken' },
   { name: 'Гуляш с картофельным пюре', icon: '🥘', category: 'meat' },
   { name: 'Котлеты по-киевски, картофель фри', icon: '🍟', category: 'chicken' },
-  { name: 'Рыба запечённая с рисом', icon: '🐟', category: 'poultry' },
+  { name: 'Рыба запечённая с рисом', icon: '🐟', category: 'fish' },
   { name: 'Плов свадебный', icon: '🍚', category: 'meat' },
   { name: 'Бефстроганов с гречкой', icon: '🥩', category: 'meat' },
   { name: 'Парамач с фаршем', icon: '🥟', category: 'meat' },
@@ -42,11 +43,13 @@ const MAIN_DISHES: MainDish[] = [
   { name: 'Тефтели в томатном соусе, рис', icon: '🧆', category: 'meat' },
   { name: 'Куриные наггетсы, картофель фри', icon: '🍟', category: 'chicken' },
   { name: 'Говядина по-строгановски, макароны', icon: '🍝', category: 'meat' },
-  { name: 'Рыбные котлеты с пюре', icon: '🐟', category: 'poultry' },
+  { name: 'Рыбные котлеты с пюре', icon: '🐟', category: 'fish' },
   { name: 'Манты с мясом', icon: '🥟', category: 'meat' },
   { name: 'Шашлык куриный, овощи гриль', icon: '🥙', category: 'chicken' },
   { name: 'Долма, отварной картофель', icon: '🥬', category: 'meat' },
   { name: 'Азу по-татарски с картофелем', icon: '🥘', category: 'meat' },
+  { name: 'Индейка запечённая с овощами', icon: '🦃', category: 'poultry' },
+  { name: 'Котлеты из индейки с гречкой', icon: '🦃', category: 'poultry' },
 ];
 
 /**
@@ -79,9 +82,11 @@ const KBJU_DATA: { calories: number; proteins: number; fats: number; carbs: numb
   { calories: 490, proteins: 36, fats: 16, carbs: 40 },
   { calories: 560, proteins: 26, fats: 20, carbs: 60 },
   { calories: 600, proteins: 32, fats: 22, carbs: 60 },
+  { calories: 500, proteins: 38, fats: 12, carbs: 46 },
+  { calories: 530, proteins: 34, fats: 16, carbs: 54 },
 ];
 
-/** 22 уникальных Unsplash-фото, подобранных под каждое блюдо */
+/** 24 уникальных Unsplash-фото, подобранных под каждое блюдо */
 const UNSPLASH_IMAGES: string[] = [
   'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80',  // 1  Гушт сай — сочный стейк
   'https://images.unsplash.com/photo-1476124369491-e7addf5db371?auto=format&fit=crop&w=800&q=80',  // 2  Курица с грибами и рисом
@@ -105,10 +110,12 @@ const UNSPLASH_IMAGES: string[] = [
   'https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=800&q=80',  // 20 Шашлык — здоровое блюдо
   'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=800&q=80',  // 21 Долма — пицца/закуска
   'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=800&q=80',  // 22 Азу — пицца/итальянское
+  'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',  // 23 Индейка запечённая — ростбиф с овощами
+  'https://images.unsplash.com/photo-1558030006-450675393462?auto=format&fit=crop&w=800&q=80',  // 24 Котлеты из индейки — мясо с гарниром
 ];
 
 /**
- * 22 рабочих дня (Пн-Пт) корпоративной подписки на месяц.
+ * 24 рабочих дня (Пн-Пт) корпоративной подписки на месяц.
  * Каждый день — уникальное основное блюдо + салат + лепёшка + напиток.
  */
 export const MONTHLY_SETS: LunchSet[] = MAIN_DISHES.map((main, index) => {

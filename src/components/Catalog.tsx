@@ -35,6 +35,7 @@ const CATEGORY_TABS: { value: CategoryFilter; labelKey: string }[] = [
   { value: 'meat', labelKey: 'categoryMeat' },
   { value: 'chicken', labelKey: 'categoryChicken' },
   { value: 'poultry', labelKey: 'categoryPoultry' },
+  { value: 'fish', labelKey: 'categoryFish' },
 ]
 
 function Catalog({

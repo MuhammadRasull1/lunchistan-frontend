@@ -1,6 +1,6 @@
 # ⚙️ Управление состоянием (State Management)
 
-> Версия: 1.2  \
+> Версия: 1.3  \
 > Последнее обновление: 05.08.2026  \
 > Связанные файлы: [[ARCHITECTURE]], [[COMPONENTS]], [[B2B_RULES]]
 
@@ -21,7 +21,7 @@
 | ---------------- | ---------- | ------------------ | ------------------------------------- |
 | `screen`         | `Screen`   | `'catalog'`        | Текущий экран (`catalog` / `cart` / `success`) |
 | `employeeCount`  | `number`   | `1`                | Множитель стоимости (сотрудники)      |
-| `workDaysCount`  | `number`   | `22`               | Отображаемое количество рабочих дней  |
+| `workDaysCount`  | `number`   | `24`               | Отображаемое количество рабочих дней  |
 | `cartState`      | `CartState`| Все `active: true`, `portions: 1`, `beverage: 'Вода'` | Состояние корзины |
 | `lang`           | `Lang`     | `'ru'`             | 🆕 Текущий язык интерфейса (RU/UZ)   |
 
@@ -37,7 +37,7 @@ interface CartItem {
   excludedIngredients: string[]  // 🆕 исключённые ингредиенты (Салат, Лепёшка, Напиток)
 }
 
-// Пример для 22 дней:
+// Пример для 24 дней:
 {
   "1":  { beverage: "Вода",                   active: true,  portions: 2, excludedIngredients: [] },
   "2":  { beverage: "Компот в ассортименте",   active: true,  portions: 1, excludedIngredients: ["Салат", "Лепёшка"] },
@@ -66,7 +66,7 @@ totalMonthlyPrice     = totalPortionsFromActive × employeeCount × SET_PRICE
 
 | Функция                         | Действие                                           |
 | ------------------------------- | -------------------------------------------------- |
-| `handleWorkDaysSet(count)`      | 🆆 Установить количество дней (1..22); при уменьшении — деактивировать дни за лимитом, при увеличении — активировать новые дни |
+| `handleWorkDaysSet(count)`      | 🆆 Установить количество дней (1..24); при уменьшении — деактивировать дни за лимитом, при увеличении — активировать новые дни |
 | `handleBeverageChange(id, bev)` | Сменить напиток для дня |
 | `handleToggleDay(id)`           | Включить/выключить день                             |
 | `handleExcludeIngredients(id, list)` | 🆆 Сохранить список исключённых ингредиентов для дня |
@@ -145,6 +145,6 @@ const handleNewOrder = () => {
 **Что сбрасывается:**
 - `cartState` → все дни активны, напиток «Вода», 1 порция, исключений нет
 - `employeeCount` → 1
-- `workDaysCount` → 22 (максимум)
+- `workDaysCount` → 24 (максимум)
 - `screen` → `'catalog'`
 - `lang` **не сбрасывается** (язык сохраняется между заказами)

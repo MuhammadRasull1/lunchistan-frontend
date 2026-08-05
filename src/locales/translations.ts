@@ -30,6 +30,7 @@ const translations: Record<Lang, Record<string, string>> = {
     categoryMeat: 'Мясо',
     categoryChicken: 'Курица',
     categoryPoultry: 'Птица',
+    categoryFish: 'Рыба',
 
     // Set card
     perPortion: 'за порцию',
@@ -120,6 +121,7 @@ const translations: Record<Lang, Record<string, string>> = {
     categoryMeat: "Go'sht",
     categoryChicken: 'Tovuq',
     categoryPoultry: 'Parranda',
+    categoryFish: 'Baliq',
 
     // Set card
     perPortion: "porsiya uchun",

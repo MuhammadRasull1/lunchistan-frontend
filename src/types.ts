@@ -4,7 +4,7 @@ export type Beverage = 'Вода' | 'Компот в ассортименте';
 
 export type PaymentMethod = 'corporate' | 'card' | 'cash';
 
-export type SetCategory = 'meat' | 'chicken' | 'poultry';
+export type SetCategory = 'meat' | 'chicken' | 'poultry' | 'fish';
 
 export interface CompositionItem {
   name: string

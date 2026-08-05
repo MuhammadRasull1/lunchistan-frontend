@@ -1,6 +1,6 @@
 # 🏗️ Архитектура Lunchistan Frontend
 
-> Версия: 2.2  \
+> Версия: 2.3  \
 > Последнее обновление: 05.08.2026  \
 > Связанные файлы: [[COMPONENTS]], [[STATE_MANAGEMENT]], [[B2B_RULES]], [[CHECKOUT_FLOW]]
 
@@ -58,7 +58,7 @@ lunchistan-frontend/
 │   │   └── translations.ts           # 🆕 Словарь RU/UZ с функцией t() и localizeIngredient()
 │   │
 │   ├── data/
-│   │   └── mockMenu.ts               # Мок-данные: 22 обеда на месяц + категории + КБЖУ (400 г)
+│   │   └── mockMenu.ts               # Мок-данные: 24 обеда на месяц + категории + КБЖУ (400 г)
 │   │
 │   └── components/
 │       ├── Catalog.tsx               # Главный экран: калькулятор + табы категорий + сетка сетов
@@ -87,7 +87,7 @@ lunchistan-frontend/
 | `Beverage`           | `'Вода' | 'Компот в ассортименте'`     |
 | `PaymentMethod`      | `'corporate' | 'card' | 'cash'`        |
 | `Lang`               | `'ru' | 'uz'` — языки интерфейса     |
-| `SetCategory`        | `'meat' | 'chicken' | 'poultry'` — категория сета (табы меню) |
+| `SetCategory`        | `'meat' | 'chicken' | 'poultry' | 'fish'` — категория сета (табы меню) |
 | `LunchSet`           | Сет с KBJU + composition + category     |
 | `CartItem`           | Элемент корзины (active, portions, excludedIngredients) |
 | `CartState`          | `Record<string | number, CartItem>`    |
@@ -130,4 +130,3 @@ npm run preview    # Превью продакшн-сборки
 5. ❌ Нет Tailwind — pure CSS
 6. ❌ Нет тестов
 7. ❌ Checkout-форма минимальна (только способ оплаты, без полей ввода)
-8. 🟡 Категория «Птица» в меню включает рыбные блюда (условность мок-данных) → [[B2B_RULES#2-1-категории-сетов]]
