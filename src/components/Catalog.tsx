@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import type { LunchSet, CartState, Lang } from '../types'
+import type { LunchSet, CartState, Lang, SetCategory, Beverage } from '../types'
 import { formatPrice } from '../types'
 import { t } from '../locales/translations'
 import SetCard from './SetCard'
 import SetDetailModal from './SetDetailModal'
 import AnimatedCount from './AnimatedCount'
+import Stepper from './Stepper'
 
-import type { Beverage } from '../types'
+type CategoryFilter = SetCategory | 'all'
 
 interface CatalogProps {
   sets: LunchSet[]
@@ -22,11 +23,19 @@ interface CatalogProps {
   onSelectAll: () => void
   onDeselectAll: () => void
   onEmployeeCountChange: (count: number) => void
-  onWorkDaysChange: (delta: number) => void
+  onWorkDaysSet: (count: number) => void
   onBeverageChange: (setId: string | number, beverage: Beverage) => void
+  onExcludeIngredients: (setId: string | number, excluded: string[]) => void
   onGoToCart: () => void
   onLangChange: (lang: Lang) => void
 }
+
+const CATEGORY_TABS: { value: CategoryFilter; labelKey: string }[] = [
+  { value: 'all', labelKey: 'categoryAll' },
+  { value: 'meat', labelKey: 'categoryMeat' },
+  { value: 'chicken', labelKey: 'categoryChicken' },
+  { value: 'poultry', labelKey: 'categoryPoultry' },
+]
 
 function Catalog({
   sets,
@@ -41,30 +50,40 @@ function Catalog({
   onSelectAll,
   onDeselectAll,
   onEmployeeCountChange,
-  onWorkDaysChange,
+  onWorkDaysSet,
   onBeverageChange,
+  onExcludeIngredients,
   onGoToCart,
   onLangChange,
 }: CatalogProps) {
-  // Статистика — только по видимым сетам
+  // Статистика — только по видимым сетам (в пределах workDaysCount)
   const visibleIds = new Set(sets.map(s => String(s.id)))
   const activeDays = Object.entries(cartState)
     .filter(([id, item]) => visibleIds.has(id) && item?.active)
     .length
   const totalPortions = Object.entries(cartState)
     .filter(([id, item]) => visibleIds.has(id) && item?.active)
-    .reduce((sum, [_, item]) => sum + (item?.portions ?? 1), 0)
+    .reduce((sum, entry) => sum + (entry[1]?.portions ?? 1), 0)
   const totalItems = totalPortions * employeeCount
 
   // Состояние модалки детализации сета
   const [selectedSetId, setSelectedSetId] = useState<string | number | null>(null)
+  const [excludedIngredients, setExcludedIngredients] = useState<string[]>([])
+
+  // Фильтр категорий меню
+  const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all')
 
   const selectedSet = selectedSetId
     ? sets.find(s => s.id === selectedSetId) ?? null
     : null
 
+  const filteredSets = activeCategory === 'all'
+    ? sets
+    : sets.filter(s => s.category === activeCategory)
+
   const handleOpenModal = (setId: string | number) => {
     setSelectedSetId(setId)
+    setExcludedIngredients(cartState[setId]?.excludedIngredients ?? [])
   }
 
   const handleCloseModal = () => {
@@ -77,7 +96,15 @@ function Catalog({
       if (!cartState[selectedSetId]?.active) {
         onToggleDay(selectedSetId)
       }
+      // Сохраняем исключённые ингредиенты
+      onExcludeIngredients(selectedSetId, excludedIngredients)
     }
+  }
+
+  const handleToggleExcluded = (name: string) => {
+    setExcludedIngredients(prev =>
+      prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name],
+    )
   }
 
   return (
@@ -130,29 +157,14 @@ function Catalog({
           transition={{ delay: 0.05, duration: 0.4 }}
         >
           <span className="subscription__label">{t(lang, 'workingDays')}</span>
-          <div className="counter">
-            <motion.button
-              type="button"
-              className="counter__btn"
-              aria-label="Уменьшить количество дней"
-              disabled={workDaysCount <= 1}
-              onClick={() => onWorkDaysChange(-1)}
-              whileTap={{ scale: 0.88 }}
-            >
-              −
-            </motion.button>
-            <span className="counter__value">{workDaysCount}</span>
-            <motion.button
-              type="button"
-              className="counter__btn counter__btn--add"
-              aria-label="Добавить дней"
-              disabled={workDaysCount >= allSetsCount}
-              onClick={() => onWorkDaysChange(1)}
-              whileTap={{ scale: 0.88 }}
-            >
-              +
-            </motion.button>
-          </div>
+          <Stepper
+            value={workDaysCount}
+            min={1}
+            max={allSetsCount}
+            onSet={onWorkDaysSet}
+            ariaDecrease={t(lang, 'stepDecrease')}
+            ariaIncrease={t(lang, 'stepIncrease')}
+          />
         </motion.div>
 
         {/* Количество сотрудников */}
@@ -163,28 +175,13 @@ function Catalog({
           transition={{ delay: 0.1, duration: 0.4 }}
         >
           <span className="subscription__label">{t(lang, 'employees')}</span>
-          <div className="counter">
-            <motion.button
-              type="button"
-              className="counter__btn"
-              aria-label="Уменьшить количество сотрудников"
-              disabled={employeeCount <= 1}
-              onClick={() => onEmployeeCountChange(employeeCount - 1)}
-              whileTap={{ scale: 0.88 }}
-            >
-              −
-            </motion.button>
-            <span className="counter__value">{employeeCount}</span>
-            <motion.button
-              type="button"
-              className="counter__btn counter__btn--add"
-              aria-label="Добавить сотрудника"
-              onClick={() => onEmployeeCountChange(employeeCount + 1)}
-              whileTap={{ scale: 0.88 }}
-            >
-              +
-            </motion.button>
-          </div>
+          <Stepper
+            value={employeeCount}
+            min={1}
+            onSet={onEmployeeCountChange}
+            ariaDecrease={t(lang, 'stepDecrease')}
+            ariaIncrease={t(lang, 'stepIncrease')}
+          />
         </motion.div>
 
         {/* Быстрые действия */}
@@ -247,9 +244,26 @@ function Catalog({
       </section>
 
       {/* Список сетов */}
-      <h2 className="catalog__section-title">{t(lang, 'menuTitle', { n: sets.length })}</h2>
+      <h2 className="catalog__section-title">{t(lang, 'menuTitle', { n: filteredSets.length })}</h2>
+
+      {/* Фильтр категорий */}
+      <div className="tabs" role="tablist" aria-label={t(lang, 'menuTitle', { n: filteredSets.length })}>
+        {CATEGORY_TABS.map(tab => (
+          <button
+            key={tab.value}
+            type="button"
+            role="tab"
+            aria-selected={activeCategory === tab.value}
+            className={`tabs__tab${activeCategory === tab.value ? ' tabs__tab--active' : ''}`}
+            onClick={() => setActiveCategory(tab.value)}
+          >
+            {t(lang, tab.labelKey)}
+          </button>
+        ))}
+      </div>
+
       <div className="catalog__grid catalog__grid--sets">
-        {sets.map((set, index) => {
+        {filteredSets.map((set, index) => {
           const cartItem = cartState[set.id]
           const active = cartItem?.active ?? true
 
@@ -303,6 +317,8 @@ function Catalog({
         onBeverageChange={(beverage) => {
           if (selectedSetId) onBeverageChange(selectedSetId, beverage)
         }}
+        excludedIngredients={excludedIngredients}
+        onToggleExcluded={handleToggleExcluded}
       />
     </div>
   )

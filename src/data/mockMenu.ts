@@ -1,4 +1,4 @@
-import type { LunchSet, WeekDay } from '../types';
+import type { LunchSet, WeekDay, SetCategory } from '../types';
 
 export const SET_PRICE = 55000;
 
@@ -7,65 +7,78 @@ export const WORK_DAYS_COUNT = 22;
 const WEEK_DAYS: WeekDay[] = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт'];
 
 const FIXED_COMPOSITION = [
-  { name: 'Салат', icon: '🥗' },
-  { name: 'Лепёшка', icon: '🫓' },
-  { name: 'Напиток', icon: '🧃' },
+  { name: 'Салат', icon: '🥗', optional: true },
+  { name: 'Лепёшка', icon: '🫓', optional: true },
+  { name: 'Напиток', icon: '🧃', optional: true },
 ] as const;
 
 interface MainDish {
   name: string;
   icon: string;
+  category: SetCategory;
 }
 
+/**
+ * Категории сетов:
+ * - meat    — «Мясо» (говядина/баранина, красное мясо)
+ * - chicken — «Курица» (блюда из курицы)
+ * - poultry — «Птица» (лёгкая категория: рыба и белое мясо)
+ */
 const MAIN_DISHES: MainDish[] = [
-  { name: 'Гушт сай с лепёшкой', icon: '🥩' },
-  { name: 'Курица с грибами и рисом', icon: '🍗' },
-  { name: 'Куриный стейк в кисло-сладком соусе, гречка', icon: '🍗' },
-  { name: 'Гуляш с картофельным пюре', icon: '🥘' },
-  { name: 'Котлеты по-киевски, картофель фри', icon: '🍟' },
-  { name: 'Рыба запечённая с рисом', icon: '🐟' },
-  { name: 'Плов свадебный', icon: '🍚' },
-  { name: 'Бефстроганов с гречкой', icon: '🥩' },
-  { name: 'Парамач с фаршем', icon: '🥟' },
-  { name: 'Лагман с мантами', icon: '🍜' },
-  { name: 'Чикен терияки с рисом', icon: '🍗' },
-  { name: 'Кебаб с овощами гриль', icon: '🥙' },
-  { name: 'Бифштекс с пюре', icon: '🥩' },
-  { name: 'Плов домашний', icon: '🍚' },
-  { name: 'Тефтели в томатном соусе, рис', icon: '🧆' },
-  { name: 'Куриные наггетсы, картофель фри', icon: '🍟' },
-  { name: 'Говядина по-строгановски, макароны', icon: '🍝' },
-  { name: 'Рыбные котлеты с пюре', icon: '🐟' },
-  { name: 'Манты с мясом', icon: '🥟' },
-  { name: 'Шашлык куриный, овощи гриль', icon: '🥙' },
-  { name: 'Долма, отварной картофель', icon: '🥬' },
-  { name: 'Азу по-татарски с картофелем', icon: '🥘' },
+  { name: 'Гушт сай с лепёшкой', icon: '🥩', category: 'meat' },
+  { name: 'Курица с грибами и рисом', icon: '🍗', category: 'chicken' },
+  { name: 'Куриный стейк в кисло-сладком соусе, гречка', icon: '🍗', category: 'chicken' },
+  { name: 'Гуляш с картофельным пюре', icon: '🥘', category: 'meat' },
+  { name: 'Котлеты по-киевски, картофель фри', icon: '🍟', category: 'chicken' },
+  { name: 'Рыба запечённая с рисом', icon: '🐟', category: 'poultry' },
+  { name: 'Плов свадебный', icon: '🍚', category: 'meat' },
+  { name: 'Бефстроганов с гречкой', icon: '🥩', category: 'meat' },
+  { name: 'Парамач с фаршем', icon: '🥟', category: 'meat' },
+  { name: 'Лагман с мантами', icon: '🍜', category: 'meat' },
+  { name: 'Чикен терияки с рисом', icon: '🍗', category: 'chicken' },
+  { name: 'Кебаб с овощами гриль', icon: '🥙', category: 'meat' },
+  { name: 'Бифштекс с пюре', icon: '🥩', category: 'meat' },
+  { name: 'Плов домашний', icon: '🍚', category: 'meat' },
+  { name: 'Тефтели в томатном соусе, рис', icon: '🧆', category: 'meat' },
+  { name: 'Куриные наггетсы, картофель фри', icon: '🍟', category: 'chicken' },
+  { name: 'Говядина по-строгановски, макароны', icon: '🍝', category: 'meat' },
+  { name: 'Рыбные котлеты с пюре', icon: '🐟', category: 'poultry' },
+  { name: 'Манты с мясом', icon: '🥟', category: 'meat' },
+  { name: 'Шашлык куриный, овощи гриль', icon: '🥙', category: 'chicken' },
+  { name: 'Долма, отварной картофель', icon: '🥬', category: 'meat' },
+  { name: 'Азу по-татарски с картофелем', icon: '🥘', category: 'meat' },
 ];
 
-/** Примерные значения КБАУ для каждого блюда (на 1 порцию ~350-400 г) */
+/**
+ * Реалистичные значения КБЖУ для каждого блюда.
+ * Стандарт: общий вес комплексного сета ≈ 400 г
+ * (основное блюдо ~280 г + салат ~60 г + лепёшка ~40 г + напиток ~20-50 г).
+ * Сытные сеты с пловом/макаронами ≈ 650-850 ккал,
+ * лёгкие сеты с птицей/рыбой/салатом ≈ 450-600 ккал.
+ */
 const KBJU_DATA: { calories: number; proteins: number; fats: number; carbs: number }[] = [
-  { calories: 520, proteins: 28, fats: 18, carbs: 58 },
-  { calories: 480, proteins: 32, fats: 14, carbs: 52 },
-  { calories: 510, proteins: 30, fats: 16, carbs: 54 },
-  { calories: 540, proteins: 26, fats: 20, carbs: 56 },
-  { calories: 590, proteins: 24, fats: 28, carbs: 48 },
-  { calories: 440, proteins: 34, fats: 10, carbs: 50 },
-  { calories: 610, proteins: 22, fats: 22, carbs: 68 },
-  { calories: 500, proteins: 30, fats: 16, carbs: 52 },
-  { calories: 560, proteins: 26, fats: 24, carbs: 50 },
-  { calories: 470, proteins: 24, fats: 14, carbs: 60 },
-  { calories: 490, proteins: 32, fats: 12, carbs: 56 },
-  { calories: 530, proteins: 28, fats: 20, carbs: 46 },
-  { calories: 550, proteins: 30, fats: 22, carbs: 48 },
-  { calories: 600, proteins: 22, fats: 20, carbs: 66 },
-  { calories: 460, proteins: 26, fats: 16, carbs: 54 },
-  { calories: 580, proteins: 28, fats: 26, carbs: 50 },
-  { calories: 510, proteins: 30, fats: 18, carbs: 52 },
-  { calories: 430, proteins: 32, fats: 12, carbs: 48 },
-  { calories: 540, proteins: 28, fats: 20, carbs: 52 },
-  { calories: 470, proteins: 34, fats: 14, carbs: 44 },
-  { calories: 490, proteins: 24, fats: 18, carbs: 50 },
-  { calories: 520, proteins: 28, fats: 18, carbs: 56 },
+  { calories: 680, proteins: 38, fats: 26, carbs: 62 },
+  { calories: 520, proteins: 34, fats: 14, carbs: 58 },
+  { calories: 560, proteins: 36, fats: 16, carbs: 60 },
+  { calories: 620, proteins: 30, fats: 22, carbs: 68 },
+  { calories: 700, proteins: 26, fats: 34, carbs: 62 },
+  { calories: 480, proteins: 36, fats: 12, carbs: 52 },
+  { calories: 780, proteins: 26, fats: 30, carbs: 92 },
+  { calories: 640, proteins: 36, fats: 22, carbs: 66 },
+  { calories: 720, proteins: 30, fats: 30, carbs: 72 },
+  { calories: 650, proteins: 28, fats: 20, carbs: 88 },
+  { calories: 540, proteins: 34, fats: 12, carbs: 68 },
+  { calories: 590, proteins: 32, fats: 24, carbs: 54 },
+  { calories: 660, proteins: 36, fats: 26, carbs: 58 },
+  { calories: 760, proteins: 26, fats: 28, carbs: 90 },
+  { calories: 580, proteins: 30, fats: 18, carbs: 66 },
+  { calories: 680, proteins: 28, fats: 32, carbs: 64 },
+  { calories: 640, proteins: 34, fats: 22, carbs: 68 },
+  { calories: 470, proteins: 30, fats: 16, carbs: 50 },
+  { calories: 720, proteins: 32, fats: 28, carbs: 74 },
+  { calories: 490, proteins: 36, fats: 16, carbs: 40 },
+  { calories: 560, proteins: 26, fats: 20, carbs: 60 },
+  { calories: 600, proteins: 32, fats: 22, carbs: 60 },
 ];
 
 /** 22 уникальных Unsplash-фото, подобранных под каждое блюдо */
@@ -106,6 +119,7 @@ export const MONTHLY_SETS: LunchSet[] = MAIN_DISHES.map((main, index) => {
     id: dayNumber,
     dayNumber,
     weekDay: WEEK_DAYS[weekDayIndex],
+    category: main.category,
     name: `Обед День ${dayNumber} (${WEEK_DAYS[weekDayIndex]})`,
     description: `${main.name} + Салат + Лепёшка + Напиток`,
     price: SET_PRICE,
@@ -115,8 +129,8 @@ export const MONTHLY_SETS: LunchSet[] = MAIN_DISHES.map((main, index) => {
     fats: kbju.fats,
     carbs: kbju.carbs,
     composition: [
-      { name: main.name, icon: main.icon },
-      ...FIXED_COMPOSITION.map(item => ({ name: item.name, icon: item.icon })),
+      { name: main.name, icon: main.icon, optional: false },
+      ...FIXED_COMPOSITION.map(item => ({ name: item.name, icon: item.icon, optional: item.optional })),
     ],
   };
 });

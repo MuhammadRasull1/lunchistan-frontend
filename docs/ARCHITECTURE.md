@@ -1,7 +1,7 @@
 # 🏗️ Архитектура Lunchistan Frontend
 
-> Версия: 2.1  \
-> Последнее обновление: 30.07.2026  \
+> Версия: 2.2  \
+> Последнее обновление: 05.08.2026  \
 > Связанные файлы: [[COMPONENTS]], [[STATE_MANAGEMENT]], [[B2B_RULES]], [[CHECKOUT_FLOW]]
 
 ---
@@ -23,7 +23,7 @@
 | **Бэкенд**       | Отсутствует (заглушка mockMenu.ts)  | —          |
 | **Telegram Bot** | Отсутствует                         | —          |
 
-> **Примечание:** На данный момент проект является чистым фронтендом. Данные берутся из `src/data/mockMenu.ts`. Бэкенд и Telegram Bot не реализованы. Изображения сетов — локальные JPG-файлы в `/images/sets/day-N.jpg` с fallback на [[Unsplash]] при ошибке загрузки (подробнее → [[COMPONENTS]]). Добавлена мультиязычность RU/UZ через `src/locales/translations.ts` (подробнее → [[COMPONENTS#10-мультиязычность]]).
+> **Примечание:** На данный момент проект является чистым фронтендом. Данные берутся из `src/data/mockMenu.ts`. Бэкенд и Telegram Bot не реализованы. Изображения сетов — локальные JPG-файлы в `/images/sets/day-N.jpg` с fallback на [[Unsplash]] при ошибке загрузки (подробнее → [[COMPONENTS]]). Добавлена мультиязычность RU/UZ через `src/locales/translations.ts` (подробнее → [[COMPONENTS#11-мультиязычность-ruuz]]).
 
 ---
 
@@ -55,15 +55,16 @@ lunchistan-frontend/
 │   ├── types.ts                      # TypeScript-типы + formatPrice() + Lang
 │   │
 │   ├── locales/
-│   │   └── translations.ts           # 🆕 Словарь RU/UZ с функцией t()
+│   │   └── translations.ts           # 🆕 Словарь RU/UZ с функцией t() и localizeIngredient()
 │   │
 │   ├── data/
-│   │   └── mockMenu.ts               # Мок-данные: 22 обеда на месяц
+│   │   └── mockMenu.ts               # Мок-данные: 22 обеда на месяц + категории + КБЖУ (400 г)
 │   │
 │   └── components/
-│       ├── Catalog.tsx               # Главный экран: калькулятор + сетка сетов
+│       ├── Catalog.tsx               # Главный экран: калькулятор + табы категорий + сетка сетов
 │       ├── SetCard.tsx               # Карточка дня/сета (премиум B2B, lucide-иконки)
-│       ├── SetDetailModal.tsx        # Выплывающее окно детализации сета
+│       ├── SetDetailModal.tsx        # Выплывающее окно детализации сета (+ исключение ингредиентов)
+│       ├── Stepper.tsx               # 🆕 Счётчик «− / input / +» с ручным вводом чисел
 │       ├── Cart.tsx                  # Экран корзины/оформления заказа (glassmorphism)
 │       ├── Success.tsx               # Экран успешного оформления
 │       └── AnimatedCount.tsx         # Плавная анимация числовых значений
@@ -86,8 +87,9 @@ lunchistan-frontend/
 | `Beverage`           | `'Вода' | 'Компот в ассортименте'`     |
 | `PaymentMethod`      | `'corporate' | 'card' | 'cash'`        |
 | `Lang`               | `'ru' | 'uz'` — языки интерфейса     |
-| `LunchSet`           | Сет с KBJU + composition                |
-| `CartItem`           | Элемент корзины (active, portions) |
+| `SetCategory`        | `'meat' | 'chicken' | 'poultry'` — категория сета (табы меню) |
+| `LunchSet`           | Сет с KBJU + composition + category     |
+| `CartItem`           | Элемент корзины (active, portions, excludedIngredients) |
 | `CartState`          | `Record<string | number, CartItem>`    |
 | `formatPrice(n)`     | `"55 000 сум"`                         |
 
@@ -128,3 +130,4 @@ npm run preview    # Превью продакшн-сборки
 5. ❌ Нет Tailwind — pure CSS
 6. ❌ Нет тестов
 7. ❌ Checkout-форма минимальна (только способ оплаты, без полей ввода)
+8. 🟡 Категория «Птица» в меню включает рыбные блюда (условность мок-данных) → [[B2B_RULES#2-1-категории-сетов]]

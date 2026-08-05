@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { UtensilsCrossed, LeafyGreen, Croissant, Wine } from 'lucide-react'
 import type { LunchSet, Lang } from '../types'
 import { formatPrice } from '../types'
-import { t } from '../locales/translations'
+import { t, localizeIngredient } from '../locales/translations'
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'
 
@@ -66,7 +66,7 @@ function SetCard({ set, index, active, lang, onSelect }: SetCardProps) {
             : <span className="set-card__name--strikethrough">{set.name}</span>
           }
         </h3>
-        <span className="set-card__tag">День {set.dayNumber} · {set.weekDay}</span>
+        <span className="set-card__tag">{t(lang, 'day')} {set.dayNumber} · {set.weekDay}</span>
 
         {/* Composition chips */}
         {active && set.composition && (
@@ -76,7 +76,7 @@ function SetCard({ set, index, active, lang, onSelect }: SetCardProps) {
               return (
                 <div key={item.name} className="set-card__chip">
                   <IconComp size={13} strokeWidth={2.2} />
-                  <span className="set-card__chip-text">{item.name}</span>
+                  <span className="set-card__chip-text">{localizeIngredient(lang, item.name)}</span>
                 </div>
               )
             })}

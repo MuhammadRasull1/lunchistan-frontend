@@ -1,7 +1,7 @@
 # 🛒 Процесс оформления заказа (Checkout Flow)
 
-> Версия: 1.1  \
-> Последнее обновление: 30.07.2026  \
+> Версия: 1.2  \
+> Последнее обновление: 05.08.2026  \
 > Связанные файлы: [[B2B_RULES]], [[COMPONENTS]], [[STATE_MANAGEMENT]]
 
 ---
@@ -55,8 +55,9 @@ Catalog (Новый заказ, сброс)
 ```
 🍱 Обед День 1 (Пн)
     Kun 1 · Пн · Вода · 2 порц./сотр.          ← локализовано через t(lang, 'day') и t(lang, 'portionsPerEmployee')
-                             2 × 55 000 сум
-                             110 000 сум
+    без: Салат, Лепёшка                        ← 🆆 v1.2 — исключённые ингредиенты (localizeIngredient)
+                              2 × 55 000 сум
+                              110 000 сум
 ```
 
 ### 3.3. Анимации (framer-motion)
@@ -98,14 +99,21 @@ const handlePlaceOrder = (method: PaymentMethod) => {
     card: t(lang, 'cardLabel'),
     cash: t(lang, 'cashLabel'),
   }
-  alert(t(lang, 'orderAlert', {
-    employees: employeeCount,
-    method: methodLabels[method],
-    price: formatPrice(totalMonthlyPrice),
-  }))
+  const lines = Object.entries(cartState)
+    .filter(([, item]) => item?.active)
+    .map(([id, item]) => ({
+      day: Number(id),
+      portions: item?.portions ?? 1,
+      beverage: item?.beverage ?? 'Вода',
+      excludedIngredients: item?.excludedIngredients ?? [],   // 🆆 v1.2
+    }))
+  console.log('Заказ оформлен:', { employeeCount, workDaysCount, activeDays, lines, totalMonthlyPrice, paymentMethod: method })
+  alert(t(lang, 'orderAlert', { employees: employeeCount, method: methodLabels[method], price: formatPrice(totalMonthlyPrice) }))
   setScreen('success')
 }
 ```
+
+> **🆆 v1.2:** Информация об **исключённых ингредиентах** сохраняется в итоговом объекте заказа (`lines[].excludedIngredients`) — массив названий исключённых компонентов (Салат, Лепёшка, Напиток) для каждого дня. Подробнее об исключении → [[COMPONENTS#5-setdetailmodaltsx]].
 
 ⚠️ **Важно**: на данный момент заказ не отправляется на сервер — только `console.log` + `alert`.
 

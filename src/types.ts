@@ -4,15 +4,20 @@ export type Beverage = 'Вода' | 'Компот в ассортименте';
 
 export type PaymentMethod = 'corporate' | 'card' | 'cash';
 
+export type SetCategory = 'meat' | 'chicken' | 'poultry';
+
 export interface CompositionItem {
   name: string
   icon: string
+  /** true — второстепенный ингредиент, который можно исключить; false/undefined — основное блюдо (заблокировано) */
+  optional?: boolean
 }
 
 export interface LunchSet {
   id: string | number;
   dayNumber: number;
   weekDay: WeekDay;
+  category: SetCategory;
   name: string;
   description: string;
   price: number;
@@ -37,6 +42,8 @@ export interface CartItem {
   portions: number;
   /** Выбранный напиток для этого дня */
   beverage: Beverage;
+  /** Исключённые второстепенные ингредиенты (Салат, Лепёшка, Напиток) */
+  excludedIngredients: string[];
 }
 
 export type CartState = Record<string | number, CartItem>;

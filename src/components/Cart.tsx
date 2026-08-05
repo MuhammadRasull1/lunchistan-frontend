@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import type { CartState, LunchSet, PaymentMethod, Lang } from '../types'
 import { formatPrice } from '../types'
-import { t } from '../locales/translations'
+import { t, localizeIngredient } from '../locales/translations'
 
 interface CartLine {
   set: LunchSet
@@ -124,6 +124,15 @@ function Cart({
                   <span className="cart__item-desc">
                     {t(lang, 'day')} {set.dayNumber} · {set.weekDay} · {portions} {t(lang, 'portionsPerEmployee')}
                   </span>
+                  {(() => {
+                    const excluded = cartState[set.id]?.excludedIngredients ?? []
+                    if (excluded.length === 0) return null
+                    return (
+                      <span className="cart__item-desc cart__item-desc--excluded">
+                        {t(lang, 'without')}: {excluded.map(n => localizeIngredient(lang, n)).join(', ')}
+                      </span>
+                    )
+                  })()}
                 </div>
                 <div className="cart__item-sum">
                   <div>{totalPortions} × {formatPrice(set.price)}</div>

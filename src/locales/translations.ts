@@ -21,9 +21,27 @@ const translations: Record<Lang, Record<string, string>> = {
     totalToPay: 'Итого к оплате',
     menuTitle: 'Меню на месяц ({n} дней)',
     from: 'из',
+    stepDecrease: 'Уменьшить',
+    stepIncrease: 'Увеличить',
+    order: 'Оформить предзаказ',
+
+    // Set categories
+    categoryAll: 'Все',
+    categoryMeat: 'Мясо',
+    categoryChicken: 'Курица',
+    categoryPoultry: 'Птица',
 
     // Set card
     perPortion: 'за порцию',
+
+    // Ingredients
+    salad: 'Салат',
+    flatbread: 'Лепёшка',
+    drink: 'Напиток',
+    without: 'без',
+    excludedIngredients: 'Без этих ингредиентов',
+    mainDishLocked: 'Основное блюдо нельзя исключить',
+    excludeHint: 'Нажмите на ингредиент, чтобы исключить его из сета',
 
     // Detail modal
     close: 'Закрыть',
@@ -93,9 +111,27 @@ const translations: Record<Lang, Record<string, string>> = {
     totalToPay: "To'lov summasi",
     menuTitle: "Oylik menyu ({n} kun)",
     from: 'dan',
+    stepDecrease: 'Kamaytirish',
+    stepIncrease: "Oshirish",
+    order: 'Buyurtma berish',
+
+    // Set categories
+    categoryAll: 'Barchasi',
+    categoryMeat: "Go'sht",
+    categoryChicken: 'Tovuq',
+    categoryPoultry: 'Parranda',
 
     // Set card
     perPortion: "porsiya uchun",
+
+    // Ingredients
+    salad: 'Salat',
+    flatbread: 'Non',
+    drink: 'Ichimlik',
+    without: 'siz',
+    excludedIngredients: 'Bu ingredientlarsiz',
+    mainDishLocked: "Asosiy taomni chiqarib bo'lmaydi",
+    excludeHint: "Ingredientni chiqarib tashlash uchun ustiga bosing",
 
     // Detail modal
     close: 'Yopish',
@@ -157,4 +193,14 @@ export function t(lang: Lang, key: string, params?: Record<string, string | numb
     }
   }
   return text
+}
+
+/** Локализация стандартных ингредиентов; названия блюд остаются на русском */
+export function localizeIngredient(lang: Lang, name: string): string {
+  const map: Record<string, string> = {
+    Салат: t(lang, 'salad'),
+    Лепёшка: t(lang, 'flatbread'),
+    Напиток: t(lang, 'drink'),
+  }
+  return map[name] ?? name
 }

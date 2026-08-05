@@ -18,7 +18,7 @@ function App() {
   const [cartState, setCartState] = useState<CartState>(() => {
     const initial: CartState = {}
     MONTHLY_SETS.forEach(set => {
-      initial[set.id] = { active: true, portions: 1, beverage: 'Вода' }
+      initial[set.id] = { active: true, portions: 1, beverage: 'Вода', excludedIngredients: [] }
     })
     return initial
   })
@@ -26,27 +26,37 @@ function App() {
   // Показываем только первые workDaysCount сетов
   const visibleSets = MONTHLY_SETS.slice(0, workDaysCount)
 
-  const handleWorkDaysChange = (delta: number) => {
-    const newCount = Math.max(1, Math.min(MAX_WORK_DAYS, workDaysCount + delta))
-    setWorkDaysCount(newCount)
-
-    // Если уменьшили число дней — деактивируем дни за пределами лимита
-    if (newCount < workDaysCount) {
-      setCartState(prev => {
-        let changed = false
-        const updated: CartState = {}
-        for (const [id, item] of Object.entries(prev)) {
-          const numId = Number(id)
-          if (numId > newCount && item.active) {
-            updated[id] = { ...item, active: false }
+  /**
+   * Установить количество рабочих дней.
+   * При уменьшении — дни за пределами лимита деактивируются.
+   * При увеличении — новые дни АВТОМАТИЧЕСКИ активируются (подгружаются в подписку).
+   */
+  const handleWorkDaysSet = (count: number) => {
+    const clamped = Math.max(1, Math.min(MAX_WORK_DAYS, count))
+    const prev = workDaysCount
+    if (clamped === prev) return
+    setWorkDaysCount(clamped)
+    setCartState(prevState => {
+      let changed = false
+      const updated: CartState = {}
+      for (const [id, item] of Object.entries(prevState)) {
+        const numId = Number(id)
+        let nextActive = item.active
+        if (clamped > prev) {
+          if (numId > prev && numId <= clamped && !item.active) {
+            nextActive = true
             changed = true
-          } else {
-            updated[id] = item
+          }
+        } else if (clamped < prev) {
+          if (numId > clamped && item.active) {
+            nextActive = false
+            changed = true
           }
         }
-        return changed ? updated : prev
-      })
-    }
+        updated[id] = nextActive === item.active ? item : { ...item, active: nextActive }
+      }
+      return changed ? updated : prevState
+    })
   }
 
   const handleBeverageChange = (setId: string | number, beverage: Beverage) => {
@@ -67,6 +77,17 @@ function App() {
       return {
         ...prev,
         [setId]: { ...item, active: !item.active },
+      }
+    })
+  }
+
+  const handleExcludeIngredients = (setId: string | number, excluded: string[]) => {
+    setCartState(prev => {
+      const item = prev[setId]
+      if (!item) return prev
+      return {
+        ...prev,
+        [setId]: { ...item, excludedIngredients: excluded },
       }
     })
   }
@@ -111,11 +132,19 @@ function App() {
       card: t(lang, 'cardLabel'),
       cash: t(lang, 'cashLabel'),
     }
+    const lines = Object.entries(cartState)
+      .filter(([, item]) => item?.active)
+      .map(([id, item]) => ({
+        day: Number(id),
+        portions: item?.portions ?? 1,
+        beverage: item?.beverage ?? 'Вода',
+        excludedIngredients: item?.excludedIngredients ?? [],
+      }))
     console.log('Заказ оформлен:', {
       employeeCount,
       workDaysCount,
       activeDays,
-      cartState,
+      lines,
       totalMonthlyPrice,
       paymentMethod: method,
     })
@@ -130,7 +159,7 @@ function App() {
   const handleNewOrder = () => {
     const reset: CartState = {}
     MONTHLY_SETS.forEach(set => {
-      reset[set.id] = { active: true, portions: 1, beverage: 'Вода' }
+      reset[set.id] = { active: true, portions: 1, beverage: 'Вода', excludedIngredients: [] }
     })
     setCartState(reset)
     setEmployeeCount(1)
@@ -158,8 +187,9 @@ function App() {
           onSelectAll={handleSelectAll}
           onDeselectAll={handleDeselectAll}
           onEmployeeCountChange={handleEmployeeCountChange}
-          onWorkDaysChange={handleWorkDaysChange}
+          onWorkDaysSet={handleWorkDaysSet}
           onBeverageChange={handleBeverageChange}
+          onExcludeIngredients={handleExcludeIngredients}
           onGoToCart={() => setScreen('cart')}
           onLangChange={handleLangChange}
         />

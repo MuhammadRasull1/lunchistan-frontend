@@ -1,8 +1,8 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Flame, Beef, Droplets, Wheat, UtensilsCrossed, Check, Wine, Droplet } from 'lucide-react'
+import { X, Flame, Beef, Droplets, Wheat, Check, Wine, Droplet, Lock } from 'lucide-react'
 import type { LunchSet, Beverage, Lang } from '../types'
 import { formatPrice } from '../types'
-import { t } from '../locales/translations'
+import { t, localizeIngredient } from '../locales/translations'
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'
 
@@ -14,6 +14,8 @@ interface SetDetailModalProps {
   lang: Lang
   beverage: Beverage
   onBeverageChange: (beverage: Beverage) => void
+  excludedIngredients: string[]
+  onToggleExcluded: (name: string) => void
 }
 
 /** Форматирование макроса */
@@ -65,7 +67,14 @@ const SHEET_VARIANTS = {
   },
 }
 
-function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, beverage, onBeverageChange }: SetDetailModalProps) {
+function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, beverage, onBeverageChange, excludedIngredients, onToggleExcluded }: SetDetailModalProps) {
+  const includedItems = set
+    ? set.composition.filter(item => !excludedIngredients.includes(item.name))
+    : []
+  const excludedItems = set
+    ? set.composition.filter(item => excludedIngredients.includes(item.name))
+    : []
+
   return (
     <AnimatePresence>
       {isOpen && set && (
@@ -136,13 +145,51 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, beverage, onBev
 
               {/* Состав — аккуратные плашки */}
               <div className="modal-sheet__composition">
-                {set.composition.map((item) => (
-                  <div key={item.name} className="modal-sheet__chip">
-                    <UtensilsCrossed size={14} strokeWidth={2.2} />
-                    <span>{item.name}</span>
-                  </div>
-                ))}
+                {includedItems.map((item) => {
+                  const isMain = item.optional !== true
+                  const chipClass = `modal-sheet__chip${isMain ? ' modal-sheet__chip--locked' : ' modal-sheet__chip--clickable'}`
+                  return (
+                    <motion.button
+                      key={item.name}
+                      type="button"
+                      disabled={isMain}
+                      className={chipClass}
+                      title={isMain ? t(lang, 'mainDishLocked') : undefined}
+                      onClick={() => onToggleExcluded(item.name)}
+                      whileTap={isMain ? undefined : { scale: 0.95 }}
+                    >
+                      <span className="modal-sheet__chip-icon">{item.icon}</span>
+                      <span>{localizeIngredient(lang, item.name)}</span>
+                      {isMain && <Lock size={12} strokeWidth={2.5} />}
+                    </motion.button>
+                  )
+                })}
               </div>
+
+              {excludedItems.length === 0 && (
+                <span className="modal-sheet__excluded-hint">{t(lang, 'excludeHint')}</span>
+              )}
+
+              {/* Исключённые ингредиенты */}
+              {excludedItems.length > 0 && (
+                <div className="modal-sheet__excluded">
+                  <span className="modal-sheet__excluded-label">{t(lang, 'excludedIngredients')}</span>
+                  <div className="modal-sheet__excluded-chips">
+                    {excludedItems.map((item) => (
+                      <motion.button
+                        key={item.name}
+                        type="button"
+                        className="modal-sheet__chip modal-sheet__chip--excluded"
+                        onClick={() => onToggleExcluded(item.name)}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <span className="modal-sheet__chip-icon">{item.icon}</span>
+                        <span>{localizeIngredient(lang, item.name)}</span>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Выбор напитка — стильные pill-кнопки */}
               <div className="beverage-select">

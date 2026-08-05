@@ -586,6 +586,39 @@ body {
   font-size: 16px;
 }
 
+/* Кликабельный input счётчика (ручной ввод) */
+.counter__input {
+  width: 56px;
+  min-width: 56px;
+  height: 32px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 16px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  outline: none;
+  -moz-appearance: textfield;
+  appearance: textfield;
+  border-radius: 8px;
+  transition: box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.counter__input::-webkit-outer-spin-button,
+.counter__input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.counter__input:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.counter__input:focus {
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.35);
+}
+
 .counter--sm .counter__btn {
   width: 28px;
   height: 28px;
@@ -901,6 +934,12 @@ body {
   margin-top: 2px;
 }
 
+.cart__item-desc--excluded {
+  color: var(--brand-dark);
+  font-weight: 600;
+  font-size: 12px;
+}
+
 .cart__item-sum {
   font-weight: 800;
   font-size: 15px;
@@ -1199,6 +1238,85 @@ body {
   font-size: 13px;
   font-weight: 600;
   color: var(--text);
+  border: none;
+  font-family: inherit;
+}
+
+.modal-sheet__chip-icon {
+  line-height: 1;
+}
+
+/* Второстепенный ингредиент — кликабелен */
+.modal-sheet__chip--clickable {
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.modal-sheet__chip--clickable:hover {
+  background: var(--brand-light);
+  color: var(--brand-dark);
+  box-shadow: 0 0 0 1.5px var(--brand);
+}
+
+/* Основное блюдо — заблокировано от исключения */
+.modal-sheet__chip--locked {
+  cursor: not-allowed;
+  opacity: 0.92;
+}
+
+.modal-sheet__chip--locked:hover {
+  background: rgba(0, 0, 0, 0.045);
+}
+
+/* Исключённый ингредиент — серый, возвращается кликом */
+.modal-sheet__chip--excluded {
+  background: #f3f4f6;
+  color: var(--text-muted);
+  opacity: 0.75;
+  text-decoration: line-through;
+  cursor: pointer;
+  border: 1px dashed #d1d5db;
+  transition: opacity 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.modal-sheet__chip--excluded:hover {
+  opacity: 1;
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+/* Блок «Без этих ингредиентов» */
+.modal-sheet__excluded {
+  margin: 14px 0 8px;
+  padding: 12px 14px;
+  background: #fafafa;
+  border: 1px dashed #e5e7eb;
+  border-radius: 14px;
+}
+
+.modal-sheet__excluded-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 8px;
+}
+
+.modal-sheet__excluded-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.modal-sheet__excluded-hint {
+  display: block;
+  margin: 10px 2px 2px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
 }
 
 /* ---------- Выбор напитка ---------- */
