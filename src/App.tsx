@@ -7,6 +7,7 @@ import { MONTHLY_SETS, SET_PRICE } from './data/mockMenu'
 import type { CartState, Screen, PaymentMethod, Beverage, Lang } from './types'
 import { formatPrice } from './types'
 import { t } from './locales/translations'
+import { showTelegramAlert } from './lib/telegram'
 
 const MAX_WORK_DAYS = MONTHLY_SETS.length
 
@@ -81,6 +82,18 @@ function App() {
     })
   }
 
+  const handlePortionsChange = (setId: string | number, portions: number) => {
+    const clamped = Math.max(1, portions)
+    setCartState(prev => {
+      const item = prev[setId]
+      if (!item) return prev
+      return {
+        ...prev,
+        [setId]: { ...item, portions: clamped },
+      }
+    })
+  }
+
   const handleExcludeIngredients = (setId: string | number, excluded: string[]) => {
     setCartState(prev => {
       const item = prev[setId]
@@ -127,33 +140,46 @@ function App() {
   const totalItems = totalPortionsFromActive * employeeCount
 
   const handlePlaceOrder = (method: PaymentMethod) => {
-    const methodLabels: Record<PaymentMethod, string> = {
-      corporate: t(lang, 'corporateLabel'),
-      card: t(lang, 'cardLabel'),
-      cash: t(lang, 'cashLabel'),
-    }
-    const lines = Object.entries(cartState)
-      .filter(([, item]) => item?.active)
-      .map(([id, item]) => ({
-        day: Number(id),
-        portions: item?.portions ?? 1,
-        beverage: item?.beverage ?? 'Вода',
-        excludedIngredients: item?.excludedIngredients ?? [],
+    try {
+      const methodLabels: Record<PaymentMethod, string> = {
+        corporate: t(lang, 'corporateLabel'),
+        card: t(lang, 'cardLabel'),
+        cash: t(lang, 'cashLabel'),
+      }
+      const lines = Object.entries(cartState)
+        .filter(([, item]) => item?.active)
+        .map(([id, item]) => {
+          const set = MONTHLY_SETS.find(s => String(s.id) === id)
+          const portions = item?.portions ?? 1
+          const totalPortions = portions * employeeCount
+          return {
+            day: Number(id),
+            setName: set?.name,
+            portions,
+            beverage: item?.beverage ?? 'Вода',
+            excludedIngredients: item?.excludedIngredients ?? [],
+            unitPrice: set?.price ?? SET_PRICE,
+            lineTotal: (set?.price ?? SET_PRICE) * totalPortions,
+          }
+        })
+      console.log('Заказ оформлен:', {
+        employeeCount,
+        workDaysCount,
+        activeDays,
+        lines,
+        totalMonthlyPrice,
+        paymentMethod: method,
+      })
+      showTelegramAlert(t(lang, 'orderAlert', {
+        employees: employeeCount,
+        method: methodLabels[method],
+        price: formatPrice(totalMonthlyPrice),
       }))
-    console.log('Заказ оформлен:', {
-      employeeCount,
-      workDaysCount,
-      activeDays,
-      lines,
-      totalMonthlyPrice,
-      paymentMethod: method,
-    })
-    alert(t(lang, 'orderAlert', {
-      employees: employeeCount,
-      method: methodLabels[method],
-      price: formatPrice(totalMonthlyPrice),
-    }))
-    setScreen('success')
+      setScreen('success')
+    } catch (error) {
+      console.error('Ошибка при оформлении заказа:', error)
+      showTelegramAlert(t(lang, 'orderError'))
+    }
   }
 
   const handleNewOrder = () => {
@@ -189,6 +215,7 @@ function App() {
           onEmployeeCountChange={handleEmployeeCountChange}
           onWorkDaysSet={handleWorkDaysSet}
           onBeverageChange={handleBeverageChange}
+          onPortionsChange={handlePortionsChange}
           onExcludeIngredients={handleExcludeIngredients}
           onGoToCart={() => setScreen('cart')}
           onLangChange={handleLangChange}

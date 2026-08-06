@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { motion } from 'framer-motion'
 import { UtensilsCrossed, LeafyGreen, Croissant, Wine } from 'lucide-react'
 import type { LunchSet, Lang } from '../types'
@@ -11,7 +12,7 @@ interface SetCardProps {
   index: number
   active: boolean
   lang: Lang
-  onSelect?: () => void
+  onSelect?: (id: string | number) => void
 }
 
 function getCompositionIcon(name: string) {
@@ -34,7 +35,7 @@ function SetCard({ set, index, active, lang, onSelect }: SetCardProps) {
         ease: [0.25, 0.46, 0.45, 0.94],
       }}
       whileHover={active ? { y: -4, scale: 1.01, transition: { duration: 0.25, ease: 'easeOut' } } : undefined}
-      onClick={onSelect}
+      onClick={() => onSelect?.(set.id)}
       style={{ cursor: 'pointer' }}
     >
       {/* Изображение сета — баннер во всю ширину */}
@@ -97,4 +98,4 @@ function SetCard({ set, index, active, lang, onSelect }: SetCardProps) {
   )
 }
 
-export default SetCard
+export default memo(SetCard)

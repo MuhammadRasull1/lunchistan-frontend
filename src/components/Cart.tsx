@@ -89,7 +89,7 @@ function Cart({
       ) : (
         <>
           <motion.p
-            style={{ fontSize: '15px', color: '#6b7280', marginBottom: '16px' }}
+            style={{ fontSize: '15px', color: 'var(--text-muted)', marginBottom: '16px' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.15, duration: 0.4 }}
@@ -136,7 +136,7 @@ function Cart({
                 </div>
                 <div className="cart__item-sum">
                   <div>{totalPortions} × {formatPrice(set.price)}</div>
-                  <div style={{ color: '#f97316' }}>{formatPrice(set.price * totalPortions)}</div>
+                  <div style={{ color: 'var(--brand)' }}>{formatPrice(set.price * totalPortions)}</div>
                 </div>
               </motion.li>
             ))}

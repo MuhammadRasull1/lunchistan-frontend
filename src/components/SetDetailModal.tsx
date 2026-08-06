@@ -1,8 +1,9 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Flame, Beef, Droplets, Wheat, Check, Wine, Droplet, Lock } from 'lucide-react'
+import { X, Flame, Beef, Droplets, Wheat, Check, Wine, Droplet, Lock, Users } from 'lucide-react'
 import type { LunchSet, Beverage, Lang } from '../types'
 import { formatPrice } from '../types'
 import { t, localizeIngredient } from '../locales/translations'
+import Stepper from './Stepper'
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'
 
@@ -14,6 +15,8 @@ interface SetDetailModalProps {
   lang: Lang
   beverage: Beverage
   onBeverageChange: (beverage: Beverage) => void
+  portions: number
+  onPortionsChange: (portions: number) => void
   excludedIngredients: string[]
   onToggleExcluded: (name: string) => void
 }
@@ -67,7 +70,7 @@ const SHEET_VARIANTS = {
   },
 }
 
-function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, beverage, onBeverageChange, excludedIngredients, onToggleExcluded }: SetDetailModalProps) {
+function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, beverage, onBeverageChange, portions, onPortionsChange, excludedIngredients, onToggleExcluded }: SetDetailModalProps) {
   const includedItems = set
     ? set.composition.filter(item => !excludedIngredients.includes(item.name))
     : []
@@ -216,6 +219,21 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, beverage, onBev
                     )
                   })}
                 </div>
+              </div>
+
+              {/* Порций на сотрудника */}
+              <div className="portions-select">
+                <span className="portions-select__label">
+                  <Users size={14} strokeWidth={2.5} />
+                  {t(lang, 'portionsLabel')}
+                </span>
+                <Stepper
+                  value={portions}
+                  min={1}
+                  onSet={onPortionsChange}
+                  ariaDecrease={t(lang, 'stepDecrease')}
+                  ariaIncrease={t(lang, 'stepIncrease')}
+                />
               </div>
 
               {/* KBJU — Пищевая ценность */}

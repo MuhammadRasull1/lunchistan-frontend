@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { motion } from 'framer-motion'
 import type { LunchSet, CartState, Lang, SetCategory, Beverage } from '../types'
 import { formatPrice } from '../types'
@@ -25,6 +25,7 @@ interface CatalogProps {
   onEmployeeCountChange: (count: number) => void
   onWorkDaysSet: (count: number) => void
   onBeverageChange: (setId: string | number, beverage: Beverage) => void
+  onPortionsChange: (setId: string | number, portions: number) => void
   onExcludeIngredients: (setId: string | number, excluded: string[]) => void
   onGoToCart: () => void
   onLangChange: (lang: Lang) => void
@@ -53,6 +54,7 @@ function Catalog({
   onEmployeeCountChange,
   onWorkDaysSet,
   onBeverageChange,
+  onPortionsChange,
   onExcludeIngredients,
   onGoToCart,
   onLangChange,
@@ -82,10 +84,10 @@ function Catalog({
     ? sets
     : sets.filter(s => s.category === activeCategory)
 
-  const handleOpenModal = (setId: string | number) => {
+  const handleOpenModal = useCallback((setId: string | number) => {
     setSelectedSetId(setId)
     setExcludedIngredients(cartState[setId]?.excludedIngredients ?? [])
-  }
+  }, [cartState])
 
   const handleCloseModal = () => {
     setSelectedSetId(null)
@@ -275,7 +277,7 @@ function Catalog({
               set={set}
               active={active}
               lang={lang}
-              onSelect={() => handleOpenModal(set.id)}
+              onSelect={handleOpenModal}
             />
           )
         })}
@@ -317,6 +319,10 @@ function Catalog({
         beverage={selectedSetId ? cartState[selectedSetId]?.beverage ?? 'Вода' : 'Вода'}
         onBeverageChange={(beverage) => {
           if (selectedSetId) onBeverageChange(selectedSetId, beverage)
+        }}
+        portions={selectedSetId ? cartState[selectedSetId]?.portions ?? 1 : 1}
+        onPortionsChange={(portions) => {
+          if (selectedSetId) onPortionsChange(selectedSetId, portions)
         }}
         excludedIngredients={excludedIngredients}
         onToggleExcluded={handleToggleExcluded}

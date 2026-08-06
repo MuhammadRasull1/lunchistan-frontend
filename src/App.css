@@ -1,12 +1,21 @@
 :root {
+  /* Брендовые акценты — сохраняются вне зависимости от темы Telegram */
   --brand: #f97316;
   --brand-dark: #ea580c;
   --brand-light: #fff7ed;
-  --text: #1f2937;
-  --text-muted: #6b7280;
+
+  /* Базовые цвета — подхватывают тему Telegram WebApp (var(--tg-theme-*)),
+     если приложение открыто в Telegram; иначе используется текущий фирменный fallback. */
+  --text: var(--tg-theme-text-color, #1f2937);
+  --text-muted: var(--tg-theme-hint-color, #6b7280);
   --border: #e5e7eb;
-  --card-bg: #ffffff;
-  --bg: #f6f7f9;
+  --card-bg: var(--tg-theme-secondary-bg-color, #ffffff);
+  --bg: var(--tg-theme-bg-color, #f6f7f9);
+  --btn-primary-bg: var(--tg-theme-button-color, var(--brand));
+  --btn-primary-text: var(--tg-theme-button-text-color, #ffffff);
+  --link: var(--tg-theme-link-color, var(--brand));
+  --destructive: var(--tg-theme-destructive-text-color, #ef4444);
+
   --radius: 16px;
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
@@ -65,14 +74,19 @@ body {
 }
 
 .btn--primary {
-  background: var(--brand);
-  color: #fff;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
   box-shadow: var(--shadow-brand);
 }
 
 .btn--primary:hover {
   background: var(--brand-dark);
   transform: translateY(-1px);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
 }
 
 .btn--lg {
@@ -162,7 +176,7 @@ body {
   overflow-x: auto;
   padding: 6px;
   margin: 0 0 24px;
-  background: #fff;
+  background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
@@ -171,6 +185,7 @@ body {
 .tabs__tab {
   flex: 1 1 auto;
   min-width: 64px;
+  min-height: 44px;
   border: none;
   background: transparent;
   color: var(--text-muted);
@@ -179,7 +194,7 @@ body {
   padding: 12px 18px;
   border-radius: 12px;
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .tabs__tab:hover {
@@ -190,6 +205,7 @@ body {
 .tabs__tab--active {
   background: var(--brand);
   color: #fff;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.35);
 }
 
 .tabs__tab--active:hover {
@@ -539,11 +555,11 @@ body {
 }
 
 .counter__btn {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border: none;
   border-radius: 50%;
-  background: #fff;
+  background: var(--card-bg);
   color: var(--brand-dark);
   font-size: 20px;
   font-weight: 700;
@@ -590,7 +606,7 @@ body {
 .counter__input {
   width: 56px;
   min-width: 56px;
-  height: 32px;
+  height: 36px;
   text-align: center;
   font-weight: 800;
   font-size: 16px;
@@ -684,9 +700,9 @@ body {
 }
 
 .btn--outline-danger:hover {
-  border-color: #ef4444;
+  border-color: var(--destructive);
   background: #fef2f2;
-  color: #dc2626;
+  color: var(--destructive);
 }
 
 .subscription__calc {
@@ -969,9 +985,10 @@ body {
   align-items: center;
   gap: 10px;
   padding: 16px;
+  min-height: 44px;
   border: 1.5px solid var(--border);
   border-radius: 14px;
-  background: #fff;
+  background: var(--card-bg);
   cursor: pointer;
   font-weight: 600;
   font-size: 15px;
@@ -1015,7 +1032,7 @@ body {
 .success {
   max-width: 460px;
   margin: 40px auto 0;
-  background: #fff;
+  background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-md);
@@ -1133,7 +1150,7 @@ body {
   bottom: 0;
   z-index: 210;
   max-height: 85vh;
-  background: #ffffff;
+  background: var(--card-bg);
   border-radius: 24px 24px 0 0;
   box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.12);
   display: flex;
@@ -1230,7 +1247,8 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 6px 12px 6px 10px;
+  min-height: 36px;
+  padding: 8px 14px 8px 11px;
   background: rgba(0, 0, 0, 0.045);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
@@ -1342,18 +1360,19 @@ body {
 .beverage-pill {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 8px 16px;
+  padding: 10px 16px;
+  min-height: 44px;
   border: 1.5px solid var(--border);
   border-radius: 999px;
-  background: #fff;
+  background: var(--card-bg);
   color: var(--text-muted);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   flex: 1;
-  justify-content: center;
 }
 
 .beverage-pill:hover {
@@ -1373,6 +1392,23 @@ body {
   background: var(--brand-dark);
   border-color: var(--brand-dark);
   color: #fff;
+}
+
+/* ---------- Количество порций ---------- */
+.portions-select {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 14px 0 8px;
+}
+
+.portions-select__label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
 }
 
 /* KBJU блок */

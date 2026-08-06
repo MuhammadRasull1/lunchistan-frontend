@@ -71,6 +71,7 @@ const translations: Record<Lang, Record<string, string>> = {
     pay: 'Оплатить {price}',
     day: 'День',
     portionsPerEmployee: 'порц./сотр.',
+    portionsLabel: 'Порций на сотрудника',
 
     // Success
     orderTitle: 'Заказ оформлен!',
@@ -86,6 +87,7 @@ const translations: Record<Lang, Record<string, string>> = {
     corporateLabel: 'Перечислением (Для юрлиц)',
     cardLabel: 'Перевод на карту (P2P)',
     cashLabel: 'Наличными курьеру',
+    orderError: 'Не удалось оформить заказ. Попробуйте ещё раз.',
 
     // Language
     langRu: 'RU',
@@ -162,6 +164,7 @@ const translations: Record<Lang, Record<string, string>> = {
     pay: "{price} to'lash",
     day: 'Kun',
     portionsPerEmployee: 'pors./xod.',
+    portionsLabel: 'Xodimga porsiya',
 
     // Success
     orderTitle: "Buyurtma qabul qilindi!",
@@ -177,6 +180,7 @@ const translations: Record<Lang, Record<string, string>> = {
     corporateLabel: "Ko'chirma orqali",
     cardLabel: "Kartaga o'tkazma",
     cashLabel: "Naqd pul",
+    orderError: "Buyurtmani rasmiylashtirib bo'lmadi. Qaytadan urinib ko'ring.",
 
     // Language
     langRu: 'RU',
