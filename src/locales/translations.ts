@@ -84,7 +84,7 @@ const translations: Record<Lang, Record<string, string>> = {
     newOrder: 'Сделать новый заказ',
 
     // Sticky bar label
-    stickyBarLabel: '{active} из {total} дней · {employees} сотрудников · {portions} порций',
+    stickyBarLabel: '{active}/{total} дн. · {employees} чел. · {portions} порц.',
 
     // Order alert
     orderAlert: 'Предзаказ на {employees} сотрудников оформлен!\nСпособ оплаты: {method}\nОбщая сумма: {price}',
@@ -181,7 +181,7 @@ const translations: Record<Lang, Record<string, string>> = {
     newOrder: 'Yangi buyurtma',
 
     // Sticky bar label
-    stickyBarLabel: '{active}/{total} kun · {employees} xodim · {portions} porsiya',
+    stickyBarLabel: '{active}/{total} kun · {employees} xodim · {portions} pors.',
 
     // Order alert
     orderAlert: "{employees} xodim uchun buyurtma rasmiylashtirildi!\nTo'lov usuli: {method}\nUmumiy summa: {price}",

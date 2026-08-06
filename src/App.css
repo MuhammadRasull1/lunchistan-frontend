@@ -20,6 +20,9 @@
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
   --shadow-brand: 0 6px 18px rgba(249, 115, 22, 0.35);
+
+  /* Отступ под системные жесты/чёлку устройства (iOS home indicator и т.п.) */
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 * {
@@ -37,7 +40,7 @@ body {
 .app {
   max-width: 1080px;
   margin: 0 auto;
-  padding: 32px 20px 140px;
+  padding: 32px 20px calc(150px + var(--safe-bottom));
 }
 
 /* ---------- Brand ---------- */
@@ -752,7 +755,7 @@ body {
   position: fixed;
   left: 20px;
   right: 20px;
-  bottom: 20px;
+  bottom: calc(20px + var(--safe-bottom));
   margin: 0 auto;
   max-width: 640px;
   width: auto;
@@ -793,12 +796,19 @@ body {
   line-height: 1.2;
 }
 
+/* Информационный режим: кнопка «Оформить» скрыта, так как оформление
+   уже доступно через нативный Telegram MainButton */
+.sticky-bar--info-only .sticky-bar__info {
+  align-items: center;
+  text-align: center;
+}
+
 /* Адаптация для Telegram Mini App / узких экранов */
 @media (max-width: 480px) {
   .sticky-bar {
     left: 12px;
     right: 12px;
-    bottom: 12px;
+    bottom: calc(12px + var(--safe-bottom));
     padding: 12px 14px;
     flex-direction: column;
     gap: 10px;

@@ -72,6 +72,10 @@ function Catalog({
     .reduce((sum, entry) => sum + (entry[1]?.portions ?? 1), 0)
   const totalItems = totalPortions * employeeCount
 
+  // Внутри Telegram оформление уже доступно через нативный MainButton —
+  // кастомная кнопка в нижней панели в этом случае не дублируется.
+  const hasMainButton = !!getTelegramWebApp()?.MainButton
+
   // Дни с кастомизацией (нестандартные порции, напиток или исключённые ингредиенты)
   const customizedDays = sets.filter(s => {
     const item = cartState[s.id]
@@ -332,7 +336,7 @@ function Catalog({
       {/* Нижняя панель */}
       {activeDays > 0 && totalPortions > 0 && (
         <motion.div
-          className="sticky-bar"
+          className={`sticky-bar${hasMainButton ? ' sticky-bar--info-only' : ''}`}
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: 'easeOut' }}
@@ -343,15 +347,17 @@ function Catalog({
             </span>
             <span className="sticky-bar__total">{formatPrice(totalMonthlyPrice)}</span>
           </div>
-          <motion.button
-            type="button"
-            className="btn btn--primary"
-            onClick={onGoToCart}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-          >
-            {t(lang, 'order')}
-          </motion.button>
+          {!hasMainButton && (
+            <motion.button
+              type="button"
+              className="btn btn--primary"
+              onClick={onGoToCart}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+            >
+              {t(lang, 'order')}
+            </motion.button>
+          )}
         </motion.div>
       )}
 
