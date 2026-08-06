@@ -43,6 +43,7 @@ const translations: Record<Lang, Record<string, string>> = {
     excludedIngredients: 'Без этих ингредиентов',
     mainDishLocked: 'Основное блюдо нельзя исключить',
     excludeHint: 'Нажмите на ингредиент, чтобы исключить его из сета',
+    beverageExcludedHint: 'Напиток исключён из сета — выбор недоступен',
 
     // Detail modal
     close: 'Закрыть',
@@ -136,6 +137,7 @@ const translations: Record<Lang, Record<string, string>> = {
     excludedIngredients: 'Bu ingredientlarsiz',
     mainDishLocked: "Asosiy taomni chiqarib bo'lmaydi",
     excludeHint: "Ingredientni chiqarib tashlash uchun ustiga bosing",
+    beverageExcludedHint: "Ichimlik setdan chiqarib tashlangan — tanlab bo'lmaydi",
 
     // Detail modal
     close: 'Yopish',

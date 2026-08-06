@@ -1357,6 +1357,14 @@ body {
   gap: 8px;
 }
 
+.beverage-select__hint {
+  display: block;
+  margin: 8px 2px 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
 .beverage-pill {
   display: inline-flex;
   align-items: center;
@@ -1392,6 +1400,17 @@ body {
   background: var(--brand-dark);
   border-color: var(--brand-dark);
   color: #fff;
+}
+
+.beverage-pill:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.beverage-pill:disabled:hover {
+  border-color: var(--border);
+  background: var(--card-bg);
+  color: var(--text-muted);
 }
 
 /* ---------- Количество порций ---------- */

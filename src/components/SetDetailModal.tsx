@@ -77,6 +77,7 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, beverage, onBev
   const excludedItems = set
     ? set.composition.filter(item => excludedIngredients.includes(item.name))
     : []
+  const beverageExcluded = excludedIngredients.includes('Напиток')
 
   return (
     <AnimatePresence>
@@ -195,22 +196,25 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, beverage, onBev
               )}
 
               {/* Выбор напитка — стильные pill-кнопки */}
-              <div className="beverage-select">
+              <div className={`beverage-select${beverageExcluded ? ' beverage-select--disabled' : ''}`}>
                 <span className="beverage-select__label">
                   <Wine size={14} strokeWidth={2.5} />
                   {t(lang, 'beverage')}
                 </span>
-                <div className="beverage-select__pills">
+                <div className="beverage-select__pills" aria-disabled={beverageExcluded}>
                   {BEVERAGE_OPTIONS.map(opt => {
-                    const active = beverage === opt.value
+                    const active = !beverageExcluded && beverage === opt.value
                     const Icon = opt.icon
                     return (
                       <motion.button
                         key={opt.value}
                         type="button"
+                        disabled={beverageExcluded}
                         className={`beverage-pill${active ? ' beverage-pill--active' : ''}`}
-                        onClick={() => onBeverageChange(opt.value)}
-                        whileTap={{ scale: 0.94 }}
+                        onClick={() => {
+                          if (!beverageExcluded) onBeverageChange(opt.value)
+                        }}
+                        whileTap={beverageExcluded ? undefined : { scale: 0.94 }}
                         transition={{ duration: 0.15 }}
                       >
                         <Icon size={16} strokeWidth={active ? 2.8 : 2.2} />
@@ -219,6 +223,9 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, beverage, onBev
                     )
                   })}
                 </div>
+                {beverageExcluded && (
+                  <span className="beverage-select__hint">{t(lang, 'beverageExcludedHint')}</span>
+                )}
               </div>
 
               {/* Порций на сотрудника */}

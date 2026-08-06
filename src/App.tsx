@@ -152,12 +152,14 @@ function App() {
           const set = MONTHLY_SETS.find(s => String(s.id) === id)
           const portions = item?.portions ?? 1
           const totalPortions = portions * employeeCount
+          const excludedIngredients = item?.excludedIngredients ?? []
+          const beverageExcluded = excludedIngredients.includes('Напиток')
           return {
             day: Number(id),
             setName: set?.name,
             portions,
-            beverage: item?.beverage ?? 'Вода',
-            excludedIngredients: item?.excludedIngredients ?? [],
+            beverage: beverageExcluded ? null : item?.beverage ?? 'Вода',
+            excludedIngredients,
             unitPrice: set?.price ?? SET_PRICE,
             lineTotal: (set?.price ?? SET_PRICE) * totalPortions,
           }
