@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import type { LunchSet, CartState, Lang, SetCategory, Beverage } from '../types'
 import { formatPrice } from '../types'
@@ -7,6 +7,7 @@ import SetCard from './SetCard'
 import SetDetailModal from './SetDetailModal'
 import AnimatedCount from './AnimatedCount'
 import Stepper from './Stepper'
+import { getTelegramWebApp, hapticImpact } from '../lib/telegram'
 
 type CategoryFilter = SetCategory | 'all'
 
@@ -25,6 +26,7 @@ interface CatalogProps {
   onEmployeeCountChange: (count: number) => void
   onWorkDaysSet: (count: number) => void
   onBeverageChange: (setId: string | number, beverage: Beverage) => void
+  onApplyBeverageToAll: (beverage: Beverage) => void
   onPortionsChange: (setId: string | number, portions: number) => void
   onExcludeIngredients: (setId: string | number, excluded: string[]) => void
   onGoToCart: () => void
@@ -54,6 +56,7 @@ function Catalog({
   onEmployeeCountChange,
   onWorkDaysSet,
   onBeverageChange,
+  onApplyBeverageToAll,
   onPortionsChange,
   onExcludeIngredients,
   onGoToCart,
@@ -68,6 +71,13 @@ function Catalog({
     .filter(([id, item]) => visibleIds.has(id) && item?.active)
     .reduce((sum, entry) => sum + (entry[1]?.portions ?? 1), 0)
   const totalItems = totalPortions * employeeCount
+
+  // Дни с кастомизацией (нестандартные порции, напиток или исключённые ингредиенты)
+  const customizedDays = sets.filter(s => {
+    const item = cartState[s.id]
+    if (!item) return false
+    return item.portions !== 1 || item.beverage !== 'Вода' || item.excludedIngredients.length > 0
+  }).length
 
   // Состояние модалки детализации сета
   const [selectedSetId, setSelectedSetId] = useState<string | number | null>(null)
@@ -85,6 +95,7 @@ function Catalog({
     : sets.filter(s => s.category === activeCategory)
 
   const handleOpenModal = useCallback((setId: string | number) => {
+    hapticImpact('light')
     setSelectedSetId(setId)
     setExcludedIngredients(cartState[setId]?.excludedIngredients ?? [])
   }, [cartState])
@@ -95,6 +106,7 @@ function Catalog({
 
   const handleModalConfirm = () => {
     if (selectedSetId) {
+      hapticImpact('light')
       // Убеждаемся, что день активен
       if (!cartState[selectedSetId]?.active) {
         onToggleDay(selectedSetId)
@@ -109,6 +121,32 @@ function Catalog({
       prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name],
     )
   }
+
+  // Нативная кнопка Telegram MainButton — зеркалит кнопку «Оформить предзаказ»
+  const onGoToCartRef = useRef(onGoToCart)
+  useEffect(() => { onGoToCartRef.current = onGoToCart }, [onGoToCart])
+
+  useEffect(() => {
+    const mainButton = getTelegramWebApp()?.MainButton
+    if (!mainButton) return
+
+    const handleClick = () => onGoToCartRef.current()
+    mainButton.setText(t(lang, 'order'))
+    mainButton.onClick(handleClick)
+
+    if (activeDays > 0 && totalPortions > 0) {
+      mainButton.enable()
+      mainButton.show()
+    } else {
+      mainButton.disable()
+      mainButton.hide()
+    }
+
+    return () => {
+      mainButton.offClick(handleClick)
+      mainButton.hide()
+    }
+  }, [lang, activeDays, totalPortions])
 
   return (
     <div className="catalog">
@@ -243,6 +281,14 @@ function Catalog({
             <span>{t(lang, 'totalToPay')}</span>
             <span className="subscription__calc-value">{formatPrice(totalMonthlyPrice)}</span>
           </div>
+          {customizedDays > 0 && (
+            <div className="subscription__calc-row">
+              <span>{t(lang, 'customizedDaysLabel')}</span>
+              <span className="subscription__calc-value">
+                <AnimatedCount value={customizedDays} /> {t(lang, 'from')} {sets.length}
+              </span>
+            </div>
+          )}
         </motion.div>
       </section>
 
@@ -320,6 +366,7 @@ function Catalog({
         onBeverageChange={(beverage) => {
           if (selectedSetId) onBeverageChange(selectedSetId, beverage)
         }}
+        onApplyBeverageToAll={onApplyBeverageToAll}
         portions={selectedSetId ? cartState[selectedSetId]?.portions ?? 1 : 1}
         onPortionsChange={(portions) => {
           if (selectedSetId) onPortionsChange(selectedSetId, portions)

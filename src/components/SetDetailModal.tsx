@@ -4,6 +4,7 @@ import type { LunchSet, Beverage, Lang } from '../types'
 import { formatPrice } from '../types'
 import { t, localizeIngredient } from '../locales/translations'
 import Stepper from './Stepper'
+import { hapticImpact } from '../lib/telegram'
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'
 
@@ -15,6 +16,7 @@ interface SetDetailModalProps {
   lang: Lang
   beverage: Beverage
   onBeverageChange: (beverage: Beverage) => void
+  onApplyBeverageToAll: (beverage: Beverage) => void
   portions: number
   onPortionsChange: (portions: number) => void
   excludedIngredients: string[]
@@ -70,7 +72,7 @@ const SHEET_VARIANTS = {
   },
 }
 
-function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, beverage, onBeverageChange, portions, onPortionsChange, excludedIngredients, onToggleExcluded }: SetDetailModalProps) {
+function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, beverage, onBeverageChange, onApplyBeverageToAll, portions, onPortionsChange, excludedIngredients, onToggleExcluded }: SetDetailModalProps) {
   const includedItems = set
     ? set.composition.filter(item => !excludedIngredients.includes(item.name))
     : []
@@ -212,7 +214,9 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, beverage, onBev
                         disabled={beverageExcluded}
                         className={`beverage-pill${active ? ' beverage-pill--active' : ''}`}
                         onClick={() => {
-                          if (!beverageExcluded) onBeverageChange(opt.value)
+                          if (beverageExcluded) return
+                          hapticImpact('light')
+                          onBeverageChange(opt.value)
                         }}
                         whileTap={beverageExcluded ? undefined : { scale: 0.94 }}
                         transition={{ duration: 0.15 }}
@@ -225,6 +229,18 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, beverage, onBev
                 </div>
                 {beverageExcluded && (
                   <span className="beverage-select__hint">{t(lang, 'beverageExcludedHint')}</span>
+                )}
+                {!beverageExcluded && (
+                  <button
+                    type="button"
+                    className="btn btn--outline beverage-select__apply-all"
+                    onClick={() => {
+                      hapticImpact('light')
+                      onApplyBeverageToAll(beverage)
+                    }}
+                  >
+                    {t(lang, 'applyBeverageToAll')}
+                  </button>
                 )}
               </div>
 

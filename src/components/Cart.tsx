@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
+import { X } from 'lucide-react'
 import type { CartState, LunchSet, PaymentMethod, Lang } from '../types'
 import { formatPrice } from '../types'
 import { t, localizeIngredient } from '../locales/translations'
+import { getTelegramWebApp, hapticImpact } from '../lib/telegram'
 
 interface CartLine {
   set: LunchSet
@@ -19,6 +21,7 @@ interface CartProps {
   lang: Lang
   onBack: () => void
   onPlaceOrder: (method: PaymentMethod) => void
+  onRemoveItem: (setId: string | number) => void
 }
 
 function Cart({
@@ -30,6 +33,7 @@ function Cart({
   lang,
   onBack,
   onPlaceOrder,
+  onRemoveItem,
 }: CartProps) {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('corporate')
 
@@ -51,6 +55,37 @@ function Cart({
     { value: 'card', label: t(lang, 'card'), icon: '💳' },
     { value: 'cash', label: t(lang, 'cash'), icon: '💵' },
   ]
+
+  const handleRemoveItem = (setId: string | number) => {
+    hapticImpact('light')
+    onRemoveItem(setId)
+  }
+
+  // Нативная кнопка Telegram MainButton — зеркалит кнопку «Оплатить»
+  const onPlaceOrderRef = useRef(onPlaceOrder)
+  useEffect(() => { onPlaceOrderRef.current = onPlaceOrder }, [onPlaceOrder])
+
+  useEffect(() => {
+    const mainButton = getTelegramWebApp()?.MainButton
+    if (!mainButton) return
+
+    const handleClick = () => onPlaceOrderRef.current(paymentMethod)
+    mainButton.setText(t(lang, 'pay', { price: formatPrice(totalMonthlyPrice) }))
+    mainButton.onClick(handleClick)
+
+    if (activeLines.length > 0) {
+      mainButton.enable()
+      mainButton.show()
+    } else {
+      mainButton.disable()
+      mainButton.hide()
+    }
+
+    return () => {
+      mainButton.offClick(handleClick)
+      mainButton.hide()
+    }
+  }, [lang, activeLines.length, totalMonthlyPrice, paymentMethod])
 
   return (
     <motion.div
@@ -138,6 +173,14 @@ function Cart({
                   <div>{totalPortions} × {formatPrice(set.price)}</div>
                   <div style={{ color: 'var(--brand)' }}>{formatPrice(set.price * totalPortions)}</div>
                 </div>
+                <button
+                  type="button"
+                  className="cart__item-remove"
+                  aria-label={t(lang, 'removeFromCart')}
+                  onClick={() => handleRemoveItem(set.id)}
+                >
+                  <X size={16} strokeWidth={2.5} />
+                </button>
               </motion.li>
             ))}
           </motion.ul>

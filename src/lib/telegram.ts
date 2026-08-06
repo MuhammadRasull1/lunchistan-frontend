@@ -2,12 +2,31 @@
  * Тонкая безопасная обёртка над window.Telegram.WebApp.
  * Вне Telegram (обычный браузер) API отсутствует — все функции no-op / graceful fallback.
  */
+export interface TelegramMainButton {
+  isVisible: boolean
+  isActive: boolean
+  setText: (text: string) => void
+  show: () => void
+  hide: () => void
+  enable: () => void
+  disable: () => void
+  onClick: (cb: () => void) => void
+  offClick: (cb: () => void) => void
+}
+
+export interface TelegramHapticFeedback {
+  impactOccurred: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void
+  notificationOccurred: (type: 'error' | 'success' | 'warning') => void
+}
+
 export interface TelegramWebApp {
   ready: () => void
   expand: () => void
   showAlert?: (message: string, callback?: () => void) => void
   themeParams?: Record<string, string>
   colorScheme?: 'light' | 'dark'
+  MainButton?: TelegramMainButton
+  HapticFeedback?: TelegramHapticFeedback
 }
 
 declare global {
@@ -48,5 +67,14 @@ export function showTelegramAlert(message: string): void {
   }
   if (typeof window !== 'undefined') {
     window.alert(message)
+  }
+}
+
+/** Лёгкая тактильная отдача для важных действий пользователя. Вне Telegram — no-op. */
+export function hapticImpact(style: 'light' | 'medium' | 'heavy' = 'light'): void {
+  try {
+    getTelegramWebApp()?.HapticFeedback?.impactOccurred(style)
+  } catch {
+    // Haptics недоступны в этом клиенте — безопасно игнорируем
   }
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import Catalog from './components/Catalog'
 import Cart from './components/Cart'
@@ -8,21 +8,44 @@ import type { CartState, Screen, PaymentMethod, Beverage, Lang } from './types'
 import { formatPrice } from './types'
 import { t } from './locales/translations'
 import { showTelegramAlert } from './lib/telegram'
+import { loadSavedOrder, saveOrder, clearSavedOrder } from './lib/orderStorage'
 
 const MAX_WORK_DAYS = MONTHLY_SETS.length
 
+function buildDefaultCartState(): CartState {
+  const initial: CartState = {}
+  MONTHLY_SETS.forEach(set => {
+    initial[set.id] = { active: true, portions: 1, beverage: 'Вода', excludedIngredients: [] }
+  })
+  return initial
+}
+
+// Читаем и валидируем сохранённую конфигурацию один раз при загрузке модуля.
+const savedOrder = loadSavedOrder()
+
 function App() {
   const [screen, setScreen] = useState<Screen>('catalog')
-  const [employeeCount, setEmployeeCount] = useState<number>(1)
-  const [workDaysCount, setWorkDaysCount] = useState<number>(MAX_WORK_DAYS)
+  const [employeeCount, setEmployeeCount] = useState<number>(() => savedOrder?.employeeCount ?? 1)
+  const [workDaysCount, setWorkDaysCount] = useState<number>(() =>
+    savedOrder ? Math.max(1, Math.min(MAX_WORK_DAYS, savedOrder.workDaysCount)) : MAX_WORK_DAYS
+  )
   const [lang, setLang] = useState<Lang>('ru')
   const [cartState, setCartState] = useState<CartState>(() => {
-    const initial: CartState = {}
-    MONTHLY_SETS.forEach(set => {
-      initial[set.id] = { active: true, portions: 1, beverage: 'Вода', excludedIngredients: [] }
-    })
-    return initial
+    const base = buildDefaultCartState()
+    if (!savedOrder) return base
+    // Восстанавливаем только известные дни меню — остальное (устаревшие id) отбрасываем.
+    const merged: CartState = { ...base }
+    for (const set of MONTHLY_SETS) {
+      const restored = savedOrder.cartState[String(set.id)]
+      if (restored) merged[set.id] = restored
+    }
+    return merged
   })
+
+  // Автосохранение текущей конфигурации заказа для восстановления при следующем запуске.
+  useEffect(() => {
+    saveOrder({ employeeCount, workDaysCount, cartState })
+  }, [employeeCount, workDaysCount, cartState])
 
   // Показываем только первые workDaysCount сетов
   const visibleSets = MONTHLY_SETS.slice(0, workDaysCount)
@@ -68,6 +91,17 @@ function App() {
         ...prev,
         [setId]: { ...item, beverage },
       }
+    })
+  }
+
+  const handleApplyBeverageToAll = (beverage: Beverage) => {
+    setCartState(prev => {
+      const next: CartState = {}
+      for (const [id, item] of Object.entries(prev)) {
+        const numId = Number(id)
+        next[id] = numId <= workDaysCount ? { ...item, beverage } : item
+      }
+      return next
     })
   }
 
@@ -185,14 +219,11 @@ function App() {
   }
 
   const handleNewOrder = () => {
-    const reset: CartState = {}
-    MONTHLY_SETS.forEach(set => {
-      reset[set.id] = { active: true, portions: 1, beverage: 'Вода', excludedIngredients: [] }
-    })
-    setCartState(reset)
+    setCartState(buildDefaultCartState())
     setEmployeeCount(1)
     setWorkDaysCount(MAX_WORK_DAYS)
     setScreen('catalog')
+    clearSavedOrder()
   }
 
   const handleLangChange = (newLang: Lang) => {
@@ -217,6 +248,7 @@ function App() {
           onEmployeeCountChange={handleEmployeeCountChange}
           onWorkDaysSet={handleWorkDaysSet}
           onBeverageChange={handleBeverageChange}
+          onApplyBeverageToAll={handleApplyBeverageToAll}
           onPortionsChange={handlePortionsChange}
           onExcludeIngredients={handleExcludeIngredients}
           onGoToCart={() => setScreen('cart')}
@@ -234,6 +266,7 @@ function App() {
           lang={lang}
           onBack={() => setScreen('catalog')}
           onPlaceOrder={handlePlaceOrder}
+          onRemoveItem={handleToggleDay}
         />
       )}
 

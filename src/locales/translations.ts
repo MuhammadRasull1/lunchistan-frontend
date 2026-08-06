@@ -24,6 +24,7 @@ const translations: Record<Lang, Record<string, string>> = {
     stepDecrease: 'Уменьшить',
     stepIncrease: 'Увеличить',
     order: 'Оформить предзаказ',
+    customizedDaysLabel: 'Дней с изменениями',
 
     // Set categories
     categoryAll: 'Все',
@@ -44,6 +45,7 @@ const translations: Record<Lang, Record<string, string>> = {
     mainDishLocked: 'Основное блюдо нельзя исключить',
     excludeHint: 'Нажмите на ингредиент, чтобы исключить его из сета',
     beverageExcludedHint: 'Напиток исключён из сета — выбор недоступен',
+    applyBeverageToAll: 'Применить выбранный напиток ко всем дням',
 
     // Detail modal
     close: 'Закрыть',
@@ -73,6 +75,7 @@ const translations: Record<Lang, Record<string, string>> = {
     day: 'День',
     portionsPerEmployee: 'порц./сотр.',
     portionsLabel: 'Порций на сотрудника',
+    removeFromCart: 'Удалить из корзины',
 
     // Success
     orderTitle: 'Заказ оформлен!',
@@ -118,6 +121,7 @@ const translations: Record<Lang, Record<string, string>> = {
     stepDecrease: 'Kamaytirish',
     stepIncrease: "Oshirish",
     order: 'Buyurtma berish',
+    customizedDaysLabel: "O'zgartirilgan kunlar",
 
     // Set categories
     categoryAll: 'Barchasi',
@@ -138,6 +142,7 @@ const translations: Record<Lang, Record<string, string>> = {
     mainDishLocked: "Asosiy taomni chiqarib bo'lmaydi",
     excludeHint: "Ingredientni chiqarib tashlash uchun ustiga bosing",
     beverageExcludedHint: "Ichimlik setdan chiqarib tashlangan — tanlab bo'lmaydi",
+    applyBeverageToAll: "Tanlangan ichimlikni barcha kunlarga qo'llash",
 
     // Detail modal
     close: 'Yopish',
@@ -167,6 +172,7 @@ const translations: Record<Lang, Record<string, string>> = {
     day: 'Kun',
     portionsPerEmployee: 'pors./xod.',
     portionsLabel: 'Xodimga porsiya',
+    removeFromCart: "Savatdan o'chirish",
 
     // Success
     orderTitle: "Buyurtma qabul qilindi!",
