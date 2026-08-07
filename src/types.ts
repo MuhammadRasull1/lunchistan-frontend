@@ -2,6 +2,8 @@ export type WeekDay = 'Пн' | 'Вт' | 'Ср' | 'Чт' | 'Пт';
 
 export type Beverage = 'Вода' | 'Компот в ассортименте';
 
+export type Salad = 'Оливье' | 'Винегрет' | 'Цезарь';
+
 export type PaymentMethod = 'corporate' | 'card' | 'cash';
 
 export type SetCategory = 'meat' | 'chicken' | 'poultry' | 'fish';
@@ -9,7 +11,7 @@ export type SetCategory = 'meat' | 'chicken' | 'poultry' | 'fish';
 export interface CompositionItem {
   name: string
   icon: string
-  /** true — второстепенный ингредиент, который можно исключить; false/undefined — основное блюдо (заблокировано) */
+  /** true — второстепенный компонент сета (не основное блюдо); false/undefined — основное блюдо (неизменяемое) */
   optional?: boolean
 }
 
@@ -42,8 +44,8 @@ export interface CartItem {
   portions: number;
   /** Выбранный напиток для этого дня */
   beverage: Beverage;
-  /** Исключённые второстепенные ингредиенты (Салат, Лепёшка, Напиток) */
-  excludedIngredients: string[];
+  /** Выбранный салат для этого дня */
+  salad: Salad;
 }
 
 export type CartState = Record<string | number, CartItem>;

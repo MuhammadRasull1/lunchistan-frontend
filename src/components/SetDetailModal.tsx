@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Flame, Beef, Droplets, Wheat, Check, Wine, Droplet, Lock, Users } from 'lucide-react'
-import type { LunchSet, Beverage, Lang } from '../types'
+import { X, Flame, Beef, Droplets, Wheat, Check, Wine, Droplet, Lock, Users, LeafyGreen } from 'lucide-react'
+import type { LunchSet, Beverage, Salad, Lang } from '../types'
 import { formatPrice } from '../types'
 import { t, localizeIngredient } from '../locales/translations'
 import Stepper from './Stepper'
@@ -17,10 +17,11 @@ interface SetDetailModalProps {
   beverage: Beverage
   onBeverageChange: (beverage: Beverage) => void
   onApplyBeverageToAll: (beverage: Beverage) => void
+  salad: Salad
+  onSaladChange: (salad: Salad) => void
+  onApplySaladToAll: (salad: Salad) => void
   portions: number
   onPortionsChange: (portions: number) => void
-  excludedIngredients: string[]
-  onToggleExcluded: (name: string) => void
 }
 
 /** Форматирование макроса */
@@ -50,10 +51,68 @@ function MacroCard({ icon: Icon, label, value, unit, color }: {
   )
 }
 
-const BEVERAGE_OPTIONS: { value: Beverage; label: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number }> }[] = [
-  { value: 'Вода', label: 'Вода', icon: Droplet },
-  { value: 'Компот в ассортименте', label: 'Компот', icon: Wine },
+const BEVERAGE_OPTIONS: { value: Beverage; icon: React.ComponentType<{ size?: number; strokeWidth?: number }> }[] = [
+  { value: 'Вода', icon: Droplet },
+  { value: 'Компот в ассортименте', icon: Wine },
 ]
+
+const SALAD_OPTIONS: { value: Salad; icon: React.ComponentType<{ size?: number; strokeWidth?: number }> }[] = [
+  { value: 'Оливье', icon: LeafyGreen },
+  { value: 'Винегрет', icon: LeafyGreen },
+  { value: 'Цезарь', icon: LeafyGreen },
+]
+
+/** Группа сегментированных пилюль для выбора одного варианта из фиксированного списка (салат/напиток) */
+function OptionPillGroup<T extends string>({ icon: SectionIcon, label, options, value, onChange, onApplyToAll, applyAllLabel }: {
+  icon: React.ComponentType<{ size?: number; strokeWidth?: number }>
+  label: string
+  options: { value: T; text: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number }> }[]
+  value: T
+  onChange: (value: T) => void
+  onApplyToAll: () => void
+  applyAllLabel: string
+}) {
+  return (
+    <div className="option-select">
+      <span className="option-select__label">
+        <SectionIcon size={14} strokeWidth={2.5} />
+        {label}
+      </span>
+      <div className="option-select__pills">
+        {options.map(opt => {
+          const active = value === opt.value
+          const OptIcon = opt.icon
+          return (
+            <motion.button
+              key={opt.value}
+              type="button"
+              className={`option-pill${active ? ' option-pill--active' : ''}`}
+              onClick={() => {
+                hapticImpact('light')
+                onChange(opt.value)
+              }}
+              whileTap={{ scale: 0.94 }}
+              transition={{ duration: 0.15 }}
+            >
+              <OptIcon size={16} strokeWidth={active ? 2.8 : 2.2} />
+              <span>{opt.text}</span>
+            </motion.button>
+          )
+        })}
+      </div>
+      <button
+        type="button"
+        className="btn btn--outline option-select__apply-all"
+        onClick={() => {
+          hapticImpact('light')
+          onApplyToAll()
+        }}
+      >
+        {applyAllLabel}
+      </button>
+    </div>
+  )
+}
 
 const OVERLAY_VARIANTS = {
   hidden: { opacity: 0 },
@@ -72,14 +131,10 @@ const SHEET_VARIANTS = {
   },
 }
 
-function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, beverage, onBeverageChange, onApplyBeverageToAll, portions, onPortionsChange, excludedIngredients, onToggleExcluded }: SetDetailModalProps) {
-  const includedItems = set
-    ? set.composition.filter(item => !excludedIngredients.includes(item.name))
+function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, beverage, onBeverageChange, onApplyBeverageToAll, salad, onSaladChange, onApplySaladToAll, portions, onPortionsChange }: SetDetailModalProps) {
+  const fixedItems = set
+    ? set.composition.filter(item => item.name !== 'Салат' && item.name !== 'Напиток')
     : []
-  const excludedItems = set
-    ? set.composition.filter(item => excludedIngredients.includes(item.name))
-    : []
-  const beverageExcluded = excludedIngredients.includes('Напиток')
 
   return (
     <AnimatePresence>
@@ -149,100 +204,45 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, beverage, onBev
                 <span className="modal-sheet__day">{t(lang, 'day')} {set.dayNumber} · {set.weekDay}</span>
               </div>
 
-              {/* Состав — аккуратные плашки */}
+              {/* Состав — фиксированные, неизменяемые плашки */}
               <div className="modal-sheet__composition">
-                {includedItems.map((item) => {
+                {fixedItems.map((item) => {
                   const isMain = item.optional !== true
-                  const chipClass = `modal-sheet__chip${isMain ? ' modal-sheet__chip--locked' : ' modal-sheet__chip--clickable'}`
                   return (
-                    <motion.button
+                    <div
                       key={item.name}
-                      type="button"
-                      disabled={isMain}
-                      className={chipClass}
+                      className="modal-sheet__chip modal-sheet__chip--locked"
                       title={isMain ? t(lang, 'mainDishLocked') : undefined}
-                      onClick={() => onToggleExcluded(item.name)}
-                      whileTap={isMain ? undefined : { scale: 0.95 }}
                     >
                       <span className="modal-sheet__chip-icon">{item.icon}</span>
                       <span>{localizeIngredient(lang, item.name)}</span>
                       {isMain && <Lock size={12} strokeWidth={2.5} />}
-                    </motion.button>
+                    </div>
                   )
                 })}
               </div>
 
-              {excludedItems.length === 0 && (
-                <span className="modal-sheet__excluded-hint">{t(lang, 'excludeHint')}</span>
-              )}
+              {/* Выбор салата */}
+              <OptionPillGroup
+                icon={LeafyGreen}
+                label={t(lang, 'salad')}
+                options={SALAD_OPTIONS.map(opt => ({ value: opt.value, text: opt.value, icon: opt.icon }))}
+                value={salad}
+                onChange={onSaladChange}
+                onApplyToAll={() => onApplySaladToAll(salad)}
+                applyAllLabel={t(lang, 'applySaladToAll')}
+              />
 
-              {/* Исключённые ингредиенты */}
-              {excludedItems.length > 0 && (
-                <div className="modal-sheet__excluded">
-                  <span className="modal-sheet__excluded-label">{t(lang, 'excludedIngredients')}</span>
-                  <div className="modal-sheet__excluded-chips">
-                    {excludedItems.map((item) => (
-                      <motion.button
-                        key={item.name}
-                        type="button"
-                        className="modal-sheet__chip modal-sheet__chip--excluded"
-                        onClick={() => onToggleExcluded(item.name)}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <span className="modal-sheet__chip-icon">{item.icon}</span>
-                        <span>{localizeIngredient(lang, item.name)}</span>
-                      </motion.button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Выбор напитка — стильные pill-кнопки */}
-              <div className={`beverage-select${beverageExcluded ? ' beverage-select--disabled' : ''}`}>
-                <span className="beverage-select__label">
-                  <Wine size={14} strokeWidth={2.5} />
-                  {t(lang, 'beverage')}
-                </span>
-                <div className="beverage-select__pills" aria-disabled={beverageExcluded}>
-                  {BEVERAGE_OPTIONS.map(opt => {
-                    const active = !beverageExcluded && beverage === opt.value
-                    const Icon = opt.icon
-                    return (
-                      <motion.button
-                        key={opt.value}
-                        type="button"
-                        disabled={beverageExcluded}
-                        className={`beverage-pill${active ? ' beverage-pill--active' : ''}`}
-                        onClick={() => {
-                          if (beverageExcluded) return
-                          hapticImpact('light')
-                          onBeverageChange(opt.value)
-                        }}
-                        whileTap={beverageExcluded ? undefined : { scale: 0.94 }}
-                        transition={{ duration: 0.15 }}
-                      >
-                        <Icon size={16} strokeWidth={active ? 2.8 : 2.2} />
-                        <span>{t(lang, opt.value === 'Вода' ? 'water' : 'compote')}</span>
-                      </motion.button>
-                    )
-                  })}
-                </div>
-                {beverageExcluded && (
-                  <span className="beverage-select__hint">{t(lang, 'beverageExcludedHint')}</span>
-                )}
-                {!beverageExcluded && (
-                  <button
-                    type="button"
-                    className="btn btn--outline beverage-select__apply-all"
-                    onClick={() => {
-                      hapticImpact('light')
-                      onApplyBeverageToAll(beverage)
-                    }}
-                  >
-                    {t(lang, 'applyBeverageToAll')}
-                  </button>
-                )}
-              </div>
+              {/* Выбор напитка */}
+              <OptionPillGroup
+                icon={Wine}
+                label={t(lang, 'beverage')}
+                options={BEVERAGE_OPTIONS.map(opt => ({ value: opt.value, text: t(lang, opt.value === 'Вода' ? 'water' : 'compote'), icon: opt.icon }))}
+                value={beverage}
+                onChange={onBeverageChange}
+                onApplyToAll={() => onApplyBeverageToAll(beverage)}
+                applyAllLabel={t(lang, 'applyBeverageToAll')}
+              />
 
               {/* Порций на сотрудника */}
               <div className="portions-select">

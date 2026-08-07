@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import type { LunchSet, CartState, Lang, SetCategory, Beverage } from '../types'
+import type { LunchSet, CartState, Lang, SetCategory, Beverage, Salad } from '../types'
 import { formatPrice } from '../types'
 import { t } from '../locales/translations'
 import SetCard from './SetCard'
@@ -28,7 +28,8 @@ interface CatalogProps {
   onBeverageChange: (setId: string | number, beverage: Beverage) => void
   onApplyBeverageToAll: (beverage: Beverage) => void
   onPortionsChange: (setId: string | number, portions: number) => void
-  onExcludeIngredients: (setId: string | number, excluded: string[]) => void
+  onSaladChange: (setId: string | number, salad: Salad) => void
+  onApplySaladToAll: (salad: Salad) => void
   onGoToCart: () => void
   onLangChange: (lang: Lang) => void
 }
@@ -58,7 +59,8 @@ function Catalog({
   onBeverageChange,
   onApplyBeverageToAll,
   onPortionsChange,
-  onExcludeIngredients,
+  onSaladChange,
+  onApplySaladToAll,
   onGoToCart,
   onLangChange,
 }: CatalogProps) {
@@ -76,16 +78,15 @@ function Catalog({
   // кастомная кнопка в нижней панели в этом случае не дублируется.
   const hasMainButton = !!getTelegramWebApp()?.MainButton
 
-  // Дни с кастомизацией (нестандартные порции, напиток или исключённые ингредиенты)
+  // Дни с кастомизацией (нестандартные порции, напиток или салат)
   const customizedDays = sets.filter(s => {
     const item = cartState[s.id]
     if (!item) return false
-    return item.portions !== 1 || item.beverage !== 'Вода' || item.excludedIngredients.length > 0
+    return item.portions !== 1 || item.beverage !== 'Вода' || item.salad !== 'Оливье'
   }).length
 
   // Состояние модалки детализации сета
   const [selectedSetId, setSelectedSetId] = useState<string | number | null>(null)
-  const [excludedIngredients, setExcludedIngredients] = useState<string[]>([])
 
   // Фильтр категорий меню
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all')
@@ -101,8 +102,7 @@ function Catalog({
   const handleOpenModal = useCallback((setId: string | number) => {
     hapticImpact('light')
     setSelectedSetId(setId)
-    setExcludedIngredients(cartState[setId]?.excludedIngredients ?? [])
-  }, [cartState])
+  }, [])
 
   const handleCloseModal = () => {
     setSelectedSetId(null)
@@ -115,15 +115,7 @@ function Catalog({
       if (!cartState[selectedSetId]?.active) {
         onToggleDay(selectedSetId)
       }
-      // Сохраняем исключённые ингредиенты
-      onExcludeIngredients(selectedSetId, excludedIngredients)
     }
-  }
-
-  const handleToggleExcluded = (name: string) => {
-    setExcludedIngredients(prev =>
-      prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name],
-    )
   }
 
   // Нативная кнопка Telegram MainButton — зеркалит кнопку «Оформить предзаказ»
@@ -377,8 +369,11 @@ function Catalog({
         onPortionsChange={(portions) => {
           if (selectedSetId) onPortionsChange(selectedSetId, portions)
         }}
-        excludedIngredients={excludedIngredients}
-        onToggleExcluded={handleToggleExcluded}
+        salad={selectedSetId ? cartState[selectedSetId]?.salad ?? 'Оливье' : 'Оливье'}
+        onSaladChange={(salad) => {
+          if (selectedSetId) onSaladChange(selectedSetId, salad)
+        }}
+        onApplySaladToAll={onApplySaladToAll}
       />
     </div>
   )

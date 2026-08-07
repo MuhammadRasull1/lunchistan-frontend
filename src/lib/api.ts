@@ -5,9 +5,10 @@ const API_BASE_URL = 'https://lunchistan-backend.onrender.com'
 export interface OrderLine {
   day: number
   setName?: string
+  mainDish: string
+  salad: string
+  beverage: string
   portions: number
-  beverage: string | null
-  excludedIngredients: string[]
   unitPrice: number
   lineTotal: number
 }

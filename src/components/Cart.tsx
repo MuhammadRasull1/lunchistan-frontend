@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import type { CartState, LunchSet, PaymentMethod, Lang } from '../types'
 import { formatPrice } from '../types'
-import { t, localizeIngredient } from '../locales/translations'
+import { t } from '../locales/translations'
 import { getTelegramWebApp, hapticImpact } from '../lib/telegram'
 
 interface CartLine {
@@ -51,6 +51,10 @@ function Cart({
     })
 
   const activeDays = activeLines.length
+  const canCheckout = activeLines.length > 0 && activeLines.every(({ set }) => {
+    const item = cartState[set.id]
+    return !!item?.salad && !!item?.beverage
+  })
 
   const paymentOptions: { value: PaymentMethod; label: string; icon: string }[] = [
     { value: 'corporate', label: t(lang, 'corporate'), icon: '🏢' },
@@ -77,7 +81,7 @@ function Cart({
     )
     mainButton.onClick(handleClick)
 
-    if (activeLines.length > 0 && !isSubmitting) {
+    if (canCheckout && !isSubmitting) {
       mainButton.enable()
       mainButton.show()
     } else if (activeLines.length > 0) {
@@ -92,7 +96,7 @@ function Cart({
       mainButton.offClick(handleClick)
       mainButton.hide()
     }
-  }, [lang, activeLines.length, totalMonthlyPrice, paymentMethod, isSubmitting])
+  }, [lang, activeLines.length, canCheckout, totalMonthlyPrice, paymentMethod, isSubmitting])
 
   return (
     <motion.div
@@ -167,11 +171,12 @@ function Cart({
                     {t(lang, 'day')} {set.dayNumber} · {set.weekDay} · {portions} {t(lang, 'portionsPerEmployee')}
                   </span>
                   {(() => {
-                    const excluded = cartState[set.id]?.excludedIngredients ?? []
-                    if (excluded.length === 0) return null
+                    const item = cartState[set.id]
+                    if (!item?.salad || !item?.beverage) return null
+                    const beverageLabel = t(lang, item.beverage === 'Вода' ? 'water' : 'compote')
                     return (
-                      <span className="cart__item-desc cart__item-desc--excluded">
-                        {t(lang, 'without')}: {excluded.map(n => localizeIngredient(lang, n)).join(', ')}
+                      <span className="cart__item-desc">
+                        {item.salad} · {beverageLabel}
                       </span>
                     )
                   })()}
@@ -228,11 +233,22 @@ function Cart({
             <span className="cart__summary-total">{formatPrice(totalMonthlyPrice)}</span>
           </motion.div>
 
+          {!canCheckout && (
+            <motion.p
+              className="catalog__status"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.35 }}
+            >
+              {t(lang, 'incompleteSelectionHint')}
+            </motion.p>
+          )}
+
           <motion.button
             type="button"
             className={`btn btn--primary btn--lg${isSubmitting ? ' btn--loading' : ''}`}
             onClick={() => onPlaceOrder(paymentMethod)}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !canCheckout}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.4 }}

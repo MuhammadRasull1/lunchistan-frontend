@@ -4,7 +4,7 @@ import Catalog from './components/Catalog'
 import Cart from './components/Cart'
 import Success from './components/Success'
 import { MONTHLY_SETS, SET_PRICE } from './data/mockMenu'
-import type { CartState, Screen, PaymentMethod, Beverage, Lang } from './types'
+import type { CartState, Screen, PaymentMethod, Beverage, Salad, Lang } from './types'
 import { t } from './locales/translations'
 import { showTelegramAlert } from './lib/telegram'
 import { loadSavedOrder, saveOrder, clearSavedOrder } from './lib/orderStorage'
@@ -15,7 +15,7 @@ const MAX_WORK_DAYS = MONTHLY_SETS.length
 function buildDefaultCartState(): CartState {
   const initial: CartState = {}
   MONTHLY_SETS.forEach(set => {
-    initial[set.id] = { active: true, portions: 1, beverage: 'Вода', excludedIngredients: [] }
+    initial[set.id] = { active: true, portions: 1, beverage: 'Вода', salad: 'Оливье' }
   })
   return initial
 }
@@ -129,14 +129,25 @@ function App() {
     })
   }
 
-  const handleExcludeIngredients = (setId: string | number, excluded: string[]) => {
+  const handleSaladChange = (setId: string | number, salad: Salad) => {
     setCartState(prev => {
       const item = prev[setId]
       if (!item) return prev
       return {
         ...prev,
-        [setId]: { ...item, excludedIngredients: excluded },
+        [setId]: { ...item, salad },
       }
+    })
+  }
+
+  const handleApplySaladToAll = (salad: Salad) => {
+    setCartState(prev => {
+      const next: CartState = {}
+      for (const [id, item] of Object.entries(prev)) {
+        const numId = Number(id)
+        next[id] = numId <= workDaysCount ? { ...item, salad } : item
+      }
+      return next
     })
   }
 
@@ -184,14 +195,14 @@ function App() {
           const set = MONTHLY_SETS.find(s => String(s.id) === id)
           const portions = item?.portions ?? 1
           const totalPortions = portions * employeeCount
-          const excludedIngredients = item?.excludedIngredients ?? []
-          const beverageExcluded = excludedIngredients.includes('Напиток')
+          const mainDish = set?.composition.find(c => c.optional !== true)?.name ?? set?.name ?? ''
           return {
             day: Number(id),
             setName: set?.name,
+            mainDish,
+            salad: item?.salad ?? 'Оливье',
+            beverage: item?.beverage ?? 'Вода',
             portions,
-            beverage: beverageExcluded ? null : item?.beverage ?? 'Вода',
-            excludedIngredients,
             unitPrice: set?.price ?? SET_PRICE,
             lineTotal: (set?.price ?? SET_PRICE) * totalPortions,
           }
@@ -247,7 +258,8 @@ function App() {
           onBeverageChange={handleBeverageChange}
           onApplyBeverageToAll={handleApplyBeverageToAll}
           onPortionsChange={handlePortionsChange}
-          onExcludeIngredients={handleExcludeIngredients}
+          onSaladChange={handleSaladChange}
+          onApplySaladToAll={handleApplySaladToAll}
           onGoToCart={() => setScreen('cart')}
           onLangChange={handleLangChange}
         />

@@ -40,12 +40,10 @@ const translations: Record<Lang, Record<string, string>> = {
     salad: 'Салат',
     flatbread: 'Лепёшка',
     drink: 'Напиток',
-    without: 'без',
-    excludedIngredients: 'Без этих ингредиентов',
     mainDishLocked: 'Основное блюдо нельзя исключить',
-    excludeHint: 'Нажмите на ингредиент, чтобы исключить его из сета',
-    beverageExcludedHint: 'Напиток исключён из сета — выбор недоступен',
     applyBeverageToAll: 'Применить выбранный напиток ко всем дням',
+    applySaladToAll: 'Применить выбранный салат ко всем дням',
+    incompleteSelectionHint: 'Выберите салат и напиток для каждого дня, чтобы продолжить',
 
     // Detail modal
     close: 'Закрыть',
@@ -138,12 +136,10 @@ const translations: Record<Lang, Record<string, string>> = {
     salad: 'Salat',
     flatbread: 'Non',
     drink: 'Ichimlik',
-    without: 'siz',
-    excludedIngredients: 'Bu ingredientlarsiz',
     mainDishLocked: "Asosiy taomni chiqarib bo'lmaydi",
-    excludeHint: "Ingredientni chiqarib tashlash uchun ustiga bosing",
-    beverageExcludedHint: "Ichimlik setdan chiqarib tashlangan — tanlab bo'lmaydi",
     applyBeverageToAll: "Tanlangan ichimlikni barcha kunlarga qo'llash",
+    applySaladToAll: "Tanlangan salatni barcha kunlarga qo'llash",
+    incompleteSelectionHint: "Davom etish uchun har bir kun uchun salat va ichimlik tanlang",
 
     // Detail modal
     close: 'Yopish',
