@@ -4,17 +4,17 @@
   --brand-dark: #ea580c;
   --brand-light: #fff7ed;
 
-  /* Базовые цвета — подхватывают тему Telegram WebApp (var(--tg-theme-*)),
-     если приложение открыто в Telegram; иначе используется текущий фирменный fallback. */
-  --text: var(--tg-theme-text-color, #1f2937);
-  --text-muted: var(--tg-theme-hint-color, #6b7280);
+  /* Базовые цвета — фирменная светлая тема приложения. Мы намеренно НЕ читаем
+     var(--tg-theme-*), чтобы тёмная тема клиента Telegram не перекрывала светлый дизайн. */
+  --text: #1f2937;
+  --text-muted: #6b7280;
   --border: #e5e7eb;
-  --card-bg: var(--tg-theme-secondary-bg-color, #ffffff);
-  --bg: var(--tg-theme-bg-color, #f6f7f9);
-  --btn-primary-bg: var(--tg-theme-button-color, var(--brand));
-  --btn-primary-text: var(--tg-theme-button-text-color, #ffffff);
-  --link: var(--tg-theme-link-color, var(--brand));
-  --destructive: var(--tg-theme-destructive-text-color, #ef4444);
+  --card-bg: #ffffff;
+  --bg: #ffffff;
+  --btn-primary-bg: var(--brand);
+  --btn-primary-text: #ffffff;
+  --link: var(--brand);
+  --destructive: #ef4444;
 
   --radius: 16px;
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -23,6 +23,10 @@
 
   /* Отступ под системные жесты/чёлку устройства (iOS home indicator и т.п.) */
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* Явно фиксируем светлую цветовую схему — не даём браузеру/ОС инвертировать
+     системные элементы (скроллбары, автозаполнение) в тёмный режим. */
+  color-scheme: light;
 }
 
 * {

@@ -25,6 +25,8 @@ export interface TelegramWebApp {
   showAlert?: (message: string, callback?: () => void) => void
   themeParams?: Record<string, string>
   colorScheme?: 'light' | 'dark'
+  setHeaderColor?: (color: string) => void
+  setBackgroundColor?: (color: string) => void
   MainButton?: TelegramMainButton
   HapticFeedback?: TelegramHapticFeedback
 }
@@ -49,6 +51,10 @@ export function initTelegramWebApp(): void {
   try {
     tg.ready()
     tg.expand()
+    // Принудительно светлые системные цвета Telegram (шапка/фон окна), чтобы
+    // тёмная тема клиента не перекрывала светлый дизайн приложения.
+    tg.setHeaderColor?.('#ffffff')
+    tg.setBackgroundColor?.('#ffffff')
   } catch {
     // Telegram API недоступен/ограничен в этом клиенте — приложение продолжает работать как обычный сайт
   }
