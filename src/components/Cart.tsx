@@ -19,6 +19,7 @@ interface CartProps {
   employeeCount: number
   totalItems: number
   lang: Lang
+  isSubmitting: boolean
   onBack: () => void
   onPlaceOrder: (method: PaymentMethod) => void
   onRemoveItem: (setId: string | number) => void
@@ -31,6 +32,7 @@ function Cart({
   employeeCount,
   totalItems,
   lang,
+  isSubmitting,
   onBack,
   onPlaceOrder,
   onRemoveItem,
@@ -70,11 +72,16 @@ function Cart({
     if (!mainButton) return
 
     const handleClick = () => onPlaceOrderRef.current(paymentMethod)
-    mainButton.setText(t(lang, 'pay', { price: formatPrice(totalMonthlyPrice) }))
+    mainButton.setText(
+      isSubmitting ? t(lang, 'submitting') : t(lang, 'pay', { price: formatPrice(totalMonthlyPrice) })
+    )
     mainButton.onClick(handleClick)
 
-    if (activeLines.length > 0) {
+    if (activeLines.length > 0 && !isSubmitting) {
       mainButton.enable()
+      mainButton.show()
+    } else if (activeLines.length > 0) {
+      mainButton.disable()
       mainButton.show()
     } else {
       mainButton.disable()
@@ -85,7 +92,7 @@ function Cart({
       mainButton.offClick(handleClick)
       mainButton.hide()
     }
-  }, [lang, activeLines.length, totalMonthlyPrice, paymentMethod])
+  }, [lang, activeLines.length, totalMonthlyPrice, paymentMethod, isSubmitting])
 
   return (
     <motion.div
@@ -223,15 +230,23 @@ function Cart({
 
           <motion.button
             type="button"
-            className="btn btn--primary btn--lg"
+            className={`btn btn--primary btn--lg${isSubmitting ? ' btn--loading' : ''}`}
             onClick={() => onPlaceOrder(paymentMethod)}
+            disabled={isSubmitting}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.4 }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={isSubmitting ? undefined : { scale: 1.02 }}
+            whileTap={isSubmitting ? undefined : { scale: 0.98 }}
           >
-            {t(lang, 'pay', { price: formatPrice(totalMonthlyPrice) })}
+            {isSubmitting ? (
+              <>
+                <span className="btn__spinner" aria-hidden="true" />
+                {t(lang, 'submitting')}
+              </>
+            ) : (
+              t(lang, 'pay', { price: formatPrice(totalMonthlyPrice) })
+            )}
           </motion.button>
         </>
       )}

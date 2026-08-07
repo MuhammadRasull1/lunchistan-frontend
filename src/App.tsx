@@ -5,10 +5,10 @@ import Cart from './components/Cart'
 import Success from './components/Success'
 import { MONTHLY_SETS, SET_PRICE } from './data/mockMenu'
 import type { CartState, Screen, PaymentMethod, Beverage, Lang } from './types'
-import { formatPrice } from './types'
 import { t } from './locales/translations'
 import { showTelegramAlert } from './lib/telegram'
 import { loadSavedOrder, saveOrder, clearSavedOrder } from './lib/orderStorage'
+import { submitOrder } from './lib/api'
 
 const MAX_WORK_DAYS = MONTHLY_SETS.length
 
@@ -30,6 +30,7 @@ function App() {
     savedOrder ? Math.max(1, Math.min(MAX_WORK_DAYS, savedOrder.workDaysCount)) : MAX_WORK_DAYS
   )
   const [lang, setLang] = useState<Lang>('ru')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [cartState, setCartState] = useState<CartState>(() => {
     const base = buildDefaultCartState()
     if (!savedOrder) return base
@@ -173,13 +174,10 @@ function App() {
   const totalMonthlyPrice = totalPortionsFromActive * employeeCount * SET_PRICE
   const totalItems = totalPortionsFromActive * employeeCount
 
-  const handlePlaceOrder = (method: PaymentMethod) => {
+  const handlePlaceOrder = async (method: PaymentMethod) => {
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
-      const methodLabels: Record<PaymentMethod, string> = {
-        corporate: t(lang, 'corporateLabel'),
-        card: t(lang, 'cardLabel'),
-        cash: t(lang, 'cashLabel'),
-      }
       const lines = Object.entries(cartState)
         .filter(([, item]) => item?.active)
         .map(([id, item]) => {
@@ -198,23 +196,22 @@ function App() {
             lineTotal: (set?.price ?? SET_PRICE) * totalPortions,
           }
         })
-      console.log('Заказ оформлен:', {
+      const payload = {
         employeeCount,
         workDaysCount,
         activeDays,
         lines,
         totalMonthlyPrice,
         paymentMethod: method,
-      })
-      showTelegramAlert(t(lang, 'orderAlert', {
-        employees: employeeCount,
-        method: methodLabels[method],
-        price: formatPrice(totalMonthlyPrice),
-      }))
+      }
+      console.log('Заказ оформлен:', payload)
+      await submitOrder(payload)
       setScreen('success')
     } catch (error) {
-      console.error('Ошибка при оформлении заказа:', error)
+      console.error('Ошибка при отправке заказа:', error)
       showTelegramAlert(t(lang, 'orderError'))
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -264,6 +261,7 @@ function App() {
           employeeCount={employeeCount}
           totalItems={totalItems}
           lang={lang}
+          isSubmitting={isSubmitting}
           onBack={() => setScreen('catalog')}
           onPlaceOrder={handlePlaceOrder}
           onRemoveItem={handleToggleDay}
