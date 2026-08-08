@@ -1,10 +1,12 @@
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Flame, Beef, Droplets, Wheat, Check, Wine, Droplet, Lock, Users, LeafyGreen } from 'lucide-react'
+import { X, Flame, Beef, Droplets, Wheat, Check, Wine, Droplet, Lock, Users, LeafyGreen, ChevronRight } from 'lucide-react'
 import type { LunchSet, Beverage, Salad, Lang } from '../types'
 import { formatPrice } from '../types'
 import { t, localizeIngredient } from '../locales/translations'
 import Stepper from './Stepper'
 import { hapticImpact } from '../lib/telegram'
+import SaladPickerModal from './SaladPickerModal'
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'
 
@@ -54,12 +56,6 @@ function MacroCard({ icon: Icon, label, value, unit, color }: {
 const BEVERAGE_OPTIONS: { value: Beverage; icon: React.ComponentType<{ size?: number; strokeWidth?: number }> }[] = [
   { value: 'Вода', icon: Droplet },
   { value: 'Компот в ассортименте', icon: Wine },
-]
-
-const SALAD_OPTIONS: { value: Salad; icon: React.ComponentType<{ size?: number; strokeWidth?: number }> }[] = [
-  { value: 'Оливье', icon: LeafyGreen },
-  { value: 'Винегрет', icon: LeafyGreen },
-  { value: 'Цезарь', icon: LeafyGreen },
 ]
 
 /** Группа сегментированных пилюль для выбора одного варианта из фиксированного списка (салат/напиток) */
@@ -132,6 +128,8 @@ const SHEET_VARIANTS = {
 }
 
 function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, beverage, onBeverageChange, onApplyBeverageToAll, salad, onSaladChange, onApplySaladToAll, portions, onPortionsChange }: SetDetailModalProps) {
+  const [isSaladPickerOpen, setSaladPickerOpen] = useState(false)
+
   const fixedItems = set
     ? set.composition.filter(item => item.name !== 'Салат' && item.name !== 'Напиток')
     : []
@@ -223,15 +221,33 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, beverage, onBev
               </div>
 
               {/* Выбор салата */}
-              <OptionPillGroup
-                icon={LeafyGreen}
-                label={t(lang, 'salad')}
-                options={SALAD_OPTIONS.map(opt => ({ value: opt.value, text: opt.value, icon: opt.icon }))}
-                value={salad}
-                onChange={onSaladChange}
-                onApplyToAll={() => onApplySaladToAll(salad)}
-                applyAllLabel={t(lang, 'applySaladToAll')}
-              />
+              <div className="option-select">
+                <span className="option-select__label">
+                  <LeafyGreen size={14} strokeWidth={2.5} />
+                  {t(lang, 'salad')}
+                </span>
+                <button
+                  type="button"
+                  className="btn btn--outline salad-trigger"
+                  onClick={() => {
+                    hapticImpact('light')
+                    setSaladPickerOpen(true)
+                  }}
+                >
+                  <span>{t(lang, 'chooseSalad')}: {salad}</span>
+                  <ChevronRight size={16} strokeWidth={2.5} />
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--outline option-select__apply-all"
+                  onClick={() => {
+                    hapticImpact('light')
+                    onApplySaladToAll(salad)
+                  }}
+                >
+                  {t(lang, 'applySaladToAll')}
+                </button>
+              </div>
 
               {/* Выбор напитка */}
               <OptionPillGroup
@@ -295,6 +311,17 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, beverage, onBev
               </motion.button>
             </div>
           </motion.div>
+
+          <SaladPickerModal
+            isOpen={isSaladPickerOpen}
+            onClose={() => setSaladPickerOpen(false)}
+            lang={lang}
+            salad={salad}
+            onSelect={(next) => {
+              onSaladChange(next)
+              setSaladPickerOpen(false)
+            }}
+          />
         </>
       )}
     </AnimatePresence>

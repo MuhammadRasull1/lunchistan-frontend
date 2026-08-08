@@ -44,6 +44,9 @@ const translations: Record<Lang, Record<string, string>> = {
     applyBeverageToAll: 'Применить выбранный напиток ко всем дням',
     applySaladToAll: 'Применить выбранный салат ко всем дням',
     incompleteSelectionHint: 'Выберите салат и напиток для каждого дня, чтобы продолжить',
+    chooseSalad: 'Выбрать салат',
+    saladModalTitle: 'Выбор салата',
+    comingSoon: 'Скоро',
 
     // Detail modal
     close: 'Закрыть',
@@ -140,6 +143,9 @@ const translations: Record<Lang, Record<string, string>> = {
     applyBeverageToAll: "Tanlangan ichimlikni barcha kunlarga qo'llash",
     applySaladToAll: "Tanlangan salatni barcha kunlarga qo'llash",
     incompleteSelectionHint: "Davom etish uchun har bir kun uchun salat va ichimlik tanlang",
+    chooseSalad: 'Salat tanlash',
+    saladModalTitle: 'Salat tanlovi',
+    comingSoon: 'Tez orada',
 
     // Detail modal
     close: 'Yopish',
