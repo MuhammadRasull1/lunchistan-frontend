@@ -23,7 +23,7 @@
 | **Бэкенд**       | Отсутствует (заглушка mockMenu.ts)  | —          |
 | **Telegram Bot** | Отсутствует                         | —          |
 
-> **Примечание:** На данный момент проект является чистым фронтендом. Данные берутся из `src/data/mockMenu.ts`. Бэкенд и Telegram Bot не реализованы. Изображения сетов — **локальные JPG-файлы в `public/images/dishes/<категория>/`** (транслит-папки: hot-dishes, salads, sides, fastfood, appetizers, soups, misc), импортированы скриптом `scripts/import-images.mjs` из `~/Загрузки/Telegram Desktop` со сжатием (1200px, q80). Меню состоит **исключительно из реальных фото** (59 блюд); fallback на [[Unsplash]] срабатывает только при ошибке загрузки файла (подробнее → [[COMPONENTS]]). Категории меню: `hot | salad | side | fastfood | appetizer | soup` (подробнее → [[B2B_RULES]]). Добавлена мультиязычность RU/UZ через `src/locales/translations.ts` (подробнее → [[COMPONENTS#11-мультиязычность-ruuz]]).
+> **Примечание:** На данный момент проект является чистым фронтендом. Данные берутся из `src/data/mockMenu.ts`. Бэкенд и Telegram Bot не реализованы. Изображения сетов — **локальные JPG-файлы в `public/images/dishes/<категория>/`** (транслит-папки: hot-dishes, salads, sides, fastfood, appetizers, soups, misc), импортированы скриптом `scripts/import-images.mjs` из `~/Загрузки/Telegram Desktop` со сжатием (1200px, q80). Меню состоит **исключительно из реальных фото** (56 блюд); fallback на [[Unsplash]] срабатывает только при ошибке загрузки файла (подробнее → [[COMPONENTS]]). Категории меню: `hot | salad | side | fastfood | appetizer | soup` (подробнее → [[B2B_RULES]]). Добавлена мультиязычность RU/UZ через `src/locales/translations.ts` (подробнее → [[COMPONENTS#11-мультиязычность-ruuz]]).
 
 ---
 
@@ -51,8 +51,8 @@ lunchistan-frontend/
 │   └── images/
 │       ├── sets/                          # SVG-плейсхолдеры (day-N.svg, устарело)
 │       └── dishes/                        # 🆕 Реальные фото блюд по категориям
-│           ├── hot-dishes/                #   Горячие блюда (32)
-│           ├── salads/                    #   Салаты (13)
+│           ├── hot-dishes/                #   Горячие блюда (31)
+│           ├── salads/                    #   Салаты (11)
 │           ├── soups/                     #   Супы (1)
 │           ├── appetizers/                #   Закуски (2)
 │           ├── sides/                     #   Каши и гарниры (8)
@@ -73,7 +73,7 @@ lunchistan-frontend/
 │   │   └── translations.ts           # 🆕 Словарь RU/UZ с функцией t() и localizeIngredient()
 │   │
 │   ├── data/
-│   │   └── mockMenu.ts               # Мок-данные: 59 реальных блюд + категории + КБЖУ
+│   │   └── mockMenu.ts               # Мок-данные: 56 реальных блюд + категории + КБЖУ
 │   │
 │   └── components/
 │       ├── Catalog.tsx               # Главный экран: калькулятор + табы категорий + сетка сетов

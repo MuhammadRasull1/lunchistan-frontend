@@ -171,7 +171,7 @@ interface SetDetailModalProps {
 
 ### 5.4. SaladPickerModal.tsx — динамический выбор салата (v1.5)
 
-- 🆕 Список салатов **не захардкожен** — выводится динамически из `SALAD_OPTIONS` в `src/components/saladOptions.ts`, который фильтрует `MONTHLY_SETS` по `category === 'salad'` (→ реальные фото из `public/images/dishes/salads/`, 13 позиций).
+- 🆕 Список салатов **не захардкожен** — выводится динамически из `SALAD_OPTIONS` в `src/components/saladOptions.ts`, который фильтрует `MONTHLY_SETS` по `category === 'salad'` (→ реальные фото из `public/images/dishes/salads/`, 11 позиций).
 - Каждый слот — карточка с **миниатюрой фото** (`salad-modal__slot-img`) и названием; заглушки «Скоро» (locked) удалены.
 - Тип `Salad` в [[ARCHITECTURE#3-типы-данных-srctypests]] изменён на `string`; дефолтный салат — `DEFAULT_SALAD` (первый из списка), используется в [[STATE_MANAGEMENT]] и при оформлении заказа.
 - Выбор применяется к конкретному дню; кнопка «Применить ко всем дням» — в родительской модалке.

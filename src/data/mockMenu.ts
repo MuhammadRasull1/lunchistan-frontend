@@ -2,7 +2,7 @@ import type { LunchSet, WeekDay, SetCategory } from '../types';
 
 export const SET_PRICE = 55000;
 
-export const WORK_DAYS_COUNT = 59;
+export const WORK_DAYS_COUNT = 56;
 
 const WEEK_DAYS: WeekDay[] = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт'];
 
@@ -67,8 +67,7 @@ const DISHES: Dish[] = [
   { name: 'Мясо по-французски', icon: '🥩', category: 'hot', imageUrl: '/images/dishes/hot-dishes/myaso-po-frantsuzski.jpg' },
   { name: 'Плов из говядины', icon: '🍚', category: 'hot', imageUrl: '/images/dishes/hot-dishes/plov-iz-govyadiny.jpg' },
   { name: 'Жареные пельмени', icon: '🥟', category: 'hot', imageUrl: '/images/dishes/hot-dishes/zharenye-pelmeni.jpg' },
-  { name: 'Жареный рис по-азиатски', icon: '🍚', category: 'hot', imageUrl: '/images/dishes/hot-dishes/zharenyy-ris-po-aziatski-1.jpg' },
-  { name: 'Жареный рис по-азиатски (2)', icon: '🍚', category: 'hot', imageUrl: '/images/dishes/hot-dishes/zharenyy-ris-po-aziatski.jpg' },
+  { name: 'Жареный рис по-азиатски', icon: '🍚', category: 'hot', imageUrl: '/images/dishes/hot-dishes/zharenyy-ris-po-aziatski.jpg' },
   { name: 'Жареный рис с овощами', icon: '🥘', category: 'hot', imageUrl: '/images/dishes/hot-dishes/zharenyy-ris-s-ovoschami.jpg' },
 
   // ── Салаты ─────────────────────────────────────────────────────
@@ -81,8 +80,6 @@ const DISHES: Dish[] = [
   { name: 'Весенний салат', icon: '🥗', category: 'salad', imageUrl: '/images/dishes/salads/vesenniy.jpg' },
   { name: 'Винегрет', icon: '🥗', category: 'salad', imageUrl: '/images/dishes/salads/vinegret.jpg' },
   { name: 'Винегрет с капустой', icon: '🥗', category: 'salad', imageUrl: '/images/dishes/salads/vinegret-s-kapustoy.jpg' },
-  { name: 'Винегрет с капустой (2)', icon: '🥗', category: 'salad', imageUrl: '/images/dishes/salads/vinegret-s-kapustoy-2.jpg' },
-  { name: 'Винегрет с капустой (3)', icon: '🥗', category: 'salad', imageUrl: '/images/dishes/salads/vinegret-s-kapustoy-4.jpg' },
   { name: 'Витаминка', icon: '🥗', category: 'salad', imageUrl: '/images/dishes/salads/vitaminka.jpg' },
   { name: 'Зелёный салат', icon: '🥬', category: 'salad', imageUrl: '/images/dishes/salads/zelenyy-salat.jpg' },
 
