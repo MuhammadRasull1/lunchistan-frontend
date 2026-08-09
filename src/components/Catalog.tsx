@@ -36,10 +36,12 @@ interface CatalogProps {
 
 const CATEGORY_TABS: { value: CategoryFilter; labelKey: string }[] = [
   { value: 'all', labelKey: 'categoryAll' },
-  { value: 'meat', labelKey: 'categoryMeat' },
-  { value: 'chicken', labelKey: 'categoryChicken' },
-  { value: 'poultry', labelKey: 'categoryPoultry' },
-  { value: 'fish', labelKey: 'categoryFish' },
+  { value: 'hot', labelKey: 'categoryHot' },
+  { value: 'salad', labelKey: 'categorySalad' },
+  { value: 'side', labelKey: 'categorySide' },
+  { value: 'fastfood', labelKey: 'categoryFastfood' },
+  { value: 'appetizer', labelKey: 'categoryAppetizer' },
+  { value: 'soup', labelKey: 'categorySoup' },
 ]
 
 function Catalog({

@@ -6,7 +6,7 @@ export type Salad = 'Оливье' | 'Винегрет' | 'Цезарь';
 
 export type PaymentMethod = 'corporate' | 'card' | 'cash';
 
-export type SetCategory = 'meat' | 'chicken' | 'poultry' | 'fish';
+export type SetCategory = 'hot' | 'salad' | 'side' | 'fastfood' | 'appetizer' | 'soup';
 
 export interface CompositionItem {
   name: string

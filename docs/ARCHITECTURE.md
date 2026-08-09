@@ -23,7 +23,7 @@
 | **Бэкенд**       | Отсутствует (заглушка mockMenu.ts)  | —          |
 | **Telegram Bot** | Отсутствует                         | —          |
 
-> **Примечание:** На данный момент проект является чистым фронтендом. Данные берутся из `src/data/mockMenu.ts`. Бэкенд и Telegram Bot не реализованы. Изображения сетов — локальные JPG-файлы в `public/images/dishes/<категория>/` (транслит-папки: hot-dishes, salads, soups, appetizers, sides, fastfood, misc), импортированы скриптом `scripts/import-images.mjs` из `~/Загрузки/Telegram Desktop` со сжатием (1200px, q80). Часть блюд, для которых нет реальных фото, осталась на [[Unsplash]]-ссылках с fallback при ошибке загрузки (подробнее → [[COMPONENTS]]). Добавлена мультиязычность RU/UZ через `src/locales/translations.ts` (подробнее → [[COMPONENTS#11-мультиязычность-ruuz]]).
+> **Примечание:** На данный момент проект является чистым фронтендом. Данные берутся из `src/data/mockMenu.ts`. Бэкенд и Telegram Bot не реализованы. Изображения сетов — **локальные JPG-файлы в `public/images/dishes/<категория>/`** (транслит-папки: hot-dishes, salads, sides, fastfood, appetizers, soups, misc), импортированы скриптом `scripts/import-images.mjs` из `~/Загрузки/Telegram Desktop` со сжатием (1200px, q80). Меню состоит **исключительно из реальных фото** (59 блюд); fallback на [[Unsplash]] срабатывает только при ошибке загрузки файла (подробнее → [[COMPONENTS]]). Категории меню: `hot | salad | side | fastfood | appetizer | soup` (подробнее → [[B2B_RULES]]). Добавлена мультиязычность RU/UZ через `src/locales/translations.ts` (подробнее → [[COMPONENTS#11-мультиязычность-ruuz]]).
 
 ---
 
@@ -73,7 +73,7 @@ lunchistan-frontend/
 │   │   └── translations.ts           # 🆕 Словарь RU/UZ с функцией t() и localizeIngredient()
 │   │
 │   ├── data/
-│   │   └── mockMenu.ts               # Мок-данные: 24 обеда на месяц + категории + КБЖУ (400 г)
+│   │   └── mockMenu.ts               # Мок-данные: 59 реальных блюд + категории + КБЖУ
 │   │
 │   └── components/
 │       ├── Catalog.tsx               # Главный экран: калькулятор + табы категорий + сетка сетов

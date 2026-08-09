@@ -28,10 +28,12 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // Set categories
     categoryAll: 'Все',
-    categoryMeat: 'Мясо',
-    categoryChicken: 'Курица',
-    categoryPoultry: 'Птица',
-    categoryFish: 'Рыба',
+    categoryHot: 'Горячие блюда',
+    categorySalad: 'Салаты',
+    categorySide: 'Гарниры',
+    categoryFastfood: 'Фастфуд',
+    categoryAppetizer: 'Закуски',
+    categorySoup: 'Супы',
 
     // Set card
     perPortion: 'за порцию',
@@ -127,10 +129,12 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // Set categories
     categoryAll: 'Barchasi',
-    categoryMeat: "Go'sht",
-    categoryChicken: 'Tovuq',
-    categoryPoultry: 'Parranda',
-    categoryFish: 'Baliq',
+    categoryHot: 'Issiq taomlar',
+    categorySalad: 'Salatlar',
+    categorySide: 'Garnirlar',
+    categoryFastfood: 'Fastfud',
+    categoryAppetizer: 'Gazaklar',
+    categorySoup: "Sho'rvalar",
 
     // Set card
     perPortion: "porsiya uchun",

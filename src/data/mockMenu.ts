@@ -2,146 +2,165 @@ import type { LunchSet, WeekDay, SetCategory } from '../types';
 
 export const SET_PRICE = 55000;
 
-export const WORK_DAYS_COUNT = 24;
+export const WORK_DAYS_COUNT = 59;
 
 const WEEK_DAYS: WeekDay[] = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт'];
 
-const FIXED_COMPOSITION = [
+/**
+ * Категории меню (соответствуют папкам public/images/dishes/):
+ * - hot       — «Горячие блюда»
+ * - salad     — «Салаты»
+ * - side      — «Гарниры»
+ * - fastfood  — «Фастфуд»
+ * - appetizer — «Закуски»
+ * - soup      — «Супы»
+ */
+type MenuCategory = SetCategory;
+
+interface Dish {
+  name: string;
+  icon: string;
+  category: MenuCategory;
+  imageUrl: string;
+}
+
+/** Стандартный состав обеда для полноценных блюд */
+const FULL_COMPOSITION = [
   { name: 'Салат', icon: '🥗', optional: true },
   { name: 'Лепёшка', icon: '🫓', optional: true },
   { name: 'Напиток', icon: '🧃', optional: true },
 ] as const;
 
-interface MainDish {
-  name: string;
-  icon: string;
-  category: SetCategory;
+/** Облегчённый состав (салаты, гарниры, закуски, супы) */
+const LIGHT_COMPOSITION = [
+  { name: 'Напиток', icon: '🧃', optional: true },
+] as const;
+
+const DISHES: Dish[] = [
+  // ── Горячие блюда ──────────────────────────────────────────────
+  { name: 'Аджахури с курицей', icon: '🍲', category: 'hot', imageUrl: '/images/dishes/hot-dishes/adzhahuri-s-kuritsey.jpg' },
+  { name: 'Бефстроганов с рисом', icon: '🥩', category: 'hot', imageUrl: '/images/dishes/hot-dishes/befstroganov-s-risom.jpg' },
+  { name: 'Биточки из курицы с рисом и овощами', icon: '🍗', category: 'hot', imageUrl: '/images/dishes/hot-dishes/bitochki-iz-kuritsy-s-risom-i-ovoschami.jpg' },
+  { name: 'Деревенский с мясом и грибами', icon: '🥘', category: 'hot', imageUrl: '/images/dishes/hot-dishes/derevenskiy-s-myasom-i-gribami.jpg' },
+  { name: 'Драники картофельные с соусом тар-тар', icon: '🥔', category: 'hot', imageUrl: '/images/dishes/hot-dishes/draniki-kartofelnye-s-sousom-tar-tar.jpg' },
+  { name: 'Голубцы', icon: '🥬', category: 'hot', imageUrl: '/images/dishes/hot-dishes/golubtsy-kapusta.jpg' },
+  { name: 'Говяжья котлета с пюре', icon: '🥩', category: 'hot', imageUrl: '/images/dishes/hot-dishes/govyazhya-kotleta-s-pyure.jpg' },
+  { name: 'Гречка по-домашнему с курицей', icon: '🍗', category: 'hot', imageUrl: '/images/dishes/hot-dishes/grechka-po-domashnemu-s-kuritsey.jpg' },
+  { name: 'Гуль ханум с соусом', icon: '🥟', category: 'hot', imageUrl: '/images/dishes/hot-dishes/gul-hanum-s-sousom.jpg' },
+  { name: 'Гуляш из говядины с гречкой', icon: '🥘', category: 'hot', imageUrl: '/images/dishes/hot-dishes/gulyash-iz-govyadiny-s-grechkoy.jpg' },
+  { name: 'Куриная грудка с овощами на пару', icon: '🍗', category: 'hot', imageUrl: '/images/dishes/hot-dishes/kurinaya-grudka-s-ovoschami-na-parujpg.jpg' },
+  { name: 'Куриная грудка с сыром и булгуром с овощами', icon: '🍗', category: 'hot', imageUrl: '/images/dishes/hot-dishes/kurinaya-grudka-s-syrom-i-bulgur-s-ovoschami.jpg' },
+  { name: 'Куриная котлета на пару с пюре', icon: '🍗', category: 'hot', imageUrl: '/images/dishes/hot-dishes/kurinaya-kotleta-na-paru-s-pyure.jpg' },
+  { name: 'Куриная котлета по-киевски', icon: '🍗', category: 'hot', imageUrl: '/images/dishes/hot-dishes/kurinaya-kotleta-po-kievski.jpg' },
+  { name: 'Котлета по-киевски с пюре', icon: '🍗', category: 'hot', imageUrl: '/images/dishes/hot-dishes/kurinaya-kotleta-po-kievski-s-pyure.jpg' },
+  { name: 'Куриная котлета с пюре', icon: '🍗', category: 'hot', imageUrl: '/images/dishes/hot-dishes/kurinaya-kotleta-s-pyure.jpg' },
+  { name: 'Курица гриль с овощами', icon: '🍗', category: 'hot', imageUrl: '/images/dishes/hot-dishes/kuritsa-gril-s-ovoschami.jpg' },
+  { name: 'Курица карри с рисом', icon: '🍛', category: 'hot', imageUrl: '/images/dishes/hot-dishes/kuritsa-karri-s-risom.jpg' },
+  { name: 'Курица по-азиатски с рисом', icon: '🍛', category: 'hot', imageUrl: '/images/dishes/hot-dishes/kuritsa-po-aziatski-s-risom.jpg' },
+  { name: 'Курица по-мексикански', icon: '🌮', category: 'hot', imageUrl: '/images/dishes/hot-dishes/kuritsa-po-meksikanski.jpg' },
+  { name: 'Курица с овощами и соусом айоли', icon: '🍗', category: 'hot', imageUrl: '/images/dishes/hot-dishes/kuritsa-s-ovoschami-ayola.jpg' },
+  { name: 'Курица терияки с рисом', icon: '🍛', category: 'hot', imageUrl: '/images/dishes/hot-dishes/kuritsa-teriyaki-s-risom.jpg' },
+  { name: 'Люля-кебаб куриный с гречкой', icon: '🥙', category: 'hot', imageUrl: '/images/dishes/hot-dishes/lyulya-kurinye-s-grechkoy.jpg' },
+  { name: 'Макароны по-флотски', icon: '🍝', category: 'hot', imageUrl: '/images/dishes/hot-dishes/makarony-po-flotski.jpg' },
+  { name: 'Манты с говядиной', icon: '🥟', category: 'hot', imageUrl: '/images/dishes/hot-dishes/manty-s-govyadinoy.jpg' },
+  { name: 'Митболы с пюре', icon: '🧆', category: 'hot', imageUrl: '/images/dishes/hot-dishes/mit-boly-s-pyure.jpg' },
+  { name: 'Мясо по-французски', icon: '🥩', category: 'hot', imageUrl: '/images/dishes/hot-dishes/myaso-po-frantsuzski.jpg' },
+  { name: 'Плов из говядины', icon: '🍚', category: 'hot', imageUrl: '/images/dishes/hot-dishes/plov-iz-govyadiny.jpg' },
+  { name: 'Жареные пельмени', icon: '🥟', category: 'hot', imageUrl: '/images/dishes/hot-dishes/zharenye-pelmeni.jpg' },
+  { name: 'Жареный рис по-азиатски', icon: '🍚', category: 'hot', imageUrl: '/images/dishes/hot-dishes/zharenyy-ris-po-aziatski-1.jpg' },
+  { name: 'Жареный рис по-азиатски (2)', icon: '🍚', category: 'hot', imageUrl: '/images/dishes/hot-dishes/zharenyy-ris-po-aziatski.jpg' },
+  { name: 'Жареный рис с овощами', icon: '🥘', category: 'hot', imageUrl: '/images/dishes/hot-dishes/zharenyy-ris-s-ovoschami.jpg' },
+
+  // ── Салаты ─────────────────────────────────────────────────────
+  { name: 'Баклажаны по-корейски', icon: '🥗', category: 'salad', imageUrl: '/images/dishes/salads/baklazhany-po-koreyski.jpg' },
+  { name: 'Греческий салат', icon: '🥗', category: 'salad', imageUrl: '/images/dishes/salads/grecheskiy.jpg' },
+  { name: 'Морковча', icon: '🥕', category: 'salad', imageUrl: '/images/dishes/salads/morkovcha.jpg' },
+  { name: 'Огурцы по-корейски', icon: '🥒', category: 'salad', imageUrl: '/images/dishes/salads/ogurtsy-po-koreyski.jpg' },
+  { name: 'Оливье с колбасой', icon: '🥗', category: 'salad', imageUrl: '/images/dishes/salads/olive-s-kolbasoy.jpg' },
+  { name: 'Оливье с мясом', icon: '🥗', category: 'salad', imageUrl: '/images/dishes/salads/olive-s-myasom.jpg' },
+  { name: 'Весенний салат', icon: '🥗', category: 'salad', imageUrl: '/images/dishes/salads/vesenniy.jpg' },
+  { name: 'Винегрет', icon: '🥗', category: 'salad', imageUrl: '/images/dishes/salads/vinegret.jpg' },
+  { name: 'Винегрет с капустой', icon: '🥗', category: 'salad', imageUrl: '/images/dishes/salads/vinegret-s-kapustoy.jpg' },
+  { name: 'Винегрет с капустой (2)', icon: '🥗', category: 'salad', imageUrl: '/images/dishes/salads/vinegret-s-kapustoy-2.jpg' },
+  { name: 'Винегрет с капустой (3)', icon: '🥗', category: 'salad', imageUrl: '/images/dishes/salads/vinegret-s-kapustoy-4.jpg' },
+  { name: 'Витаминка', icon: '🥗', category: 'salad', imageUrl: '/images/dishes/salads/vitaminka.jpg' },
+  { name: 'Зелёный салат', icon: '🥬', category: 'salad', imageUrl: '/images/dishes/salads/zelenyy-salat.jpg' },
+
+  // ── Гарниры ────────────────────────────────────────────────────
+  { name: 'Гречка отварная', icon: '🍚', category: 'side', imageUrl: '/images/dishes/sides/grechka-otvarnaya.jpg' },
+  { name: 'Гречка с капустой', icon: '🥦', category: 'side', imageUrl: '/images/dishes/sides/grechka-s-kapustoy.jpg' },
+  { name: 'Картофельное пюре', icon: '🥔', category: 'side', imageUrl: '/images/dishes/sides/kartofelnoe-pyure.jpg' },
+  { name: 'Картофельные дольки с сыром', icon: '🍟', category: 'side', imageUrl: '/images/dishes/sides/kartofelnye-dolki-s-syromjpg.jpg' },
+  { name: 'Картофель с грибами', icon: '🥔', category: 'side', imageUrl: '/images/dishes/sides/kartofel-s-gribami.jpg' },
+  { name: 'Каша овсяная', icon: '🥣', category: 'side', imageUrl: '/images/dishes/sides/kasha-ovsyanaya-1.jpg' },
+  { name: 'Каша рисовая', icon: '🍚', category: 'side', imageUrl: '/images/dishes/sides/kasha-risovaya.jpg' },
+  { name: 'Каша рисовая на кокосовом молоке', icon: '🥥', category: 'side', imageUrl: '/images/dishes/sides/kasha-risovaya-na-kokosovom-moloke.jpg' },
+
+  // ── Фастфуд ────────────────────────────────────────────────────
+  { name: 'Бургер маззали', icon: '🍔', category: 'fastfood', imageUrl: '/images/dishes/fastfood/burger-mazzali.jpg' },
+  { name: 'Клаб-сэндвич с курицей', icon: '🥪', category: 'fastfood', imageUrl: '/images/dishes/fastfood/klab-sendvis-s-kuritsey.jpg' },
+  { name: 'Клаб-сэндвич с индейкой', icon: '🥪', category: 'fastfood', imageUrl: '/images/dishes/fastfood/klab-sendvich-s-indeykoy.jpg' },
+
+  // ── Закуски ────────────────────────────────────────────────────
+  { name: 'Домашняя баклажанная икра', icon: '🍆', category: 'appetizer', imageUrl: '/images/dishes/appetizers/domashnyaya-baklazhannaya-ikra-3.jpg' },
+  { name: 'Долма', icon: '🍃', category: 'appetizer', imageUrl: '/images/dishes/appetizers/dolma.jpg' },
+
+  // ── Супы ───────────────────────────────────────────────────────
+  { name: 'Куриный бульон с лапшой', icon: '🍜', category: 'soup', imageUrl: '/images/dishes/soups/kurinyy-bulon-s-lapshoy.jpg' },
+];
+
+/**
+ * КБЖУ по категории с небольшой детерминированной вариацией
+ * (чтобы каждое блюдо отличалось в числовых значениях).
+ */
+const KBJU_BY_CATEGORY: Record<MenuCategory, { calories: number; proteins: number; fats: number; carbs: number }> = {
+  hot: { calories: 620, proteins: 30, fats: 22, carbs: 60 },
+  salad: { calories: 220, proteins: 8, fats: 12, carbs: 20 },
+  side: { calories: 320, proteins: 8, fats: 10, carbs: 50 },
+  fastfood: { calories: 540, proteins: 24, fats: 26, carbs: 50 },
+  appetizer: { calories: 260, proteins: 12, fats: 16, carbs: 20 },
+  soup: { calories: 240, proteins: 12, fats: 10, carbs: 25 },
+};
+
+function kbjuFor(index: number, category: MenuCategory) {
+  const base = KBJU_BY_CATEGORY[category];
+  return {
+    calories: base.calories + (index % 5) * 12,
+    proteins: base.proteins + (index % 4),
+    fats: base.fats + (index % 3),
+    carbs: base.carbs + (index % 4) * 3,
+  };
+}
+
+function compositionFor(dish: Dish) {
+  const main = { name: dish.name, icon: dish.icon, optional: false };
+  const extras = dish.category === 'hot' || dish.category === 'fastfood' || dish.category === 'soup'
+    ? FULL_COMPOSITION
+    : LIGHT_COMPOSITION;
+  return [main, ...extras.map(item => ({ name: item.name, icon: item.icon, optional: item.optional }))];
 }
 
 /**
- * Категории сетов:
- * - meat    — «Мясо» (говядина/баранина, красное мясо)
- * - chicken — «Курица» (блюда из курицы)
- * - poultry — «Птица» (блюда из птицы: индейка)
- * - fish    — «Рыба» (блюда из рыбы)
+ * Меню: 59 реальных блюд с локальными фото из public/images/dishes/.
+ * Каждый день — одно блюдо + стандартный состав обеда.
  */
-const MAIN_DISHES: MainDish[] = [
-  { name: 'Гушт сай с лепёшкой', icon: '🥩', category: 'meat' },
-  { name: 'Курица с грибами и рисом', icon: '🍗', category: 'chicken' },
-  { name: 'Куриный стейк в кисло-сладком соусе, гречка', icon: '🍗', category: 'chicken' },
-  { name: 'Гуляш с картофельным пюре', icon: '🥘', category: 'meat' },
-  { name: 'Котлеты по-киевски, картофель фри', icon: '🍟', category: 'chicken' },
-  { name: 'Рыба запечённая с рисом', icon: '🐟', category: 'fish' },
-  { name: 'Плов свадебный', icon: '🍚', category: 'meat' },
-  { name: 'Бефстроганов с гречкой', icon: '🥩', category: 'meat' },
-  { name: 'Парамач с фаршем', icon: '🥟', category: 'meat' },
-  { name: 'Лагман с мантами', icon: '🍜', category: 'meat' },
-  { name: 'Чикен терияки с рисом', icon: '🍗', category: 'chicken' },
-  { name: 'Кебаб с овощами гриль', icon: '🥙', category: 'meat' },
-  { name: 'Бифштекс с пюре', icon: '🥩', category: 'meat' },
-  { name: 'Плов домашний', icon: '🍚', category: 'meat' },
-  { name: 'Тефтели в томатном соусе, рис', icon: '🧆', category: 'meat' },
-  { name: 'Куриные наггетсы, картофель фри', icon: '🍟', category: 'chicken' },
-  { name: 'Говядина по-строгановски, макароны', icon: '🍝', category: 'meat' },
-  { name: 'Рыбные котлеты с пюре', icon: '🐟', category: 'fish' },
-  { name: 'Манты с мясом', icon: '🥟', category: 'meat' },
-  { name: 'Шашлык куриный, овощи гриль', icon: '🥙', category: 'chicken' },
-  { name: 'Долма, отварной картофель', icon: '🥬', category: 'meat' },
-  { name: 'Азу по-татарски с картофелем', icon: '🥘', category: 'meat' },
-  { name: 'Индейка запечённая с овощами', icon: '🦃', category: 'poultry' },
-  { name: 'Котлеты из индейки с гречкой', icon: '🦃', category: 'poultry' },
-];
-
-/**
- * Реалистичные значения КБЖУ для каждого блюда.
- * Стандарт: общий вес комплексного сета ≈ 400 г
- * (основное блюдо ~280 г + салат ~60 г + лепёшка ~40 г + напиток ~20-50 г).
- * Сытные сеты с пловом/макаронами ≈ 650-850 ккал,
- * лёгкие сеты с птицей/рыбой/салатом ≈ 450-600 ккал.
- */
-const KBJU_DATA: { calories: number; proteins: number; fats: number; carbs: number }[] = [
-  { calories: 680, proteins: 38, fats: 26, carbs: 62 },
-  { calories: 520, proteins: 34, fats: 14, carbs: 58 },
-  { calories: 560, proteins: 36, fats: 16, carbs: 60 },
-  { calories: 620, proteins: 30, fats: 22, carbs: 68 },
-  { calories: 700, proteins: 26, fats: 34, carbs: 62 },
-  { calories: 480, proteins: 36, fats: 12, carbs: 52 },
-  { calories: 780, proteins: 26, fats: 30, carbs: 92 },
-  { calories: 640, proteins: 36, fats: 22, carbs: 66 },
-  { calories: 720, proteins: 30, fats: 30, carbs: 72 },
-  { calories: 650, proteins: 28, fats: 20, carbs: 88 },
-  { calories: 540, proteins: 34, fats: 12, carbs: 68 },
-  { calories: 590, proteins: 32, fats: 24, carbs: 54 },
-  { calories: 660, proteins: 36, fats: 26, carbs: 58 },
-  { calories: 760, proteins: 26, fats: 28, carbs: 90 },
-  { calories: 580, proteins: 30, fats: 18, carbs: 66 },
-  { calories: 680, proteins: 28, fats: 32, carbs: 64 },
-  { calories: 640, proteins: 34, fats: 22, carbs: 68 },
-  { calories: 470, proteins: 30, fats: 16, carbs: 50 },
-  { calories: 720, proteins: 32, fats: 28, carbs: 74 },
-  { calories: 490, proteins: 36, fats: 16, carbs: 40 },
-  { calories: 560, proteins: 26, fats: 20, carbs: 60 },
-  { calories: 600, proteins: 32, fats: 22, carbs: 60 },
-  { calories: 500, proteins: 38, fats: 12, carbs: 46 },
-  { calories: 530, proteins: 34, fats: 16, carbs: 54 },
-];
-
-/**
- * Фото для каждого блюда.
- * Совпавшие блюда — локальные файлы в /images/dishes/<категория>/,
- * остальные — Unsplash-фото (fallback в SetCard/SetDetailModal).
- */
-const UNSPLASH_IMAGES: string[] = [
-  'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80',  // 1  Гушт сай — сочный стейк
-  'https://images.unsplash.com/photo-1476124369491-e7addf5db371?auto=format&fit=crop&w=800&q=80',  // 2  Курица с грибами и рисом
-  'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80',  // 3  Куриный стейк — мясо на доске
-  '/images/dishes/hot-dishes/gulyash-iz-govyadiny-s-grechkoy.jpg',  // 4  Гуляш — тушёное мясо
-  '/images/dishes/hot-dishes/kurinaya-kotleta-po-kievski-s-pyure.jpg',  // 5  Котлеты по-киевски
-  'https://images.unsplash.com/photo-1484723091739-30a097e8f929?auto=format&fit=crop&w=800&q=80',  // 6  Рыба — фиш/суши-стейк
-  '/images/dishes/hot-dishes/plov-iz-govyadiny.jpg',  // 7  Плов свадебный
-  '/images/dishes/hot-dishes/befstroganov-s-risom.jpg',  // 8  Бефстроганов
-  'https://images.unsplash.com/photo-1506354666786-959d6d497f1a?auto=format&fit=crop&w=800&q=80',  // 9  Парамач — пицца/лепёшка
-  'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?auto=format&fit=crop&w=800&q=80',  // 10 Лагман — азиатская лапша
-  '/images/dishes/hot-dishes/kuritsa-teriyaki-s-risom.jpg',  // 11 Чикен терияки
-  '/images/dishes/hot-dishes/lyulya-kurinye-s-grechkoy.jpg',  // 12 Кебаб — люля-кебаб
-  '/images/dishes/hot-dishes/govyazhya-kotleta-s-pyure.jpg',  // 13 Бифштекс — говяжья котлета
-  'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80',  // 14 Плов домашний — салат/овощи
-  '/images/dishes/hot-dishes/mit-boly-s-pyure.jpg',  // 15 Тефтели — мит-болы
-  'https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=800&q=80',  // 16 Наггетсы — запечённое мясо
-  'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?auto=format&fit=crop&w=800&q=80',  // 17 Бефстроганов с макаронами — паста
-  'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?auto=format&fit=crop&w=800&q=80',  // 18 Рыбные котлеты — завтрак/блинчики
-  '/images/dishes/hot-dishes/manty-s-govyadinoy.jpg',  // 19 Манты
-  '/images/dishes/hot-dishes/kuritsa-gril-s-ovoschami.jpg',  // 20 Шашлык куриный
-  '/images/dishes/appetizers/dolma.jpg',  // 21 Долма
-  'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=800&q=80',  // 22 Азу — пицца/итальянское
-  'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',  // 23 Индейка запечённая — ростбиф с овощами
-  'https://images.unsplash.com/photo-1558030006-450675393462?auto=format&fit=crop&w=800&q=80',  // 24 Котлеты из индейки — мясо с гарниром
-];
-
-/**
- * 24 рабочих дня (Пн-Пт) корпоративной подписки на месяц.
- * Каждый день — уникальное основное блюдо + салат + лепёшка + напиток.
- */
-export const MONTHLY_SETS: LunchSet[] = MAIN_DISHES.map((main, index) => {
+export const MONTHLY_SETS: LunchSet[] = DISHES.map((dish, index) => {
   const dayNumber = index + 1;
   const weekDayIndex = index % 5;
-  const kbju = KBJU_DATA[index];
+  const kbju = kbjuFor(index, dish.category);
   return {
     id: dayNumber,
     dayNumber,
     weekDay: WEEK_DAYS[weekDayIndex],
-    category: main.category,
-    name: `Обед День ${dayNumber} (${WEEK_DAYS[weekDayIndex]})`,
-    description: `${main.name} + Салат + Лепёшка + Напиток`,
+    category: dish.category,
+    name: dish.name,
+    description: `${dish.name} + Салат + Лепёшка + Напиток`,
     price: SET_PRICE,
-    imageUrl: UNSPLASH_IMAGES[index], // уникальное Unsplash-фото для каждого блюда
+    imageUrl: dish.imageUrl,
     calories: kbju.calories,
     proteins: kbju.proteins,
     fats: kbju.fats,
     carbs: kbju.carbs,
-    composition: [
-      { name: main.name, icon: main.icon, optional: false },
-      ...FIXED_COMPOSITION.map(item => ({ name: item.name, icon: item.icon, optional: item.optional })),
-    ],
+    composition: compositionFor(dish),
   };
 });
