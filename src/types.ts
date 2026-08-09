@@ -2,7 +2,7 @@ export type WeekDay = 'Пн' | 'Вт' | 'Ср' | 'Чт' | 'Пт';
 
 export type Beverage = 'Вода' | 'Компот в ассортименте';
 
-export type Salad = 'Оливье' | 'Винегрет' | 'Цезарь';
+export type Salad = string;
 
 export type PaymentMethod = 'corporate' | 'card' | 'cash';
 

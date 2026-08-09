@@ -8,6 +8,7 @@ import SetDetailModal from './SetDetailModal'
 import AnimatedCount from './AnimatedCount'
 import Stepper from './Stepper'
 import { getTelegramWebApp, hapticImpact } from '../lib/telegram'
+import { DEFAULT_SALAD } from './saladOptions'
 
 type CategoryFilter = SetCategory | 'all'
 
@@ -84,7 +85,7 @@ function Catalog({
   const customizedDays = sets.filter(s => {
     const item = cartState[s.id]
     if (!item) return false
-    return item.portions !== 1 || item.beverage !== 'Вода' || item.salad !== 'Оливье'
+    return item.portions !== 1 || item.beverage !== 'Вода' || item.salad !== DEFAULT_SALAD
   }).length
 
   // Состояние модалки детализации сета
@@ -371,7 +372,7 @@ function Catalog({
         onPortionsChange={(portions) => {
           if (selectedSetId) onPortionsChange(selectedSetId, portions)
         }}
-        salad={selectedSetId ? cartState[selectedSetId]?.salad ?? 'Оливье' : 'Оливье'}
+        salad={selectedSetId ? cartState[selectedSetId]?.salad ?? DEFAULT_SALAD : DEFAULT_SALAD}
         onSaladChange={(salad) => {
           if (selectedSetId) onSaladChange(selectedSetId, salad)
         }}

@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Lock } from 'lucide-react'
-import type { Salad, Lang } from '../types'
+import { X } from 'lucide-react'
+import type { Lang } from '../types'
 import { t } from '../locales/translations'
 import { hapticImpact } from '../lib/telegram'
 import { SALAD_OPTIONS } from './saladOptions'
@@ -9,11 +9,9 @@ interface SaladPickerModalProps {
   isOpen: boolean
   onClose: () => void
   lang: Lang
-  salad: Salad
-  onSelect: (salad: Salad) => void
+  salad: string
+  onSelect: (salad: string) => void
 }
-
-const LOCKED_SLOT_COUNT = 12
 
 const OVERLAY_VARIANTS = {
   hidden: { opacity: 0 },
@@ -83,7 +81,6 @@ function SaladPickerModal({ isOpen, onClose, lang, salad, onSelect }: SaladPicke
               <div className="salad-modal__grid">
                 {SALAD_OPTIONS.map(opt => {
                   const active = salad === opt.value
-                  const OptIcon = opt.icon
                   return (
                     <motion.button
                       key={opt.value}
@@ -96,22 +93,16 @@ function SaladPickerModal({ isOpen, onClose, lang, salad, onSelect }: SaladPicke
                       whileTap={{ scale: 0.94 }}
                       transition={{ duration: 0.15 }}
                     >
-                      <OptIcon size={22} strokeWidth={active ? 2.6 : 2.2} />
+                      <img
+                        className="salad-modal__slot-img"
+                        src={opt.imageUrl}
+                        alt={opt.value}
+                        loading="lazy"
+                      />
                       <span>{opt.value}</span>
                     </motion.button>
                   )
                 })}
-
-                {Array.from({ length: LOCKED_SLOT_COUNT }).map((_, i) => (
-                  <div
-                    key={`locked-${i}`}
-                    className="salad-modal__slot salad-modal__slot--locked"
-                    aria-disabled="true"
-                  >
-                    <Lock size={18} strokeWidth={2.2} />
-                    <span>{t(lang, 'comingSoon')}</span>
-                  </div>
-                ))}
               </div>
             </div>
           </motion.div>

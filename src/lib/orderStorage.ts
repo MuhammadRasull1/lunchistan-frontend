@@ -15,7 +15,7 @@ function isValidCartItem(value: unknown): value is CartState[string] {
     typeof item.active === 'boolean' &&
     typeof item.portions === 'number' && item.portions >= 1 &&
     (item.beverage === 'Вода' || item.beverage === 'Компот в ассортименте') &&
-    (item.salad === 'Оливье' || item.salad === 'Винегрет' || item.salad === 'Цезарь')
+    typeof item.salad === 'string'
   )
 }
 

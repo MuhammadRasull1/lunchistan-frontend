@@ -9,13 +9,14 @@ import { t } from './locales/translations'
 import { showTelegramAlert } from './lib/telegram'
 import { loadSavedOrder, saveOrder, clearSavedOrder } from './lib/orderStorage'
 import { submitOrder } from './lib/api'
+import { DEFAULT_SALAD } from './components/saladOptions'
 
 const MAX_WORK_DAYS = MONTHLY_SETS.length
 
 function buildDefaultCartState(): CartState {
   const initial: CartState = {}
   MONTHLY_SETS.forEach(set => {
-    initial[set.id] = { active: true, portions: 1, beverage: 'Вода', salad: 'Оливье' }
+    initial[set.id] = { active: true, portions: 1, beverage: 'Вода', salad: DEFAULT_SALAD }
   })
   return initial
 }
@@ -200,7 +201,7 @@ function App() {
             day: Number(id),
             setName: set?.name,
             mainDish,
-            salad: item?.salad ?? 'Оливье',
+            salad: item?.salad ?? DEFAULT_SALAD,
             beverage: item?.beverage ?? 'Вода',
             portions,
             unitPrice: set?.price ?? SET_PRICE,

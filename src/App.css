@@ -1432,8 +1432,8 @@ body {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 84px;
-  padding: 12px 8px;
+  min-height: 108px;
+  padding: 10px 8px;
   border: 1.5px solid var(--border);
   border-radius: 16px;
   background: var(--card-bg);
@@ -1443,6 +1443,14 @@ body {
   text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+.salad-modal__slot-img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
 }
 
 .salad-modal__slot:hover {
@@ -1462,18 +1470,6 @@ body {
   background: var(--brand-dark);
   border-color: var(--brand-dark);
   color: #fff;
-}
-
-.salad-modal__slot--locked {
-  cursor: not-allowed;
-  opacity: 0.45;
-  filter: grayscale(0.4);
-}
-
-.salad-modal__slot--locked:hover {
-  border-color: var(--border);
-  background: var(--card-bg);
-  color: var(--text-muted);
 }
 
 /* ---------- Количество порций ---------- */

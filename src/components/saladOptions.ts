@@ -1,8 +1,14 @@
-import { LeafyGreen } from 'lucide-react'
-import type { Salad } from '../types'
+import { MONTHLY_SETS } from '../data/mockMenu'
 
-export const SALAD_OPTIONS: { value: Salad; icon: React.ComponentType<{ size?: number; strokeWidth?: number }> }[] = [
-  { value: 'Оливье', icon: LeafyGreen },
-  { value: 'Винегрет', icon: LeafyGreen },
-  { value: 'Цезарь', icon: LeafyGreen },
-]
+export interface SaladOption {
+  value: string
+  imageUrl: string
+}
+
+/** Все салаты меню — выведены динамически из реальных фото public/images/dishes/salads/ */
+export const SALAD_OPTIONS: SaladOption[] = MONTHLY_SETS
+  .filter(set => set.category === 'salad')
+  .map(set => ({ value: set.name, imageUrl: set.imageUrl ?? '' }))
+
+/** Салат по умолчанию — первый из доступных */
+export const DEFAULT_SALAD = SALAD_OPTIONS[0]?.value ?? ''
