@@ -98,7 +98,7 @@ interface CatalogProps {
 
 ### 4.1. Визуальные элементы
 
-- **Hero-изображение (баннер)** — `<img>` во всю ширину (`h-44 = 176px`), `object-fit: cover`, уникальные Unsplash-фото для каждого из 24 блюд (прямые ссылки `UNSPLASH_IMAGES` в [[mockMenu.ts]]), `loading="lazy"`, fallback на резервное Unsplash фото при ошибке
+- **Hero-изображение (баннер)** — `<img>` во всю ширину (`h-44 = 176px`), `object-fit: cover`, локальные фото блюд для совпавших позиций (`/images/dishes/<категория>/...`, массив `UNSPLASH_IMAGES` в [[mockMenu.ts]]), для остальных 13 блюд — Unsplash-ссылки, `loading="lazy"`, fallback на резервное Unsplash фото при ошибке
 - **DayBadge** — оранжевый кружок с номером дня поверх изображения
 - **Название сета** — с зачёркиванием для неактивных дней
 - **Composition chips** — полупрозрачные чипсы с lucide-иконками (`UtensilsCrossed`, `LeafyGreen`, `Croissant`, `Wine`). Чип «Напиток» показан в карточке и модалке

@@ -23,7 +23,7 @@
 | **Бэкенд**       | Отсутствует (заглушка mockMenu.ts)  | —          |
 | **Telegram Bot** | Отсутствует                         | —          |
 
-> **Примечание:** На данный момент проект является чистым фронтендом. Данные берутся из `src/data/mockMenu.ts`. Бэкенд и Telegram Bot не реализованы. Изображения сетов — локальные JPG-файлы в `/images/sets/day-N.jpg` с fallback на [[Unsplash]] при ошибке загрузки (подробнее → [[COMPONENTS]]). Добавлена мультиязычность RU/UZ через `src/locales/translations.ts` (подробнее → [[COMPONENTS#11-мультиязычность-ruuz]]).
+> **Примечание:** На данный момент проект является чистым фронтендом. Данные берутся из `src/data/mockMenu.ts`. Бэкенд и Telegram Bot не реализованы. Изображения сетов — локальные JPG-файлы в `public/images/dishes/<категория>/` (транслит-папки: hot-dishes, salads, soups, appetizers, sides, fastfood, misc), импортированы скриптом `scripts/import-images.mjs` из `~/Загрузки/Telegram Desktop` со сжатием (1200px, q80). Часть блюд, для которых нет реальных фото, осталась на [[Unsplash]]-ссылках с fallback при ошибке загрузки (подробнее → [[COMPONENTS]]). Добавлена мультиязычность RU/UZ через `src/locales/translations.ts` (подробнее → [[COMPONENTS#11-мультиязычность-ruuz]]).
 
 ---
 
@@ -46,6 +46,21 @@ lunchistan-frontend/
 │   ├── STATE_MANAGEMENT.md           #   Управление состоянием → [[STATE_MANAGEMENT]]
 │   ├── B2B_RULES.md                  #   Бизнес-правила → [[B2B_RULES]]
 │   └── CHECKOUT_FLOW.md              #   Процесс оформления → [[CHECKOUT_FLOW]]
+│
+├── public/
+│   └── images/
+│       ├── sets/                          # SVG-плейсхолдеры (day-N.svg, устарело)
+│       └── dishes/                        # 🆕 Реальные фото блюд по категориям
+│           ├── hot-dishes/                #   Горячие блюда (32)
+│           ├── salads/                    #   Салаты (13)
+│           ├── soups/                     #   Супы (1)
+│           ├── appetizers/                #   Закуски (2)
+│           ├── sides/                     #   Каши и гарниры (8)
+│           ├── fastfood/                  #   Фастфуд (3)
+│           └── misc/                      #   Разное (4)
+│
+├── scripts/
+│   └── import-images.mjs                  # 🆕 Импорт+сжатие фото из Загрузок (sharp)
 │
 ├── src/
 │   ├── main.tsx                      # Точка входа React (StrictMode + App)

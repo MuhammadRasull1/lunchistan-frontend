@@ -86,29 +86,33 @@ const KBJU_DATA: { calories: number; proteins: number; fats: number; carbs: numb
   { calories: 530, proteins: 34, fats: 16, carbs: 54 },
 ];
 
-/** 24 уникальных Unsplash-фото, подобранных под каждое блюдо */
+/**
+ * Фото для каждого блюда.
+ * Совпавшие блюда — локальные файлы в /images/dishes/<категория>/,
+ * остальные — Unsplash-фото (fallback в SetCard/SetDetailModal).
+ */
 const UNSPLASH_IMAGES: string[] = [
   'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80',  // 1  Гушт сай — сочный стейк
   'https://images.unsplash.com/photo-1476124369491-e7addf5db371?auto=format&fit=crop&w=800&q=80',  // 2  Курица с грибами и рисом
   'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80',  // 3  Куриный стейк — мясо на доске
-  'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=800&q=80',  // 4  Гуляш — тушёное мясо в миске
-  'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&w=800&q=80',  // 5  Котлеты — еда на тёмной тарелке
+  '/images/dishes/hot-dishes/gulyash-iz-govyadiny-s-grechkoy.jpg',  // 4  Гуляш — тушёное мясо
+  '/images/dishes/hot-dishes/kurinaya-kotleta-po-kievski-s-pyure.jpg',  // 5  Котлеты по-киевски
   'https://images.unsplash.com/photo-1484723091739-30a097e8f929?auto=format&fit=crop&w=800&q=80',  // 6  Рыба — фиш/суши-стейк
-  'https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&w=800&q=80',  // 7  Плов свадебный — рисовое блюдо
-  'https://images.unsplash.com/photo-1563379926898-05f4575a45d8?auto=format&fit=crop&w=800&q=80',  // 8  Бефстроганов — мясо в тёмном соусе
+  '/images/dishes/hot-dishes/plov-iz-govyadiny.jpg',  // 7  Плов свадебный
+  '/images/dishes/hot-dishes/befstroganov-s-risom.jpg',  // 8  Бефстроганов
   'https://images.unsplash.com/photo-1506354666786-959d6d497f1a?auto=format&fit=crop&w=800&q=80',  // 9  Парамач — пицца/лепёшка
   'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?auto=format&fit=crop&w=800&q=80',  // 10 Лагман — азиатская лапша
-  'https://images.unsplash.com/photo-1606787366850-de6330128bfc?auto=format&fit=crop&w=800&q=80',  // 11 Чикен терияки — рис с овощами
-  'https://images.unsplash.com/photo-1432139555190-58524dae6a55?auto=format&fit=crop&w=800&q=80',  // 12 Кебаб — мясо на шампуре
-  'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=800&q=80',  // 13 Бифштекс — мясо с гарниром
+  '/images/dishes/hot-dishes/kuritsa-teriyaki-s-risom.jpg',  // 11 Чикен терияки
+  '/images/dishes/hot-dishes/lyulya-kurinye-s-grechkoy.jpg',  // 12 Кебаб — люля-кебаб
+  '/images/dishes/hot-dishes/govyazhya-kotleta-s-pyure.jpg',  // 13 Бифштекс — говяжья котлета
   'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80',  // 14 Плов домашний — салат/овощи
-  'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?auto=format&fit=crop&w=800&q=80',  // 15 Тефтели — суп/рагу
+  '/images/dishes/hot-dishes/mit-boly-s-pyure.jpg',  // 15 Тефтели — мит-болы
   'https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=800&q=80',  // 16 Наггетсы — запечённое мясо
   'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?auto=format&fit=crop&w=800&q=80',  // 17 Бефстроганов с макаронами — паста
   'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?auto=format&fit=crop&w=800&q=80',  // 18 Рыбные котлеты — завтрак/блинчики
-  'https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=800&q=80',  // 19 Манты — азиатские пельмени/суши
-  'https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=800&q=80',  // 20 Шашлык — здоровое блюдо
-  'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=800&q=80',  // 21 Долма — пицца/закуска
+  '/images/dishes/hot-dishes/manty-s-govyadinoy.jpg',  // 19 Манты
+  '/images/dishes/hot-dishes/kuritsa-gril-s-ovoschami.jpg',  // 20 Шашлык куриный
+  '/images/dishes/appetizers/dolma.jpg',  // 21 Долма
   'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=800&q=80',  // 22 Азу — пицца/итальянское
   'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',  // 23 Индейка запечённая — ростбиф с овощами
   'https://images.unsplash.com/photo-1558030006-450675393462?auto=format&fit=crop&w=800&q=80',  // 24 Котлеты из индейки — мясо с гарниром
