@@ -4,21 +4,22 @@ import Catalog from './components/Catalog'
 import Cart from './components/Cart'
 import Success from './components/Success'
 import { MONTHLY_SETS, SET_PRICE } from './data/mockMenu'
-import type { CartState, Screen, PaymentMethod, Beverage, Salad, Lang } from './types'
+import type { CartState, Screen, PaymentMethod, Beverage, Salad, Lang, SelectedDay, PresetPattern } from './types'
 import { t } from './locales/translations'
 import { showTelegramAlert } from './lib/telegram'
 import { loadSavedOrder, saveOrder, clearSavedOrder } from './lib/orderStorage'
 import { submitOrder } from './lib/api'
 import { DEFAULT_SALAD } from './components/saladOptions'
+import { isValidDateString, monthKeyOfDate, buildPresetDates, getSelectableDates } from './lib/calendar'
 
-const MAX_WORK_DAYS = MONTHLY_SETS.length
+/** Сет меню для даты — стабильно по числу месяца: 15-е число → сет №15 */
+function getSetForDate(date: string) {
+  const dayOfMonth = Number(date.slice(8, 10))
+  return MONTHLY_SETS[Math.min(dayOfMonth, MONTHLY_SETS.length) - 1]
+}
 
-function buildDefaultCartState(): CartState {
-  const initial: CartState = {}
-  MONTHLY_SETS.forEach(set => {
-    initial[set.id] = { active: true, portions: 1, beverage: 'Вода', salad: DEFAULT_SALAD }
-  })
-  return initial
+function makeDefaultDay(): CartState[string] {
+  return { active: true, portions: 1, beverage: 'Вода', salad: DEFAULT_SALAD }
 }
 
 // Читаем и валидируем сохранённую конфигурацию один раз при загрузке модуля.
@@ -27,148 +28,119 @@ const savedOrder = loadSavedOrder()
 function App() {
   const [screen, setScreen] = useState<Screen>('catalog')
   const [employeeCount, setEmployeeCount] = useState<number>(() => savedOrder?.employeeCount ?? 1)
-  const [workDaysCount, setWorkDaysCount] = useState<number>(() =>
-    savedOrder ? Math.max(1, Math.min(MAX_WORK_DAYS, savedOrder.workDaysCount)) : MAX_WORK_DAYS
-  )
   const [lang, setLang] = useState<Lang>('ru')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  // Единая модель: cartState ключуется по дате YYYY-MM-DD; наличие ключа = день выбран.
+  // Первый запуск — ничего не выбрано (0 дней).
   const [cartState, setCartState] = useState<CartState>(() => {
-    const base = buildDefaultCartState()
-    if (!savedOrder) return base
-    // Восстанавливаем только известные дни меню — остальное (устаревшие id) отбрасываем.
-    const merged: CartState = { ...base }
-    for (const set of MONTHLY_SETS) {
-      const restored = savedOrder.cartState[String(set.id)]
-      if (restored) merged[set.id] = restored
+    if (!savedOrder) return {}
+    const merged: CartState = {}
+    for (const [date, item] of Object.entries(savedOrder.cartState)) {
+      if (isValidDateString(date)) merged[date] = item
     }
     return merged
   })
 
   // Автосохранение текущей конфигурации заказа для восстановления при следующем запуске.
   useEffect(() => {
-    saveOrder({ employeeCount, workDaysCount, cartState })
-  }, [employeeCount, workDaysCount, cartState])
+    saveOrder({ employeeCount, cartState })
+  }, [employeeCount, cartState])
 
-  // Показываем только первые workDaysCount сетов
-  const visibleSets = MONTHLY_SETS.slice(0, workDaysCount)
-
-  /**
-   * Установить количество рабочих дней.
-   * При уменьшении — дни за пределами лимита деактивируются.
-   * При увеличении — новые дни АВТОМАТИЧЕСКИ активируются (подгружаются в подписку).
-   */
-  const handleWorkDaysSet = (count: number) => {
-    const clamped = Math.max(1, Math.min(MAX_WORK_DAYS, count))
-    const prev = workDaysCount
-    if (clamped === prev) return
-    setWorkDaysCount(clamped)
-    setCartState(prevState => {
-      let changed = false
-      const updated: CartState = {}
-      for (const [id, item] of Object.entries(prevState)) {
-        const numId = Number(id)
-        let nextActive = item.active
-        if (clamped > prev) {
-          if (numId > prev && numId <= clamped && !item.active) {
-            nextActive = true
-            changed = true
-          }
-        } else if (clamped < prev) {
-          if (numId > clamped && item.active) {
-            nextActive = false
-            changed = true
-          }
-        }
-        updated[id] = nextActive === item.active ? item : { ...item, active: nextActive }
+  // Единственный источник истины по количеству дней — выбранные даты.
+  const selectedDates = Object.keys(cartState).sort()
+  const orderDays: SelectedDay[] = selectedDates.map(date => ({
+    date,
+    set: getSetForDate(date),
+    item: cartState[date],
+  }))
+  const totalPortionsFromActive = selectedDates.reduce((sum, date) => sum + (cartState[date]?.portions ?? 1), 0)
+  const totalMonthlyPrice = totalPortionsFromActive * employeeCount * SET_PRICE
+  const totalItems = totalPortionsFromActive * employeeCount
+  /** Включить/выключить день: при отключении настройки дня (салат/напиток/порции) удаляются из state */
+  const handleToggleDate = (date: string) => {
+    setCartState(prev => {
+      if (prev[date]) {
+        const next = { ...prev }
+        delete next[date]
+        return next
       }
-      return changed ? updated : prevState
+      return { ...prev, [date]: makeDefaultDay() }
     })
   }
 
-  const handleBeverageChange = (setId: string | number, beverage: Beverage) => {
+  const handleBeverageChange = (date: string, beverage: Beverage) => {
     setCartState(prev => {
-      const item = prev[setId]
+      const item = prev[date]
       if (!item) return prev
-      return {
-        ...prev,
-        [setId]: { ...item, beverage },
-      }
+      return { ...prev, [date]: { ...item, beverage } }
     })
   }
 
   const handleApplyBeverageToAll = (beverage: Beverage) => {
     setCartState(prev => {
       const next: CartState = {}
-      for (const [id, item] of Object.entries(prev)) {
-        const numId = Number(id)
-        next[id] = numId <= workDaysCount ? { ...item, beverage } : item
+      for (const [date, item] of Object.entries(prev)) {
+        next[date] = { ...item, beverage }
       }
       return next
     })
   }
 
-  const handleToggleDay = (setId: string | number) => {
-    setCartState(prev => {
-      const item = prev[setId]
-      if (!item) return prev
-      return {
-        ...prev,
-        [setId]: { ...item, active: !item.active },
-      }
-    })
-  }
-
-  const handlePortionsChange = (setId: string | number, portions: number) => {
+  const handlePortionsChange = (date: string, portions: number) => {
     const clamped = Math.max(1, portions)
     setCartState(prev => {
-      const item = prev[setId]
+      const item = prev[date]
       if (!item) return prev
-      return {
-        ...prev,
-        [setId]: { ...item, portions: clamped },
-      }
+      return { ...prev, [date]: { ...item, portions: clamped } }
     })
   }
 
-  const handleSaladChange = (setId: string | number, salad: Salad) => {
+  const handleSaladChange = (date: string, salad: Salad) => {
     setCartState(prev => {
-      const item = prev[setId]
+      const item = prev[date]
       if (!item) return prev
-      return {
-        ...prev,
-        [setId]: { ...item, salad },
-      }
+      return { ...prev, [date]: { ...item, salad } }
     })
   }
 
   const handleApplySaladToAll = (salad: Salad) => {
     setCartState(prev => {
       const next: CartState = {}
-      for (const [id, item] of Object.entries(prev)) {
-        const numId = Number(id)
-        next[id] = numId <= workDaysCount ? { ...item, salad } : item
+      for (const [date, item] of Object.entries(prev)) {
+        next[date] = { ...item, salad }
       }
       return next
     })
   }
 
-  const handleSelectAll = () => {
+  /** «Выбрать все» — все допустимые даты видимого месяца */
+  const handleSelectAllInMonth = (monthKey: string) => {
     setCartState(prev => {
-      const next: CartState = {}
-      for (const [id, item] of Object.entries(prev)) {
-        const numId = Number(id)
-        next[id] = { ...item, active: numId <= workDaysCount }
+      const next = { ...prev }
+      for (const date of getSelectableDates(monthKey)) {
+        if (!next[date]) next[date] = makeDefaultDay()
       }
       return next
     })
   }
 
-  const handleDeselectAll = () => {
+  /** «Сбросить все» — удаляет выбор только в пределах видимого месяца */
+  const handleDeselectAllInMonth = (monthKey: string) => {
     setCartState(prev => {
+      const next = { ...prev }
+      for (const date of Object.keys(next)) {
+        if (monthKeyOfDate(date) === monthKey) delete next[date]
+      }
+      return next
+    })
+  }
+
+  /** Пресет: очищает текущий выбор и строит новый график в видимом месяце от его 1-го числа */
+  const handleApplyPreset = (pattern: PresetPattern, monthKey: string) => {
+    setCartState(() => {
       const next: CartState = {}
-      for (const [id, item] of Object.entries(prev)) {
-        const numId = Number(id)
-        next[id] = { ...item, active: numId > workDaysCount ? item.active : false }
+      for (const date of buildPresetDates(monthKey, pattern)) {
+        next[date] = makeDefaultDay()
       }
       return next
     })
@@ -178,40 +150,32 @@ function App() {
     setEmployeeCount(Math.max(1, count))
   }
 
-  // Динамический расчёт: сумма порций активных дней × employeeCount × SET_PRICE
-  const activeDays = Object.values(cartState).filter(item => item?.active).length
-  const totalPortionsFromActive = Object.values(cartState)
-    .filter(item => item?.active)
-    .reduce((sum, item) => sum + (item?.portions ?? 1), 0)
-  const totalMonthlyPrice = totalPortionsFromActive * employeeCount * SET_PRICE
-  const totalItems = totalPortionsFromActive * employeeCount
-
   const handlePlaceOrder = async (method: PaymentMethod) => {
     if (isSubmitting) return
     setIsSubmitting(true)
     try {
-      const lines = Object.entries(cartState)
-        .filter(([, item]) => item?.active)
-        .map(([id, item]) => {
-          const set = MONTHLY_SETS.find(s => String(s.id) === id)
-          const portions = item?.portions ?? 1
-          const totalPortions = portions * employeeCount
-          const mainDish = set?.composition.find(c => c.optional !== true)?.name ?? set?.name ?? ''
-          return {
-            day: Number(id),
-            setName: set?.name,
-            mainDish,
-            salad: item?.salad ?? DEFAULT_SALAD,
-            beverage: item?.beverage ?? 'Вода',
-            portions,
-            unitPrice: set?.price ?? SET_PRICE,
-            lineTotal: (set?.price ?? SET_PRICE) * totalPortions,
-          }
-        })
+      // Массив дней строится напрямую из выбранных дат — день из календаря всегда есть в days[].
+      const lines = orderDays.map(({ date, set, item }) => {
+        const portions = item?.portions ?? 1
+        const totalPortions = portions * employeeCount
+        const mainDish = set?.composition.find(c => c.optional !== true)?.name ?? set?.name ?? ''
+        return {
+          date,
+          day: Number(date.slice(8, 10)),
+          setName: set?.name,
+          mainDish,
+          salad: item?.salad ?? DEFAULT_SALAD,
+          beverage: item?.beverage ?? 'Вода',
+          portions,
+          unitPrice: set?.price ?? SET_PRICE,
+          lineTotal: (set?.price ?? SET_PRICE) * totalPortions,
+        }
+      })
       const payload = {
         employeeCount,
-        workDaysCount,
-        activeDays,
+        workDaysCount: lines.length,
+        activeDays: lines.length,
+        days: lines,
         lines,
         totalMonthlyPrice,
         paymentMethod: method,
@@ -228,9 +192,8 @@ function App() {
   }
 
   const handleNewOrder = () => {
-    setCartState(buildDefaultCartState())
+    setCartState({})
     setEmployeeCount(1)
-    setWorkDaysCount(MAX_WORK_DAYS)
     setScreen('catalog')
     clearSavedOrder()
   }
@@ -243,19 +206,17 @@ function App() {
     <div className="app">
       {screen === 'catalog' && (
         <Catalog
-          sets={visibleSets}
-          allSetsCount={MAX_WORK_DAYS}
-          cartState={cartState}
+          days={orderDays}
+          allSetsCount={MONTHLY_SETS.length}
           employeeCount={employeeCount}
-          workDaysCount={workDaysCount}
           totalMonthlyPrice={totalMonthlyPrice}
           setPrice={SET_PRICE}
           lang={lang}
-          onToggleDay={handleToggleDay}
-          onSelectAll={handleSelectAll}
-          onDeselectAll={handleDeselectAll}
+          onToggleDate={handleToggleDate}
+          onSelectAllInMonth={handleSelectAllInMonth}
+          onDeselectAllInMonth={handleDeselectAllInMonth}
+          onApplyPreset={handleApplyPreset}
           onEmployeeCountChange={handleEmployeeCountChange}
-          onWorkDaysSet={handleWorkDaysSet}
           onBeverageChange={handleBeverageChange}
           onApplyBeverageToAll={handleApplyBeverageToAll}
           onPortionsChange={handlePortionsChange}
@@ -268,8 +229,7 @@ function App() {
 
       {screen === 'cart' && (
         <Cart
-          sets={MONTHLY_SETS}
-          cartState={cartState}
+          days={orderDays}
           totalMonthlyPrice={totalMonthlyPrice}
           employeeCount={employeeCount}
           totalItems={totalItems}
@@ -277,7 +237,7 @@ function App() {
           isSubmitting={isSubmitting}
           onBack={() => setScreen('catalog')}
           onPlaceOrder={handlePlaceOrder}
-          onRemoveItem={handleToggleDay}
+          onRemoveItem={handleToggleDate}
         />
       )}
 

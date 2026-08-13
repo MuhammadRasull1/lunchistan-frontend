@@ -9,6 +9,15 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // Calculator
     calculatorTitle: 'Калькулятор стоимости',
+    calendarTitle: 'Календарь рабочих дней',
+    calendarSubtitle: 'Отметьте даты доставки обедов в этом месяце',
+    preset22: '2/2',
+    preset52: '5/2',
+    preset61: '6/1',
+    presetFull: 'Весь месяц',
+    calendarPrevMonth: 'Предыдущий месяц',
+    calendarNextMonth: 'Следующий месяц',
+    noDatesSelected: 'Выберите даты в календаре, чтобы собрать меню',
     workingDays: 'Рабочих дней в месяце',
     employees: 'Количество сотрудников',
     selectAll: '✅ Выбрать все {n} дней',
@@ -88,7 +97,7 @@ const translations: Record<Lang, Record<string, string>> = {
     newOrder: 'Сделать новый заказ',
 
     // Sticky bar label
-    stickyBarLabel: '{active}/{total} дн. · {employees} чел. · {portions} порц.',
+    stickyBarLabel: '{active} дн. · {employees} чел. · {portions} порц.',
 
     // Order alert
     orderAlert: 'Предзаказ на {employees} сотрудников оформлен!\nСпособ оплаты: {method}\nОбщая сумма: {price}',
@@ -110,6 +119,15 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // Calculator
     calculatorTitle: 'Narx hisoblagichi',
+    calendarTitle: 'Ish kunlari taqvimi',
+    calendarSubtitle: 'Shu oy uchun tushlik yetkazib berish sanalarini belgilang',
+    preset22: '2/2',
+    preset52: '5/2',
+    preset61: '6/1',
+    presetFull: 'Butun oy',
+    calendarPrevMonth: 'Oldingi oy',
+    calendarNextMonth: 'Keyingi oy',
+    noDatesSelected: "Taqvimda sanalarni tanlang, menyu shakllanadi",
     workingDays: 'Oylik ish kunlari',
     employees: 'Xodimlar soni',
     selectAll: '✅ Barcha {n} kunni tanlash',
@@ -189,7 +207,7 @@ const translations: Record<Lang, Record<string, string>> = {
     newOrder: 'Yangi buyurtma',
 
     // Sticky bar label
-    stickyBarLabel: '{active}/{total} kun · {employees} xodim · {portions} pors.',
+    stickyBarLabel: '{active} kun · {employees} xodim · {portions} pors.',
 
     // Order alert
     orderAlert: "{employees} xodim uchun buyurtma rasmiylashtirildi!\nTo'lov usuli: {method}\nUmumiy summa: {price}",
@@ -225,4 +243,16 @@ export function localizeIngredient(lang: Lang, name: string): string {
     Напиток: t(lang, 'drink'),
   }
   return map[name] ?? name
+}
+
+/** Названия месяцев по индексу 0..11 */
+export const MONTHS: Record<Lang, string[]> = {
+  ru: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
+  uz: ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'],
+}
+
+/** Короткие названия дней недели по индексу getDay() (0 = Вс ... 6 = Сб) */
+export const WEEKDAYS_SHORT: Record<Lang, string[]> = {
+  ru: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
+  uz: ['Ya', 'Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh'],
 }

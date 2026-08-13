@@ -1,35 +1,36 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import type { LunchSet, CartState, Lang, SetCategory, Beverage, Salad } from '../types'
+import type { Lang, SetCategory, Beverage, Salad, SelectedDay, PresetPattern } from '../types'
 import { formatPrice } from '../types'
 import { t } from '../locales/translations'
 import SetCard from './SetCard'
 import SetDetailModal from './SetDetailModal'
 import AnimatedCount from './AnimatedCount'
 import Stepper from './Stepper'
+import Calendar from './Calendar'
 import { getTelegramWebApp, hapticImpact } from '../lib/telegram'
 import { DEFAULT_SALAD } from './saladOptions'
+import { startOfMonth, addMonths, monthKeyOf, buildMonthGrid, formatDayLabel } from '../lib/calendar'
 
 type CategoryFilter = SetCategory | 'all'
 
 interface CatalogProps {
-  sets: LunchSet[]
+  /** Все выбранные дни (сортированные) с привязанными сетами и настройками */
+  days: SelectedDay[]
   allSetsCount: number
-  cartState: CartState
   employeeCount: number
-  workDaysCount: number
   totalMonthlyPrice: number
   setPrice: number
   lang: Lang
-  onToggleDay: (setId: string | number) => void
-  onSelectAll: () => void
-  onDeselectAll: () => void
+  onToggleDate: (date: string) => void
+  onSelectAllInMonth: (monthKey: string) => void
+  onDeselectAllInMonth: (monthKey: string) => void
+  onApplyPreset: (pattern: PresetPattern, monthKey: string) => void
   onEmployeeCountChange: (count: number) => void
-  onWorkDaysSet: (count: number) => void
-  onBeverageChange: (setId: string | number, beverage: Beverage) => void
+  onBeverageChange: (date: string, beverage: Beverage) => void
   onApplyBeverageToAll: (beverage: Beverage) => void
-  onPortionsChange: (setId: string | number, portions: number) => void
-  onSaladChange: (setId: string | number, salad: Salad) => void
+  onPortionsChange: (date: string, portions: number) => void
+  onSaladChange: (date: string, salad: Salad) => void
   onApplySaladToAll: (salad: Salad) => void
   onGoToCart: () => void
   onLangChange: (lang: Lang) => void
@@ -46,19 +47,17 @@ const CATEGORY_TABS: { value: CategoryFilter; labelKey: string }[] = [
 ]
 
 function Catalog({
-  sets,
+  days,
   allSetsCount,
-  cartState,
   employeeCount,
-  workDaysCount,
   totalMonthlyPrice,
   setPrice,
   lang,
-  onToggleDay,
-  onSelectAll,
-  onDeselectAll,
+  onToggleDate,
+  onSelectAllInMonth,
+  onDeselectAllInMonth,
+  onApplyPreset,
   onEmployeeCountChange,
-  onWorkDaysSet,
   onBeverageChange,
   onApplyBeverageToAll,
   onPortionsChange,
@@ -67,14 +66,9 @@ function Catalog({
   onGoToCart,
   onLangChange,
 }: CatalogProps) {
-  // Статистика — только по видимым сетам (в пределах workDaysCount)
-  const visibleIds = new Set(sets.map(s => String(s.id)))
-  const activeDays = Object.entries(cartState)
-    .filter(([id, item]) => visibleIds.has(id) && item?.active)
-    .length
-  const totalPortions = Object.entries(cartState)
-    .filter(([id, item]) => visibleIds.has(id) && item?.active)
-    .reduce((sum, entry) => sum + (entry[1]?.portions ?? 1), 0)
+  // Количество дней определяется исключительно выбранными датами.
+  const activeDays = days.length
+  const totalPortions = days.reduce((sum, d) => sum + (d.item?.portions ?? 1), 0)
   const totalItems = totalPortions * employeeCount
 
   // Внутри Telegram оформление уже доступно через нативный MainButton —
@@ -82,43 +76,44 @@ function Catalog({
   const hasMainButton = !!getTelegramWebApp()?.MainButton
 
   // Дни с кастомизацией (нестандартные порции, напиток или салат)
-  const customizedDays = sets.filter(s => {
-    const item = cartState[s.id]
-    if (!item) return false
+  const customizedDays = days.filter(d => {
+    const item = d.item
     return item.portions !== 1 || item.beverage !== 'Вода' || item.salad !== DEFAULT_SALAD
   }).length
 
-  // Состояние модалки детализации сета
-  const [selectedSetId, setSelectedSetId] = useState<string | number | null>(null)
+  // Состояние модалки детализации сета (по дате дня)
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
 
   // Фильтр категорий меню
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all')
 
-  const selectedSet = selectedSetId
-    ? sets.find(s => s.id === selectedSetId) ?? null
-    : null
+  // Календарь: видимый месяц + границы навигации (текущий → следующий месяц)
+  const [minMonth] = useState(() => startOfMonth(new Date()))
+  const maxMonth = useMemo(() => addMonths(minMonth, 1), [minMonth])
+  const [visibleMonth, setVisibleMonth] = useState(() => startOfMonth(new Date()))
+  const visibleMonthKey = monthKeyOf(visibleMonth.getFullYear(), visibleMonth.getMonth())
+  const selectableInMonth = useMemo(
+    () => buildMonthGrid(visibleMonth).filter(c => c.isSelectable).length,
+    [visibleMonth]
+  )
 
-  const filteredSets = activeCategory === 'all'
-    ? sets
-    : sets.filter(s => s.category === activeCategory)
+  const selectedDay = selectedDate ? days.find(d => d.date === selectedDate) ?? null : null
 
-  const handleOpenModal = useCallback((setId: string | number) => {
+  const filteredDays = activeCategory === 'all'
+    ? days
+    : days.filter(d => d.set.category === activeCategory)
+
+  const handleOpenModal = useCallback((date: string) => {
     hapticImpact('light')
-    setSelectedSetId(setId)
+    setSelectedDate(date)
   }, [])
 
   const handleCloseModal = () => {
-    setSelectedSetId(null)
+    setSelectedDate(null)
   }
 
   const handleModalConfirm = () => {
-    if (selectedSetId) {
-      hapticImpact('light')
-      // Убеждаемся, что день активен
-      if (!cartState[selectedSetId]?.active) {
-        onToggleDay(selectedSetId)
-      }
-    }
+    hapticImpact('light')
   }
 
   // Нативная кнопка Telegram MainButton — зеркалит кнопку «Оформить предзаказ»
@@ -185,27 +180,26 @@ function Catalog({
         </p>
       </header>
 
-      {/* Калькулятор стоимости */}
+      {/* Календарь + калькулятор стоимости */}
       <section className="subscription">
-        <h2 className="subscription__title">{t(lang, 'calculatorTitle')}</h2>
+        <h2 className="subscription__title">{t(lang, 'calendarTitle')}</h2>
+        <p className="subscription__label" style={{ margin: '-8px 0 14px' }}>
+          {t(lang, 'calendarSubtitle')}
+        </p>
 
-        {/* Рабочие дни */}
-        <motion.div
-          className="subscription__field"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.05, duration: 0.4 }}
-        >
-          <span className="subscription__label">{t(lang, 'workingDays')}</span>
-          <Stepper
-            value={workDaysCount}
-            min={1}
-            max={allSetsCount}
-            onSet={onWorkDaysSet}
-            ariaDecrease={t(lang, 'stepDecrease')}
-            ariaIncrease={t(lang, 'stepIncrease')}
-          />
-        </motion.div>
+        <Calendar
+          month={visibleMonth}
+          minMonth={minMonth}
+          maxMonth={maxMonth}
+          onMonthChange={setVisibleMonth}
+          selectedDates={days.map(d => d.date)}
+          selectableCount={selectableInMonth}
+          lang={lang}
+          onToggleDate={onToggleDate}
+          onApplyPreset={(pattern) => onApplyPreset(pattern, visibleMonthKey)}
+          onSelectAll={() => onSelectAllInMonth(visibleMonthKey)}
+          onDeselectAll={() => onDeselectAllInMonth(visibleMonthKey)}
+        />
 
         {/* Количество сотрудников */}
         <motion.div
@@ -224,24 +218,6 @@ function Catalog({
           />
         </motion.div>
 
-        {/* Быстрые действия */}
-        <div className="subscription__actions">
-          <button
-            type="button"
-            className="btn btn--outline"
-            onClick={onSelectAll}
-          >
-            {t(lang, 'selectAll', { n: workDaysCount })}
-          </button>
-          <button
-            type="button"
-            className="btn btn--outline btn--outline-danger"
-            onClick={onDeselectAll}
-          >
-            {t(lang, 'deselectAll')}
-          </button>
-        </div>
-
         <motion.div
           className="subscription__calc"
           initial={{ opacity: 0 }}
@@ -251,7 +227,7 @@ function Catalog({
           <div className="subscription__calc-row">
             <span>{t(lang, 'selectedDays')}</span>
             <span className="subscription__calc-value">
-              <AnimatedCount value={activeDays} /> {t(lang, 'from')} {workDaysCount}
+              <AnimatedCount value={activeDays} />
             </span>
           </div>
           <div className="subscription__calc-row">
@@ -284,49 +260,50 @@ function Catalog({
             <div className="subscription__calc-row">
               <span>{t(lang, 'customizedDaysLabel')}</span>
               <span className="subscription__calc-value">
-                <AnimatedCount value={customizedDays} /> {t(lang, 'from')} {sets.length}
+                <AnimatedCount value={customizedDays} /> {t(lang, 'from')} {days.length}
               </span>
             </div>
           )}
         </motion.div>
       </section>
 
-      {/* Список сетов */}
-      <h2 className="catalog__section-title">{t(lang, 'menuTitle', { n: filteredSets.length })}</h2>
+      {/* Список сетов выбранных дней */}
+      <h2 className="catalog__section-title">{t(lang, 'menuTitle', { n: filteredDays.length })}</h2>
 
-      {/* Фильтр категорий */}
-      <div className="tabs" role="tablist" aria-label={t(lang, 'menuTitle', { n: filteredSets.length })}>
-        {CATEGORY_TABS.map(tab => (
-          <button
-            key={tab.value}
-            type="button"
-            role="tab"
-            aria-selected={activeCategory === tab.value}
-            className={`tabs__tab${activeCategory === tab.value ? ' tabs__tab--active' : ''}`}
-            onClick={() => setActiveCategory(tab.value)}
-          >
-            {t(lang, tab.labelKey)}
-          </button>
-        ))}
-      </div>
+      {days.length > 0 && (
+        <div className="tabs" role="tablist" aria-label={t(lang, 'menuTitle', { n: filteredDays.length })}>
+          {CATEGORY_TABS.map(tab => (
+            <button
+              key={tab.value}
+              type="button"
+              role="tab"
+              aria-selected={activeCategory === tab.value}
+              className={`tabs__tab${activeCategory === tab.value ? ' tabs__tab--active' : ''}`}
+              onClick={() => setActiveCategory(tab.value)}
+            >
+              {t(lang, tab.labelKey)}
+            </button>
+          ))}
+        </div>
+      )}
 
-      <div className="catalog__grid catalog__grid--sets">
-        {filteredSets.map((set, index) => {
-          const cartItem = cartState[set.id]
-          const active = cartItem?.active ?? true
-
-          return (
+      {days.length === 0 ? (
+        <p className="catalog__status">{t(lang, 'noDatesSelected')}</p>
+      ) : (
+        <div className="catalog__grid catalog__grid--sets">
+          {filteredDays.map(({ date, set }, index) => (
             <SetCard
-              key={set.id}
+              key={date}
               index={index}
               set={set}
-              active={active}
+              active
               lang={lang}
-              onSelect={handleOpenModal}
+              dateLabel={formatDayLabel(date, lang)}
+              onSelect={() => handleOpenModal(date)}
             />
-          )
-        })}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Нижняя панель */}
       {activeDays > 0 && totalPortions > 0 && (
@@ -338,7 +315,7 @@ function Catalog({
         >
           <div className="sticky-bar__info">
             <span className="sticky-bar__count">
-              {t(lang, 'stickyBarLabel', { active: activeDays, total: workDaysCount, employees: employeeCount, portions: totalItems })}
+              {t(lang, 'stickyBarLabel', { active: activeDays, employees: employeeCount, portions: totalItems })}
             </span>
             <span className="sticky-bar__total">{formatPrice(totalMonthlyPrice)}</span>
           </div>
@@ -358,23 +335,24 @@ function Catalog({
 
       {/* Модальное окно детализации сета */}
       <SetDetailModal
-        set={selectedSet}
-        isOpen={selectedSetId !== null}
+        set={selectedDay?.set ?? null}
+        isOpen={selectedDate !== null}
         onClose={handleCloseModal}
         onConfirm={handleModalConfirm}
         lang={lang}
-        beverage={selectedSetId ? cartState[selectedSetId]?.beverage ?? 'Вода' : 'Вода'}
+        dateLabel={selectedDate ? formatDayLabel(selectedDate, lang) : undefined}
+        beverage={selectedDay?.item.beverage ?? 'Вода'}
         onBeverageChange={(beverage) => {
-          if (selectedSetId) onBeverageChange(selectedSetId, beverage)
+          if (selectedDate) onBeverageChange(selectedDate, beverage)
         }}
         onApplyBeverageToAll={onApplyBeverageToAll}
-        portions={selectedSetId ? cartState[selectedSetId]?.portions ?? 1 : 1}
+        portions={selectedDay?.item.portions ?? 1}
         onPortionsChange={(portions) => {
-          if (selectedSetId) onPortionsChange(selectedSetId, portions)
+          if (selectedDate) onPortionsChange(selectedDate, portions)
         }}
-        salad={selectedSetId ? cartState[selectedSetId]?.salad ?? DEFAULT_SALAD : DEFAULT_SALAD}
+        salad={selectedDay?.item.salad ?? DEFAULT_SALAD}
         onSaladChange={(salad) => {
-          if (selectedSetId) onSaladChange(selectedSetId, salad)
+          if (selectedDate) onSaladChange(selectedDate, salad)
         }}
         onApplySaladToAll={onApplySaladToAll}
       />

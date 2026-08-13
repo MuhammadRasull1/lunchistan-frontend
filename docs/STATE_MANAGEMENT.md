@@ -1,7 +1,7 @@
 # ⚙️ Управление состоянием (State Management)
 
-> Версия: 1.3  \
-> Последнее обновление: 05.08.2026  \
+> Версия: 2.0  \
+> Последнее обновление: 13.08.2026  \
 > Связанные файлы: [[ARCHITECTURE]], [[COMPONENTS]], [[B2B_RULES]]
 
 ---
@@ -10,6 +10,8 @@
 
 **Единый источник истины (Single Source of Truth)** — всё состояние хранится в `App.tsx`.  
 Дочерние компоненты — stateless, получают данные через `props` и сообщают о действиях через колбэки.
+
+> **v2.0 (календарь дат):** количество рабочих дней определяется **исключительно** набором выбранных дат (`selectedDates` = ключи `cartState`). Абстрактный счётчик `workDaysCount` удалён. Выбранная дата хранит полный конфиг дня; отключение дня удаляет его настройки из state.
 
 ---
 
@@ -21,72 +23,80 @@
 | ---------------- | ---------- | ------------------ | ------------------------------------- |
 | `screen`         | `Screen`   | `'catalog'`        | Текущий экран (`catalog` / `cart` / `success`) |
 | `employeeCount`  | `number`   | `1`                | Множитель стоимости (сотрудники)      |
-| `workDaysCount`  | `number`   | `24`               | Отображаемое количество рабочих дней  |
-| `cartState`      | `CartState`| Все `active: true`, `portions: 1`, `beverage: 'Вода'` | Состояние корзины |
-| `lang`           | `Lang`     | `'ru'`             | 🆕 Текущий язык интерфейса (RU/UZ)   |
+| `cartState`      | `CartState`| `{}` (0 дней)      | Выбранные даты (`YYYY-MM-DD`) с настройками дня |
+| `lang`           | `Lang`     | `'ru'`             | Текущий язык интерфейса (RU/UZ)       |
 
 ### 2.2. CartState — детальная структура
 
+Ключом дня является **дата** в формате `YYYY-MM-DD` (наличие ключа = день выбран).
+
 ```typescript
-type CartState = Record<string | number, CartItem>
+type CartState = Record<string, CartItem>
 
 interface CartItem {
-  beverage: Beverage          // 'Вода' | 'Компот в ассортименте'
-  active: boolean             // включён ли день в подписку
+  active: boolean             // всегда true для выбранных дней
   portions: number            // порций на одного сотрудника
-  excludedIngredients: string[]  // 🆕 исключённые ингредиенты (Салат, Лепёшка, Напиток)
+  beverage: Beverage          // 'Вода' | 'Компот в ассортименте'
+  salad: Salad                // выбранный салат
 }
 
-// Пример для 24 дней:
+// Пример:
 {
-  "1":  { beverage: "Вода",                   active: true,  portions: 2, excludedIngredients: [] },
-  "2":  { beverage: "Компот в ассортименте",   active: true,  portions: 1, excludedIngredients: ["Салат", "Лепёшка"] },
-  "3":  { beverage: "Вода",                   active: false, portions: 1, excludedIngredients: [] },
-  // ...
+  "2026-08-03": { active: true, portions: 2, beverage: "Вода",                   salad: "Греческий салат" },
+  "2026-08-04": { active: true, portions: 1, beverage: "Компот в ассортименте",   salad: "Оливье с мясом" },
+  "2026-08-07": { active: true, portions: 1, beverage: "Вода",                   salad: "Морковча" }
 }
 ```
+
+Сопоставление дата → сет меню стабильно по числу месяца (`MONTHLY_SETS[день-1]`), см. [[COMPONENTS#calendartsx]].
 
 ---
 
 ## 3. Вычисляемые значения (Derived State)
 
 ```typescript
-visibleSets           = MONTHLY_SETS.slice(0, workDaysCount)
-activeDays            = Object.values(cartState).filter(item => item.active).length
-totalPortionsFromActive = activeItems.reduce(sum of portions)
-totalItems            = totalPortionsFromActive × employeeCount
-totalMonthlyPrice     = totalPortionsFromActive × employeeCount × SET_PRICE
+selectedDates            = Object.keys(cartState).sort()            // единственный источник количества дней
+orderDays: SelectedDay[] = selectedDates.map(date => ({ date, set: getSetForDate(date), item: cartState[date] }))
+activeDays               = selectedDates.length
+totalPortionsFromActive  = Σ(portions каждого выбранного дня)
+totalItems               = totalPortionsFromActive × employeeCount
+totalMonthlyPrice        = totalPortionsFromActive × employeeCount × SET_PRICE
 ```
 
-> **Важно (v1.2):** В `Catalog.tsx` `activeDays` и `totalPortions` считаются **только по видимым сетам** (первые `workDaysCount`), чтобы «X из Y» отображалось корректно. При уменьшении `workDaysCount` дни за пределами лимита автоматически деактивируются в `cartState` через `handleWorkDaysSet`. При **увеличении** новые дни автоматически **активируются** (подгружаются в подписку).
+> **v2.0:** цена рассчитывается от `selectedDates.length` (количество выбранных дней) × порции × сотрудники × цена сета. Старый источник `workDaysCount` удалён.
 
 ---
 
 ## 4. Обработчики событий
 
 | Функция                         | Действие                                           |
-| ------------------------------- | -------------------------------------------------- |
-| `handleWorkDaysSet(count)`      | 🆆 Установить количество дней (1..24); при уменьшении — деактивировать дни за лимитом, при увеличении — активировать новые дни |
-| `handleBeverageChange(id, bev)` | Сменить напиток для дня |
-| `handleToggleDay(id)`           | Включить/выключить день                             |
-| `handleExcludeIngredients(id, list)` | 🆆 Сохранить список исключённых ингредиентов для дня |
-| `handlePortionChange(id, delta)`| Увеличить/уменьшить порции для дня (мин. 1)        |
-| `handleSelectAll()`             | Включить все дни **в пределах workDaysCount**       |
-| `handleDeselectAll()`           | Выключить все дни **в пределах workDaysCount**      |
+| ------------------------------- | ------------------------------------------------- |
+| `handleToggleDate(date)`        | Включить/выключить день; при отключении настройки дня (салат/напиток/порции) удаляются из state |
+| `handleBeverageChange(date, bev)` | Сменить напиток для даты                        |
+| `handleSaladChange(date, salad)` | Сменить салат для даты                           |
+| `handlePortionsChange(date, n)` | Увеличить/уменьшить порции для даты (мин. 1)     |
+| `handleApplyBeverageToAll(bev)` | Применить напиток ко всем выбранным датам         |
+| `handleApplySaladToAll(salad)`  | Применить салат ко всем выбранным датам           |
+| `handleSelectAllInMonth(monthKey)` | Выбрать все допустимые даты (Пн-Пт) видимого месяца |
+| `handleDeselectAllInMonth(monthKey)` | Удалить выбор только в пределах видимого месяца |
+| `handleApplyPreset(pattern, monthKey)` | Очистить весь выбор и построить график по пресету (2/2, 5/2, 6/1, full) от 1-го числа видимого месяца |
 | `handleEmployeeCountChange(n)`  | Установить количество сотрудников (мин. 1)          |
-| `handlePlaceOrder(method)`      | Оформить заказ → screen = 'success'                 |
+| `handlePlaceOrder(method)`      | Оформить заказ → POST /api/orders с массивом `days[]` → screen = 'success' |
 | `handleNewOrder()`              | Сбросить всё → screen = 'catalog'                   |
-| `handleLangChange(newLang)`     | 🆕 Сменить язык интерфейса                          |
+| `handleLangChange(newLang)`     | Сменить язык интерфейса                          |
 
-### 4.1. Логика `handleWorkDaysSet` (v1.2)
+### 4.1. Пресеты графика (v2.0)
+
+Паттерн начинается от **даты начала подписки** = 1-е число видимого месяца (день №1) и применяется к последовательности допустимых дней (Пн-Пт). Выходные не выбираются. Реализация — `buildPresetDates()` в [[ARCHITECTURE#3-типы-данных-srctypests]] (фактически `src/lib/calendar.ts`):
 
 ```typescript
-// При уменьшении (clamped < prev): активность снимается с дней numId > clamped
-// При увеличении (clamped > prev): дни numId ∈ (prev, clamped] автоматически активируются
-// (даже если были деактивированы ранее) → итоговая сумма мгновенно растёт.
+'2/2'  → работа 2 дня / выход 2 дня (цикл 4)
+'5/2'  → работа 5 дней / выход 2 дня (цикл 7)
+'6/1'  → работа 6 дней / выход 1 день (цикл 7)
+'full' → все допустимые даты месяца
 ```
 
-Ручной ввод чисел реализован в компоненте [[COMPONENTS#9-steppertsx-счётчик-с-ручным-вводом-v12]]: `onWorkDaysSet`/`onEmployeeCountChange` вызываются на каждый валидный ввод.
+Применение пресета **очищает текущий список выбранных дат целиком** и строит новый график в видимом месяце.
 
 ---
 
@@ -96,14 +106,12 @@ totalMonthlyPrice     = totalPortionsFromActive × employeeCount × SET_PRICE
 
 ```typescript
 // Catalog.tsx
-const [selectedSetId, setSelectedSetId] = useState<string | number | null>(null)
-const [excludedIngredients, setExcludedIngredients] = useState<string[]>([])  // 🆕 v1.2
+const [selectedDate, setSelectedDate] = useState<string | null>(null)
 ```
 
-- `setSelectedSetId(id)` — открыть модалку для сета; при этом `excludedIngredients` инициализируется из `cartState[id].excludedIngredients`
-- `setSelectedSetId(null)` — закрыть модалку
-- При закрытии: beverage и исключённые ингредиенты не сохраняются в cartState до нажатия «Выбрать» (ленивое обновление)
-- **v1.2:** при подтверждении модалки `handleModalConfirm` активирует день (если неактивен) и вызывает `onExcludeIngredients(setId, excludedIngredients)` → `handleExcludeIngredients` в [[App.tsx]]
+- `setSelectedDate(date)` — открыть модалку для даты; конфиг читается из `orderDays` (по дате)
+- `setSelectedDate(null)` — закрыть модалку
+- Изменения салата/напитка/порций применяются к дате немедленно (через колбэки в App)
 
 ---
 
@@ -114,11 +122,12 @@ App (state owner — useState)
   │  lang → Catalog, Cart, Success
   │
   ├──→ Catalog
-  │     ├──→ SetCard (×N) — read-only display + lang
-  │     ├──→ SetDetailModal — lang + excludedIngredients (локальный state)
-  │     └──→ Stepper (×2) — onSet → handleWorkDaysSet / handleEmployeeCountChange
+  │     ├──→ Calendar — selectedDates, пресеты, навигация по месяцам
+  │     ├──→ SetCard (×selectedDates) — read-only display + lang
+  │     ├──→ SetDetailModal — lang + dateLabel + настройки даты
+  │     └──→ Stepper (×1: сотрудники)
   │
-  ├──→ Cart — lang + read-only display + onPlaceOrder
+  ├──→ Cart — lang + orderDays + onPlaceOrder
   └──→ Success — lang + onNewOrder callback → полный reset
 ```
 
@@ -131,20 +140,15 @@ React Router не используется → [[ARCHITECTURE#4-маршрути
 
 ```typescript
 const handleNewOrder = () => {
-  const reset: CartState = {}
-  MONTHLY_SETS.forEach(set => {
-    reset[set.id] = { beverage: 'Вода', active: true, portions: 1, excludedIngredients: [] }
-  })
-  setCartState(reset)
+  setCartState({})   // 0 выбранных дней
   setEmployeeCount(1)
-  setWorkDaysCount(MAX_WORK_DAYS)
   setScreen('catalog')
+  clearSavedOrder()
 }
 ```
 
 **Что сбрасывается:**
-- `cartState` → все дни активны, напиток «Вода», 1 порция, исключений нет
+- `cartState` → `{}` (первый запуск/новый заказ — ни один день не выбран)
 - `employeeCount` → 1
-- `workDaysCount` → 24 (максимум)
 - `screen` → `'catalog'`
 - `lang` **не сбрасывается** (язык сохраняется между заказами)

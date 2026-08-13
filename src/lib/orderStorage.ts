@@ -1,10 +1,10 @@
 import type { CartState } from '../types'
+import { isValidDateString } from './calendar'
 
-const STORAGE_KEY = 'lunchistan:order:v1'
+const STORAGE_KEY = 'lunchistan:order:v2'
 
 export interface SavedOrder {
   employeeCount: number
-  workDaysCount: number
   cartState: CartState
 }
 
@@ -27,18 +27,17 @@ export function loadSavedOrder(): SavedOrder | null {
     const parsed = JSON.parse(raw) as Partial<SavedOrder> | null
     if (!parsed || typeof parsed !== 'object') return null
     if (typeof parsed.employeeCount !== 'number' || parsed.employeeCount < 1) return null
-    if (typeof parsed.workDaysCount !== 'number' || parsed.workDaysCount < 1) return null
     if (!parsed.cartState || typeof parsed.cartState !== 'object') return null
 
     const validCartState: CartState = {}
-    for (const [id, item] of Object.entries(parsed.cartState)) {
-      if (isValidCartItem(item)) validCartState[id] = item
+    for (const [date, item] of Object.entries(parsed.cartState)) {
+      // Ключом дня является дата YYYY-MM-DD; всё остальное (устаревшие id) отбрасываем.
+      if (isValidDateString(date) && isValidCartItem(item)) validCartState[date] = item
     }
     if (Object.keys(validCartState).length === 0) return null
 
     return {
       employeeCount: parsed.employeeCount,
-      workDaysCount: parsed.workDaysCount,
       cartState: validCartState,
     }
   } catch {

@@ -16,6 +16,8 @@ interface SetDetailModalProps {
   onClose: () => void
   onConfirm: () => void
   lang: Lang
+  /** Подпись даты (например "03.08 · Пн"); если не передана — используется день меню */
+  dateLabel?: string
   beverage: Beverage
   onBeverageChange: (beverage: Beverage) => void
   onApplyBeverageToAll: (beverage: Beverage) => void
@@ -127,7 +129,7 @@ const SHEET_VARIANTS = {
   },
 }
 
-function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, beverage, onBeverageChange, onApplyBeverageToAll, salad, onSaladChange, onApplySaladToAll, portions, onPortionsChange }: SetDetailModalProps) {
+function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, dateLabel, beverage, onBeverageChange, onApplyBeverageToAll, salad, onSaladChange, onApplySaladToAll, portions, onPortionsChange }: SetDetailModalProps) {
   const [isSaladPickerOpen, setSaladPickerOpen] = useState(false)
 
   const fixedItems = set
@@ -199,7 +201,7 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, beverage, onBev
               {/* Заголовок */}
               <div className="modal-sheet__header">
                 <h2 className="modal-sheet__title">{set.name}</h2>
-                <span className="modal-sheet__day">{t(lang, 'day')} {set.dayNumber} · {set.weekDay}</span>
+                <span className="modal-sheet__day">{dateLabel ?? `${t(lang, 'day')} ${set.dayNumber} · ${set.weekDay}`}</span>
               </div>
 
               {/* Состав — фиксированные, неизменяемые плашки */}

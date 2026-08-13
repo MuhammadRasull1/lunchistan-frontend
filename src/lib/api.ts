@@ -3,6 +3,8 @@ import axios from 'axios'
 const API_BASE_URL = 'https://lunchistan-backend.onrender.com'
 
 export interface OrderLine {
+  /** Дата дня в формате YYYY-MM-DD */
+  date: string
   day: number
   setName?: string
   mainDish: string
@@ -17,6 +19,7 @@ export interface OrderPayload {
   employeeCount: number
   workDaysCount: number
   activeDays: number
+  days: OrderLine[]
   lines: OrderLine[]
   totalMonthlyPrice: number
   paymentMethod: string

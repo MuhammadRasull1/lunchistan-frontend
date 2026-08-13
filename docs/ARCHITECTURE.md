@@ -1,7 +1,7 @@
 # 🏗️ Архитектура Lunchistan Frontend
 
-> Версия: 2.3  \
-> Последнее обновление: 05.08.2026  \
+> Версия: 2.4  \
+> Последнее обновление: 13.08.2026  \
 > Связанные файлы: [[COMPONENTS]], [[STATE_MANAGEMENT]], [[B2B_RULES]], [[CHECKOUT_FLOW]]
 
 ---
@@ -75,12 +75,19 @@ lunchistan-frontend/
 │   ├── data/
 │   │   └── mockMenu.ts               # Мок-данные: 56 реальных блюд + категории + КБЖУ
 │   │
+│   ├── lib/                           # 🆕 Утилиты
+│   │   ├── api.ts                     # Отправка заказа на backend (payload с days[])
+│   │   ├── calendar.ts                # 🆕 Даты, сетка месяца, пресеты (2/2, 5/2, 6/1, full)
+│   │   ├── orderStorage.ts            # Сохранение конфигурации (v2, ключи — даты)
+│   │   └── telegram.ts                # Telegram WebApp, вибрация, алерты
+│   │
 │   └── components/
-│       ├── Catalog.tsx               # Главный экран: калькулятор + табы категорий + сетка сетов
+│       ├── Catalog.tsx               # Главный экран: календарь + калькулятор + табы + сетка сетов
+│       ├── Calendar.tsx              # 🆕 Календарь рабочих дней с пресетами
 │       ├── SetCard.tsx               # Карточка дня/сета (премиум B2B, lucide-иконки)
 │       ├── SetDetailModal.tsx        # Выплывающее окно детализации сета (+ исключение ингредиентов)
-│       ├── Stepper.tsx               # 🆕 Счётчик «− / input / +» с ручным вводом чисел
-│       ├── Cart.tsx                  # Экран корзины/оформления заказа (glassmorphism)
+│       ├── Stepper.tsx               # Счётчик «− / input / +» (сотрудники)
+│       ├── Cart.tsx                  # Экран корзины/оформления заказа (строки по датам)
 │       ├── Success.tsx               # Экран успешного оформления
 │       └── AnimatedCount.tsx         # Плавная анимация числовых значений
 │
@@ -102,10 +109,12 @@ lunchistan-frontend/
 | `Beverage`           | `'Вода' | 'Компот в ассортименте'`     |
 | `PaymentMethod`      | `'corporate' | 'card' | 'cash'`        |
 | `Lang`               | `'ru' | 'uz'` — языки интерфейса     |
+| `PresetPattern`      | 🆆 `'2/2' | '5/2' | '6/1' | 'full'` — пресеты графика |
+| `SelectedDay`        | 🆆 `{ date, set, item }` — выбранная дата с сетом меню и настройками дня |
 | `SetCategory`        | `'meat' | 'chicken' | 'poultry' | 'fish'` — категория сета (табы меню) |
 | `LunchSet`           | Сет с KBJU + composition + category     |
-| `CartItem`           | Элемент корзины (active, portions, excludedIngredients) |
-| `CartState`          | `Record<string | number, CartItem>`    |
+| `CartItem`           | Настройки дня (active, portions, salad, beverage) |
+| `CartState`          | 🆆 `Record<string, CartItem>` — ключи = даты `YYYY-MM-DD` |
 | `formatPrice(n)`     | `"55 000 сум"`                         |
 
 ---

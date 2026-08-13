@@ -1,7 +1,7 @@
 # 🧩 Компоненты Lunchistan
 
-> Версия: 1.3  \
-> Последнее обновление: 05.08.2026  \
+> Версия: 2.0  \
+> Последнее обновление: 13.08.2026  \
 > Связанные файлы: [[ARCHITECTURE]], [[STATE_MANAGEMENT]], [[CHECKOUT_FLOW]], [[B2B_RULES]]
 
 ---
@@ -14,9 +14,10 @@
 App (state owner)
   │
   ├──→ Catalog
-  │     ├──→ SetCard (×N)
+  │     ├──→ Calendar (календарь рабочих дней + пресеты)
+  │     ├──→ SetCard (×selectedDates)
   │     ├──→ SetDetailModal (Bottom Sheet, при клике на SetCard)
-  │     ├──→ Stepper (×2: рабочие дни / сотрудники)
+  │     ├──→ Stepper (×1: сотрудники)
   │     └──→ Language Switcher (в шапке)
   │
   ├──→ Cart
@@ -33,9 +34,10 @@ App (state owner)
 | ------------------- | ---------- | ------------------ | --------------------------------- |
 | `screen`            | `Screen`   | `'catalog'`        | Текущий экран                     |
 | `employeeCount`     | `number`   | `1`                | Количество сотрудников (множитель)|
-| `workDaysCount`     | `number`   | `24`               | Отображаемое количество дней      |
-| `cartState`         | `CartState`| Все дни active     | Состояние корзины                 |
+| `cartState`         | `CartState`| `{}` — 0 дней      | Выбранные даты (`YYYY-MM-DD`) + настройки |
 | `lang`              | `Lang`     | `'ru'`             | Текущий язык интерфейса           |
+
+> **v2.0:** `workDaysCount` удалён — количество дней = `selectedDates.length` ([[STATE_MANAGEMENT#3-вычисляемые-значения-derived-state]]).
 
 ---
 
@@ -44,43 +46,42 @@ App (state owner)
 ### 3.1. Секции
 
 1. **Шапка** — бренд + переключатель языка (`RU | UZ`) + заголовок + подзаголовок
-2. **Калькулятор стоимости** — счётчики рабочих дней и сотрудников
-3. **Быстрые действия** — «Выбрать все» / «Сбросить все»
-4. **Детализация расчёта** — порции, множители, итоговая цена
-5. **Сетка SetCard × workDaysCount** — карточки дней (Image → Name → Chips → Price)
-6. **StickyBar** — фиксированная панель с итогом + кнопка «Оформить»
-7. **SetDetailModal** — выплывающее окно детализации сета
+2. **Календарь рабочих дней** — навигация по месяцам, пресеты, сетка дат, «Выбрать все/Сбросить все»
+3. **Калькулятор стоимости** — счётчик сотрудников + детализация расчёта
+4. **Сетка SetCard × выбранные даты** — карточки дней (Image → Name → Chips → Price)
+5. **StickyBar** — фиксированная панель с итогом + кнопка «Оформить»
+6. **SetDetailModal** — выплывающее окно детализации сета
 
 ### 3.2. Props
 
 ```typescript
 interface CatalogProps {
-  sets: LunchSet[]
+  days: SelectedDay[]                 // 🆆 выбранные даты с сетами и настройками
   allSetsCount: number
-  cartState: CartState
   employeeCount: number
-  workDaysCount: number
   totalMonthlyPrice: number
   setPrice: number
-  lang: Lang                          // 🆕 текущий язык
-  onToggleDay: (setId: string | number) => void
-  onSelectAll: () => void
-  onDeselectAll: () => void
+  lang: Lang
+  onToggleDate: (date: string) => void          // 🆆 включить/выключить дату
+  onSelectAllInMonth: (monthKey: string) => void // 🆆 выбрать все Пн-Пт видимого месяца
+  onDeselectAllInMonth: (monthKey: string) => void // 🆆 сбросить выбор видимого месяца
+  onApplyPreset: (pattern: PresetPattern, monthKey: string) => void // 🆆 пресеты 2/2, 5/2, 6/1, full
   onEmployeeCountChange: (count: number) => void
-  onWorkDaysSet: (count: number) => void   // 🆕 устанавливает кол-во дней напрямую (заменил onWorkDaysChange)
-  onBeverageChange: (setId: string | number, beverage: Beverage) => void
-  onExcludeIngredients: (setId: string | number, excluded: string[]) => void  // 🆕 сохранение исключённых
+  onBeverageChange: (date: string, beverage: Beverage) => void
+  onApplyBeverageToAll: (beverage: Beverage) => void
+  onPortionsChange: (date: string, portions: number) => void
+  onSaladChange: (date: string, salad: Salad) => void
+  onApplySaladToAll: (salad: Salad) => void
   onGoToCart: () => void
-  onLangChange: (lang: Lang) => void  // 🆕 смена языка
+  onLangChange: (lang: Lang) => void
 }
 ```
 
-### 3.3. Фикс калькулятора (v1.2)
+### 3.3. Фикс калькулятора (v2.0)
 
-- `activeDays` и `totalPortions` считаются **только по видимым сетам** (в пределах `workDaysCount`), а не по всем 24 дням в `cartState`.
-- При уменьшении `workDaysCount` — дни за пределами лимита **деактивируются** в `cartState`.
-- При увеличении `workDaysCount` — **новые дни автоматически активируются** (подгружаются в подписку, цена мгновенно растёт) → [[STATE_MANAGEMENT#4-обработчики-событий]].
-- «Выбрать все N дней» активирует строго N дней; «Сбросить все» деактивирует только видимые дни.
+- `activeDays` и `totalPortions` считаются **только по выбранным датам** (`days.length` и сумма порций).
+- Сетка карточек рендерится для выбранных дат; категорийные табы фильтруют её (не влияют на расчёт).
+- При отсутствии выбранных дней показывается подсказка «Выберите даты в календаре».
 - Все строки интерфейса используют функцию `t(lang, 'key')` из [[translations.ts]].
 
 ### 3.4. Табы категорий (v1.3)
@@ -91,6 +92,43 @@ interface CatalogProps {
 - Фильтрация влияет **только на сетку карточек**, но НЕ на расчёт статистики (считается по всем видимым дням подписки).
 - Названия категорий локализованы: `categoryAll`, `categoryMeat`, `categoryChicken`, `categoryPoultry`, `categoryFish` → [[B2B_RULES#2-1-категории-сетов]].
 - **v1.3:** рыбные сеты вынесены в собственную категорию `'fish'` (рыба ≠ птица).
+
+### 3.5. Calendar.tsx — Календарь рабочих дней (v2.0) 🆆
+
+Новый компонент заменяет абстрактный счётчик «рабочих дней» `− 56 +`.
+
+**Возможности:**
+- **Период:** показывается текущий месяц; доступна навигация на следующий месяц (и назад в пределе «текущий → следующий»). Дальше недопустимого периода уйти нельзя.
+- **Дата начала подписки** = 1-е число видимого месяца (день №1 паттерна пресетов).
+- **Начальное состояние:** при первом открытии ни один день не выбран.
+- **Выбор:** клик по допустимой дате (Пн-Пт) — включить/выключить; выходные (Сб/Вс) — некликабельны.
+- **Пресеты:** `2/2`, `5/2`, `6/1`, `Весь месяц` — очищают выбор и строят график от 1-го числа видимого месяца по последовательности Пн-Пт (реализация `buildPresetDates()` в [[ARCHITECTURE]] / `src/lib/calendar.ts`).
+- **Быстрые действия:** «Выбрать все N дней» / «Сбросить все» — в пределах видимого месяца.
+
+**Визуальные состояния (используются CSS-переменные дизайн-системы):**
+- Выбранный рабочий день — оранжевый (`--brand`)
+- Нерабочий/не выбранный — серый (`.calendar__day--off`, `#f3f4f6`)
+- Сегодня — оранжевая обводка (`.calendar__day--today`)
+
+**Props:**
+
+```typescript
+interface CalendarProps {
+  month: Date                          // видимый месяц
+  minMonth: Date                       // текущий месяц (граница «назад»)
+  maxMonth: Date                       // следующий месяц (граница «вперёд»)
+  onMonthChange: (month: Date) => void
+  selectedDates: string[]              // выбранные даты YYYY-MM-DD
+  selectableCount: number              // допустимых дат в видимом месяце
+  lang: Lang
+  onToggleDate: (date: string) => void
+  onApplyPreset: (pattern: PresetPattern) => void
+  onSelectAll: () => void
+  onDeselectAll: () => void
+}
+```
+
+**Стили** `.calendar*` в [[ARCHITECTURE#10-известные-ограничения-todos]] (фактически `src/App.css`) — адаптив под узкие экраны Telegram Mini App (`@media max-width: 480px`).
 
 ---
 
@@ -113,9 +151,12 @@ interface SetCardProps {
   index: number
   active: boolean
   lang: Lang            // 🆕 для локализации «за порцию»
+  dateLabel?: string    // 🆆 подпись даты «03.08 · Пн» (иначе день меню)
   onSelect?: () => void
 }
 ```
+
+> **v2.0:** в теге карточки отображается реальная дата календаря (`dateLabel`), а не абстрактный «День N».
 
 ### 4.3. Анимации
 
@@ -222,7 +263,7 @@ interface SetDetailModalProps {
 
 ### 9.1. Назначение
 
-Заменяет прежний счётчик «− / число / +»: число стало **кликабельным инпутом** (`input type="number"`). Пользователь может кликнуть по цифре и сразу вписать нужное значение с клавиатуры. Кнопки «−» и «+» остаются по бокам.
+Число — кликабельный `input type="number"`: можно вписать значение с клавиатуры. Кнопки «−» и «+» остаются по бокам.
 
 ### 9.2. Props
 
@@ -239,7 +280,7 @@ interface StepperProps {
 
 ### 9.3. Поведение
 
-- **Применяется в Catalog** для «Рабочих дней» (`min=1, max=allSetsCount`) и «Количество сотрудников» (`min=1`).
+- **v2.0:** применяется **только** к «Количество сотрудников» (`min=1`). Счётчик «рабочих дней» удалён — количество дней определяется календарём ([[STATE_MANAGEMENT#3-вычисляемые-значения-derived-state]]).
 - `onSet` вызывается на каждый валидный ввод → мгновенный пересчёт цены в [[CHECKOUT_FLOW#2-2-stickybar]].
 - Кнопки `+`/`−` работают через `onSet(clamp(value ± 1))`.
 - Локальное состояние `draft` + флаг `focused`: во время фокуса ввод не перезатирается внешними изменениями; при потере фокуса / Enter значение `clamp`-ится и коммитится.

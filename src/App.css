@@ -1639,3 +1639,159 @@ body {
     font-size: 15px;
   }
 }
+
+/* ---------- Calendar (рабочие дни подписки) ---------- */
+.calendar {
+  margin-bottom: 4px;
+}
+
+.calendar__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.calendar__nav-btn {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.calendar__nav-btn:hover:not(:disabled) {
+  background: var(--brand-light);
+  border-color: var(--brand);
+  color: var(--brand-dark);
+}
+
+.calendar__nav-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.calendar__title {
+  flex: 1;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  text-transform: capitalize;
+}
+
+.calendar__presets {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.calendar__preset {
+  border: 1px solid var(--border);
+  background: var(--brand-light);
+  color: var(--brand-dark);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 4px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.1s ease;
+}
+
+.calendar__preset:hover {
+  background: var(--brand);
+  color: #fff;
+}
+
+.calendar__preset:active {
+  transform: scale(0.96);
+}
+
+.calendar__weekdays,
+.calendar__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+
+.calendar__weekday {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 4px 0;
+}
+
+.calendar__weekday--weekend {
+  color: #d1d5db;
+}
+
+.calendar__day {
+  aspect-ratio: 1;
+  min-height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.calendar__day:hover:not(.calendar__day--off):not(.calendar__day--selected) {
+  background: var(--brand-light);
+  border-color: var(--brand);
+}
+
+.calendar__day--off {
+  background: #f3f4f6;
+  border-color: #f3f4f6;
+  color: #d1d5db;
+  cursor: default;
+}
+
+.calendar__day--selected {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+  box-shadow: var(--shadow-brand);
+}
+
+.calendar__day--selected:active {
+  transform: scale(0.92);
+}
+
+.calendar__day--today {
+  outline: 2px solid var(--brand);
+  outline-offset: -2px;
+}
+
+.calendar__day--today.calendar__day--selected {
+  outline: 2px solid var(--brand-dark);
+}
+
+.calendar__actions {
+  margin-top: 18px;
+}
+
+@media (max-width: 480px) {
+  .calendar__presets {
+    gap: 6px;
+  }
+
+  .calendar__day {
+    font-size: 14px;
+  }
+}

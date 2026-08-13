@@ -50,6 +50,19 @@ export interface CartItem {
 
 export type CartState = Record<string | number, CartItem>;
 
+/** Пресет графика рабочих дней. Паттерн строится от даты начала подписки (1-е число видимого месяца). */
+export type PresetPattern = '2/2' | '5/2' | '6/1' | 'full';
+
+/** День подписки: конкретная дата + привязанный к ней сет меню + настройки дня */
+export interface SelectedDay {
+  /** Дата в формате YYYY-MM-DD */
+  date: string;
+  /** Сет меню для этой даты (стабильно по числу месяца) */
+  set: LunchSet;
+  /** Настройки дня (напиток, салат, порции) */
+  item: CartItem;
+}
+
 export type Lang = 'ru' | 'uz';
 
 export type Screen = 'catalog' | 'cart' | 'success';

@@ -1,7 +1,7 @@
 # 🛒 Процесс оформления заказа (Checkout Flow)
 
-> Версия: 1.2  \
-> Последнее обновление: 05.08.2026  \
+> Версия: 2.0  \
+> Последнее обновление: 13.08.2026  \
 > Связанные файлы: [[B2B_RULES]], [[COMPONENTS]], [[STATE_MANAGEMENT]]
 
 ---
@@ -50,15 +50,19 @@ Catalog (Новый заказ, сброс)
 - **Итоговая сумма**: жирный оранжевый текст
 - **Кнопка оплаты**: «Оплатить {price}» / «{price} to'lash»
 
-### 3.2. Детализация строки сета
+### 3.2. Детализация строки сета (v2.0)
 
 ```
-🍱 Обед День 1 (Пн)
-    Kun 1 · Пн · Вода · 2 порц./сотр.          ← локализовано через t(lang, 'day') и t(lang, 'portionsPerEmployee')
-    без: Салат, Лепёшка                        ← 🆆 v1.2 — исключённые ингредиенты (localizeIngredient)
-                              2 × 55 000 сум
-                              110 000 сум
+🍱 Аджахури с курицей
+    03.08 · Пн · 2 порц./сотр.           ← реальная дата + день недели (formatDayLabel)
+    Греческий салат · Вода
+                      2 × 55 000 сум
+                      110 000 сум
 ```
+
+- Строка строится для каждой **выбранной даты** календаря ([[STATE_MANAGEMENT#3-вычисляемые-значения-derived-state]]).
+- Напиток и салат локализуются через `t()`.
+- Кнопка «Удалить» (`×`) отключает день в календаре и удаляет его настройки из state.
 
 ### 3.3. Анимации (framer-motion)
 
@@ -90,32 +94,57 @@ UI: три кнопки с иконками, `payment__option--active` для в
 4. **Номер заказа**: `#ORD-NNNN` (случайный 4-значный, генерируется при монтировании)
 5. **Кнопка**: «Сделать новый заказ» / «Yangi buyurtma» → полный сброс ([[STATE_MANAGEMENT#7-сброс-состояния-new-order]])
 
-### 5.2. Обработка заказа
+### 5.2. Обработка заказа (v2.0)
+
+Главный источник данных — массив дней. Каждый выбранный день из календаря гарантированно попадает в `days[]`:
+
+```
+selectedDates (ключи cartState)
+        ↓
+day configuration (set + salad + beverage + portions)
+        ↓
+days[] (массив OrderLine с date)
+        ↓
+order payload
+        ↓
+POST /api/orders
+```
 
 ```typescript
-const handlePlaceOrder = (method: PaymentMethod) => {
-  const methodLabels = {
-    corporate: t(lang, 'corporateLabel'),
-    card: t(lang, 'cardLabel'),
-    cash: t(lang, 'cashLabel'),
-  }
-  const lines = Object.entries(cartState)
-    .filter(([, item]) => item?.active)
-    .map(([id, item]) => ({
-      day: Number(id),
-      portions: item?.portions ?? 1,
+const handlePlaceOrder = async (method: PaymentMethod) => {
+  const lines = orderDays.map(({ date, set, item }) => {
+    const portions = item?.portions ?? 1
+    const totalPortions = portions * employeeCount
+    const mainDish = set?.composition.find(c => c.optional !== true)?.name ?? set?.name ?? ''
+    return {
+      date,                       // 🆆 реальная дата YYYY-MM-DD
+      day: Number(date.slice(8, 10)),
+      setName: set?.name,
+      mainDish,
+      salad: item?.salad ?? DEFAULT_SALAD,
       beverage: item?.beverage ?? 'Вода',
-      excludedIngredients: item?.excludedIngredients ?? [],   // 🆆 v1.2
-    }))
-  console.log('Заказ оформлен:', { employeeCount, workDaysCount, activeDays, lines, totalMonthlyPrice, paymentMethod: method })
-  alert(t(lang, 'orderAlert', { employees: employeeCount, method: methodLabels[method], price: formatPrice(totalMonthlyPrice) }))
+      portions,
+      unitPrice: set?.price ?? SET_PRICE,
+      lineTotal: (set?.price ?? SET_PRICE) * totalPortions,
+    }
+  })
+  const payload = {
+    employeeCount,
+    workDaysCount: lines.length,    // теперь = количеству выбранных дат
+    activeDays: lines.length,
+    days: lines,                    // 🆆 канонический массив дней
+    lines,                          // (совместимость с прежним контрактом)
+    totalMonthlyPrice,
+    paymentMethod: method,
+  }
+  await submitOrder(payload)
   setScreen('success')
 }
 ```
 
-> **🆆 v1.2:** Информация об **исключённых ингредиентах** сохраняется в итоговом объекте заказа (`lines[].excludedIngredients`) — массив названий исключённых компонентов (Салат, Лепёшка, Напиток) для каждого дня. Подробнее об исключении → [[COMPONENTS#5-setdetailmodaltsx]].
+> **🆆 v2.0:** вместо абстрактного `workDaysCount: 24` фронтенд отправляет **конкретные даты** (`days[].date`). Поле `workDaysCount` в payload теперь производное (`lines.length`). Каждый день в календаре имеет полный объект `{ date, mainDish, salad, beverage, portions }` — день не может быть выбран в календаре и отсутствовать в `days[]`.
 
-⚠️ **Важно**: на данный момент заказ не отправляется на сервер — только `console.log` + `alert`.
+⚠️ **Важно:** отправка на сервер через `submitOrder()` ([[ARCHITECTURE]] / `src/lib/api.ts`), `axios.post(API_BASE_URL + '/api/orders')`.
 
 ---
 

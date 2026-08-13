@@ -12,6 +12,8 @@ interface SetCardProps {
   index: number
   active: boolean
   lang: Lang
+  /** Подпись даты (например "03.08 · Пн"); если не передана — используется день меню */
+  dateLabel?: string
   onSelect?: (id: string | number) => void
 }
 
@@ -22,7 +24,7 @@ function getCompositionIcon(name: string) {
   return UtensilsCrossed
 }
 
-function SetCard({ set, index, active, lang, onSelect }: SetCardProps) {
+function SetCard({ set, index, active, lang, dateLabel, onSelect }: SetCardProps) {
   return (
     <motion.article
       className={`set-card${active ? ' set-card--active' : ' set-card--inactive'}`}
@@ -67,7 +69,7 @@ function SetCard({ set, index, active, lang, onSelect }: SetCardProps) {
             : <span className="set-card__name--strikethrough">{set.name}</span>
           }
         </h3>
-        <span className="set-card__tag">{t(lang, 'day')} {set.dayNumber} · {set.weekDay}</span>
+        <span className="set-card__tag">{dateLabel ?? `${t(lang, 'day')} ${set.dayNumber} · ${set.weekDay}`}</span>
 
         {/* Composition chips */}
         {active && set.composition && (

@@ -1,20 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { X } from 'lucide-react'
-import type { CartState, LunchSet, PaymentMethod, Lang } from '../types'
+import type { SelectedDay, PaymentMethod, Lang } from '../types'
 import { formatPrice } from '../types'
 import { t } from '../locales/translations'
 import { getTelegramWebApp, hapticImpact } from '../lib/telegram'
+import { formatDayLabel } from '../lib/calendar'
 
 interface CartLine {
-  set: LunchSet
+  date: string
+  set: SelectedDay['set']
+  item: SelectedDay['item']
   portions: number
   totalPortions: number
 }
 
 interface CartProps {
-  sets: LunchSet[]
-  cartState: CartState
+  days: SelectedDay[]
   totalMonthlyPrice: number
   employeeCount: number
   totalItems: number
@@ -22,12 +24,11 @@ interface CartProps {
   isSubmitting: boolean
   onBack: () => void
   onPlaceOrder: (method: PaymentMethod) => void
-  onRemoveItem: (setId: string | number) => void
+  onRemoveItem: (date: string) => void
 }
 
 function Cart({
-  sets,
-  cartState,
+  days,
   totalMonthlyPrice,
   employeeCount,
   totalItems,
@@ -39,20 +40,19 @@ function Cart({
 }: CartProps) {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('corporate')
 
-  const activeLines: CartLine[] = sets
-    .filter((set) => cartState[set.id]?.active)
-    .map((set) => {
-      const portions = cartState[set.id]?.portions ?? 1
-      return {
-        set,
-        portions,
-        totalPortions: portions * employeeCount,
-      }
-    })
+  const activeLines: CartLine[] = days.map(({ date, set, item }) => {
+    const portions = item?.portions ?? 1
+    return {
+      date,
+      set,
+      item,
+      portions,
+      totalPortions: portions * employeeCount,
+    }
+  })
 
   const activeDays = activeLines.length
-  const canCheckout = activeLines.length > 0 && activeLines.every(({ set }) => {
-    const item = cartState[set.id]
+  const canCheckout = activeLines.length > 0 && activeLines.every(({ item }) => {
     return !!item?.salad && !!item?.beverage
   })
 
@@ -62,9 +62,9 @@ function Cart({
     { value: 'cash', label: t(lang, 'cash'), icon: '💵' },
   ]
 
-  const handleRemoveItem = (setId: string | number) => {
+  const handleRemoveItem = (date: string) => {
     hapticImpact('light')
-    onRemoveItem(setId)
+    onRemoveItem(date)
   }
 
   // Нативная кнопка Telegram MainButton — зеркалит кнопку «Оплатить»
@@ -152,9 +152,9 @@ function Cart({
               visible: { transition: { staggerChildren: 0.05 } },
             }}
           >
-            {activeLines.map(({ set, portions, totalPortions }) => (
+            {activeLines.map(({ date, set, item, portions, totalPortions }) => (
               <motion.li
-                key={set.id}
+                key={date}
                 className="cart__item"
                 variants={{
                   hidden: { opacity: 0, x: -20 },
@@ -168,10 +168,9 @@ function Cart({
                     {set.name}
                   </span>
                   <span className="cart__item-desc">
-                    {t(lang, 'day')} {set.dayNumber} · {set.weekDay} · {portions} {t(lang, 'portionsPerEmployee')}
+                    {formatDayLabel(date, lang)} · {portions} {t(lang, 'portionsPerEmployee')}
                   </span>
                   {(() => {
-                    const item = cartState[set.id]
                     if (!item?.salad || !item?.beverage) return null
                     const beverageLabel = t(lang, item.beverage === 'Вода' ? 'water' : 'compote')
                     return (
@@ -189,7 +188,7 @@ function Cart({
                   type="button"
                   className="cart__item-remove"
                   aria-label={t(lang, 'removeFromCart')}
-                  onClick={() => handleRemoveItem(set.id)}
+                  onClick={() => handleRemoveItem(date)}
                 >
                   <X size={16} strokeWidth={2.5} />
                 </button>
