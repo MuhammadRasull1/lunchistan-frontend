@@ -14,6 +14,8 @@ interface SetCardProps {
   lang: Lang
   /** Подпись даты (например "03.08 · Пн"); если не передана — используется день меню */
   dateLabel?: string
+  /** Просмотр в полном каталоге: карточка не выбранного дня в обычных цветах (без бейджа и состава) */
+  preview?: boolean
   onSelect?: (id: string | number) => void
 }
 
@@ -24,10 +26,11 @@ function getCompositionIcon(name: string) {
   return UtensilsCrossed
 }
 
-function SetCard({ set, index, active, lang, dateLabel, onSelect }: SetCardProps) {
+function SetCard({ set, index, active, lang, dateLabel, preview, onSelect }: SetCardProps) {
+  const cardActive = active || preview
   return (
     <motion.article
-      className={`set-card${active ? ' set-card--active' : ' set-card--inactive'}`}
+      className={`set-card${cardActive ? ' set-card--active' : ' set-card--inactive'}`}
       initial={{ opacity: 0, y: 40, scale: 0.97 }}
       whileInView={{ opacity: 1, y: 0, scale: 1 }}
       viewport={{ once: true, margin: '-40px' }}
@@ -36,7 +39,7 @@ function SetCard({ set, index, active, lang, dateLabel, onSelect }: SetCardProps
         delay: (index % 6) * 0.08,
         ease: [0.25, 0.46, 0.45, 0.94],
       }}
-      whileHover={active ? { y: -4, scale: 1.01, transition: { duration: 0.25, ease: 'easeOut' } } : undefined}
+      whileHover={cardActive ? { y: -4, scale: 1.01, transition: { duration: 0.25, ease: 'easeOut' } } : undefined}
       onClick={() => onSelect?.(set.id)}
       style={{ cursor: 'pointer' }}
     >
@@ -64,14 +67,14 @@ function SetCard({ set, index, active, lang, dateLabel, onSelect }: SetCardProps
       <div className="set-card__body">
         {/* Название */}
         <h3 className="set-card__name">
-          {active
+          {cardActive
             ? set.name
             : <span className="set-card__name--strikethrough">{set.name}</span>
           }
         </h3>
         <span className="set-card__tag">{dateLabel ?? `${t(lang, 'day')} ${set.dayNumber} · ${set.weekDay}`}</span>
 
-        {/* Composition chips */}
+        {/* Composition chips (только для выбранных дней) */}
         {active && set.composition && (
           <div className="set-card__composition">
             {set.composition.map((item) => {
@@ -86,7 +89,7 @@ function SetCard({ set, index, active, lang, dateLabel, onSelect }: SetCardProps
           </div>
         )}
 
-        {!active && (
+        {!cardActive && (
           <p className="set-card__description">{set.description}</p>
         )}
 

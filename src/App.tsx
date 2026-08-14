@@ -4,13 +4,13 @@ import Catalog from './components/Catalog'
 import Cart from './components/Cart'
 import Success from './components/Success'
 import { MONTHLY_SETS, SET_PRICE } from './data/mockMenu'
-import type { CartState, Screen, PaymentMethod, Beverage, Salad, Lang, SelectedDay, PresetPattern } from './types'
+import type { CartState, Screen, PaymentMethod, Beverage, Salad, Lang, SelectedDay } from './types'
 import { t } from './locales/translations'
 import { showTelegramAlert } from './lib/telegram'
 import { loadSavedOrder, saveOrder, clearSavedOrder } from './lib/orderStorage'
 import { submitOrder } from './lib/api'
 import { DEFAULT_SALAD } from './components/saladOptions'
-import { isValidDateString, monthKeyOfDate, buildPresetDates, getSelectableDates } from './lib/calendar'
+import { isValidDateString } from './lib/calendar'
 
 /** Сет меню для даты — стабильно по числу месяца: 15-е число → сет №15 */
 function getSetForDate(date: string) {
@@ -113,34 +113,16 @@ function App() {
     })
   }
 
-  /** «Выбрать все» — все допустимые даты видимого месяца */
-  const handleSelectAllInMonth = (monthKey: string) => {
+  /**
+   * Применение подтверждённого выбора из календарной модалки.
+   * Новые даты получают конфиг дня по умолчанию; конфиги уже выбранных дат сохраняются;
+   * даты, снятые в модалке, удаляются из state.
+   */
+  const handleApplySelectedDates = (dates: string[]) => {
     setCartState(prev => {
-      const next = { ...prev }
-      for (const date of getSelectableDates(monthKey)) {
-        if (!next[date]) next[date] = makeDefaultDay()
-      }
-      return next
-    })
-  }
-
-  /** «Сбросить все» — удаляет выбор только в пределах видимого месяца */
-  const handleDeselectAllInMonth = (monthKey: string) => {
-    setCartState(prev => {
-      const next = { ...prev }
-      for (const date of Object.keys(next)) {
-        if (monthKeyOfDate(date) === monthKey) delete next[date]
-      }
-      return next
-    })
-  }
-
-  /** Пресет: очищает текущий выбор и строит новый график в видимом месяце от его 1-го числа */
-  const handleApplyPreset = (pattern: PresetPattern, monthKey: string) => {
-    setCartState(() => {
       const next: CartState = {}
-      for (const date of buildPresetDates(monthKey, pattern)) {
-        next[date] = makeDefaultDay()
+      for (const date of dates) {
+        next[date] = prev[date] ?? makeDefaultDay()
       }
       return next
     })
@@ -212,10 +194,7 @@ function App() {
           totalMonthlyPrice={totalMonthlyPrice}
           setPrice={SET_PRICE}
           lang={lang}
-          onToggleDate={handleToggleDate}
-          onSelectAllInMonth={handleSelectAllInMonth}
-          onDeselectAllInMonth={handleDeselectAllInMonth}
-          onApplyPreset={handleApplyPreset}
+          onApplySelectedDates={handleApplySelectedDates}
           onEmployeeCountChange={handleEmployeeCountChange}
           onBeverageChange={handleBeverageChange}
           onApplyBeverageToAll={handleApplyBeverageToAll}

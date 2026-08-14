@@ -712,6 +712,36 @@ body {
   flex-wrap: wrap;
 }
 
+/* Сводка выбранных дней + кнопки «Выбрать дни» / «Сбросить все» */
+.subscription__days-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.subscription__days-summary .subscription__actions {
+  margin-bottom: 0;
+}
+
+.subscription__days-count {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 34px;
+  font-weight: 800;
+  color: var(--brand);
+  line-height: 1;
+}
+
+.subscription__days-count-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
 .btn--outline {
   background: transparent;
   border: 1.5px solid var(--border);
@@ -1645,6 +1675,24 @@ body {
   margin-bottom: 4px;
 }
 
+/* Заголовок и подзаголовок календарной модалки */
+.calendar-modal__title {
+  font-size: 20px;
+  font-weight: 800;
+  text-align: center;
+  margin: 8px 0 4px;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.calendar-modal__subtitle {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0 0 16px;
+}
+
 .calendar__header {
   display: flex;
   align-items: center;
@@ -1715,11 +1763,24 @@ body {
   transform: scale(0.96);
 }
 
+/* Шапка дней недели выровнена с колонками недель (учитывает кнопку недели) */
+.calendar__header-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.calendar__week-preset-spacer {
+  width: 30px;
+  flex: 0 0 30px;
+}
+
 .calendar__weekdays,
-.calendar__grid {
+.calendar__week-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 5px;
+  flex: 1;
 }
 
 .calendar__weekday {
@@ -1732,6 +1793,44 @@ body {
 
 .calendar__weekday--weekend {
   color: #d1d5db;
+}
+
+/* Недели месяца: строка = кнопка «Вся рабочая неделя» + 7 дней */
+.calendar__weeks {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.calendar__week {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.calendar__week-preset {
+  width: 30px;
+  height: 38px;
+  flex: 0 0 30px;
+  border-radius: 10px;
+  border: 1px dashed var(--border);
+  background: var(--card-bg);
+  color: var(--brand-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.calendar__week-preset:hover {
+  background: var(--brand-light);
+  border-color: var(--brand);
+  color: var(--brand-dark);
+}
+
+.calendar__week-preset:active {
+  transform: scale(0.94);
 }
 
 .calendar__day {
@@ -1750,16 +1849,29 @@ body {
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
 }
 
-.calendar__day:hover:not(.calendar__day--off):not(.calendar__day--selected) {
+.calendar__day:hover:not(.calendar__day--empty):not(.calendar__day--selected) {
   background: var(--brand-light);
   border-color: var(--brand);
 }
 
-.calendar__day--off {
-  background: #f3f4f6;
-  border-color: #f3f4f6;
-  color: #d1d5db;
-  cursor: default;
+/* Пустые ячейки выравнивания сетки (дни вне месяца) */
+.calendar__day--empty {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Выходные (Сб/Вс) — выбираемы, но визуально выделены */
+.calendar__day--weekend {
+  background: #fef3f0;
+  border-color: #fde3dc;
+  color: var(--text-muted);
+}
+
+.calendar__day--weekend.calendar__day--selected {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+  box-shadow: var(--shadow-brand);
 }
 
 .calendar__day--selected {

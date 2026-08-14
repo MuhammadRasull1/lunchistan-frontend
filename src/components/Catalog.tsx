@@ -1,16 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import type { Lang, SetCategory, Beverage, Salad, SelectedDay, PresetPattern } from '../types'
+import type { Lang, SetCategory, Beverage, Salad, SelectedDay, LunchSet } from '../types'
 import { formatPrice } from '../types'
 import { t } from '../locales/translations'
 import SetCard from './SetCard'
 import SetDetailModal from './SetDetailModal'
 import AnimatedCount from './AnimatedCount'
 import Stepper from './Stepper'
-import Calendar from './Calendar'
+import CalendarModal from './CalendarModal'
 import { getTelegramWebApp, hapticImpact } from '../lib/telegram'
 import { DEFAULT_SALAD } from './saladOptions'
-import { startOfMonth, addMonths, monthKeyOf, buildMonthGrid, formatDayLabel } from '../lib/calendar'
+import { startOfMonth, addMonths, formatDayLabel } from '../lib/calendar'
+import { MONTHLY_SETS } from '../data/mockMenu'
 
 type CategoryFilter = SetCategory | 'all'
 
@@ -22,10 +23,8 @@ interface CatalogProps {
   totalMonthlyPrice: number
   setPrice: number
   lang: Lang
-  onToggleDate: (date: string) => void
-  onSelectAllInMonth: (monthKey: string) => void
-  onDeselectAllInMonth: (monthKey: string) => void
-  onApplyPreset: (pattern: PresetPattern, monthKey: string) => void
+  /** Применяет подтверждённый выбор из календарной модалки к основному state заказа */
+  onApplySelectedDates: (dates: string[]) => void
   onEmployeeCountChange: (count: number) => void
   onBeverageChange: (date: string, beverage: Beverage) => void
   onApplyBeverageToAll: (beverage: Beverage) => void
@@ -53,10 +52,7 @@ function Catalog({
   totalMonthlyPrice,
   setPrice,
   lang,
-  onToggleDate,
-  onSelectAllInMonth,
-  onDeselectAllInMonth,
-  onApplyPreset,
+  onApplySelectedDates,
   onEmployeeCountChange,
   onBeverageChange,
   onApplyBeverageToAll,
@@ -83,29 +79,42 @@ function Catalog({
 
   // Состояние модалки детализации сета (по дате дня)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
-
+  // Предпросмотр сета из полного каталога (невыбранный день)
+  const [previewSet, setPreviewSet] = useState<LunchSet | null>(null)
   // Фильтр категорий меню
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all')
+  // Календарная модалка выбора дат
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false)
 
-  // Календарь: видимый месяц + границы навигации (текущий → следующий месяц)
+  // Границы навигации календаря (текущий → следующий месяц)
   const [minMonth] = useState(() => startOfMonth(new Date()))
   const maxMonth = useMemo(() => addMonths(minMonth, 1), [minMonth])
-  const [visibleMonth, setVisibleMonth] = useState(() => startOfMonth(new Date()))
-  const visibleMonthKey = monthKeyOf(visibleMonth.getFullYear(), visibleMonth.getMonth())
-  const selectableInMonth = useMemo(
-    () => buildMonthGrid(visibleMonth).filter(c => c.isSelectable).length,
-    [visibleMonth]
-  )
+
+  // Полный каталог меню: карточки выбранных дней активны (по числу месяца),
+  // остальные — предпросмотр сета.
+  const activeDateBySet = useMemo(() => {
+    const map = new Map<number, string>()
+    for (const d of days) {
+      const dayOfMonth = Number(d.date.slice(8, 10))
+      if (!map.has(dayOfMonth)) map.set(dayOfMonth, d.date)
+    }
+    return map
+  }, [days])
+
+  const filteredSets = activeCategory === 'all'
+    ? MONTHLY_SETS
+    : MONTHLY_SETS.filter(set => set.category === activeCategory)
 
   const selectedDay = selectedDate ? days.find(d => d.date === selectedDate) ?? null : null
-
-  const filteredDays = activeCategory === 'all'
-    ? days
-    : days.filter(d => d.set.category === activeCategory)
 
   const handleOpenModal = useCallback((date: string) => {
     hapticImpact('light')
     setSelectedDate(date)
+  }, [])
+
+  const handleOpenPreview = useCallback((set: LunchSet) => {
+    hapticImpact('light')
+    setPreviewSet(set)
   }, [])
 
   const handleCloseModal = () => {
@@ -114,6 +123,11 @@ function Catalog({
 
   const handleModalConfirm = () => {
     hapticImpact('light')
+  }
+
+  const openCalendar = () => {
+    hapticImpact('light')
+    setIsCalendarOpen(true)
   }
 
   // Нативная кнопка Telegram MainButton — зеркалит кнопку «Оформить предзаказ»
@@ -180,26 +194,40 @@ function Catalog({
         </p>
       </header>
 
-      {/* Календарь + калькулятор стоимости */}
+      {/* Подписка: выбор дат + калькулятор стоимости */}
       <section className="subscription">
         <h2 className="subscription__title">{t(lang, 'calendarTitle')}</h2>
         <p className="subscription__label" style={{ margin: '-8px 0 14px' }}>
           {t(lang, 'calendarSubtitle')}
         </p>
 
-        <Calendar
-          month={visibleMonth}
-          minMonth={minMonth}
-          maxMonth={maxMonth}
-          onMonthChange={setVisibleMonth}
-          selectedDates={days.map(d => d.date)}
-          selectableCount={selectableInMonth}
-          lang={lang}
-          onToggleDate={onToggleDate}
-          onApplyPreset={(pattern) => onApplyPreset(pattern, visibleMonthKey)}
-          onSelectAll={() => onSelectAllInMonth(visibleMonthKey)}
-          onDeselectAll={() => onDeselectAllInMonth(visibleMonthKey)}
-        />
+        {/* Сводка выбранных дней + кнопки открытия календаря */}
+        <div className="subscription__days-summary">
+          <div className="subscription__days-count">
+            <AnimatedCount value={activeDays} />
+            <span className="subscription__days-count-label">{t(lang, 'selectedDays')}</span>
+          </div>
+          <div className="subscription__actions">
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={openCalendar}
+            >
+              {t(lang, 'chooseDays')}
+            </button>
+            <button
+              type="button"
+              className="btn btn--outline btn--outline-danger"
+              onClick={openCalendar}
+            >
+              {t(lang, 'deselectAll')}
+            </button>
+          </div>
+        </div>
+
+        {activeDays === 0 && (
+          <p className="catalog__status">{t(lang, 'noDatesSelected')}</p>
+        )}
 
         {/* Количество сотрудников */}
         <motion.div
@@ -267,43 +295,42 @@ function Catalog({
         </motion.div>
       </section>
 
-      {/* Список сетов выбранных дней */}
-      <h2 className="catalog__section-title">{t(lang, 'menuTitle', { n: filteredDays.length })}</h2>
+      {/* Полное меню на месяц — всегда отображается, независимо от выбранных дней */}
+      <h2 className="catalog__section-title">{t(lang, 'menuTitle', { n: filteredSets.length })}</h2>
 
-      {days.length > 0 && (
-        <div className="tabs" role="tablist" aria-label={t(lang, 'menuTitle', { n: filteredDays.length })}>
-          {CATEGORY_TABS.map(tab => (
-            <button
-              key={tab.value}
-              type="button"
-              role="tab"
-              aria-selected={activeCategory === tab.value}
-              className={`tabs__tab${activeCategory === tab.value ? ' tabs__tab--active' : ''}`}
-              onClick={() => setActiveCategory(tab.value)}
-            >
-              {t(lang, tab.labelKey)}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="tabs" role="tablist" aria-label={t(lang, 'menuTitle', { n: filteredSets.length })}>
+        {CATEGORY_TABS.map(tab => (
+          <button
+            key={tab.value}
+            type="button"
+            role="tab"
+            aria-selected={activeCategory === tab.value}
+            className={`tabs__tab${activeCategory === tab.value ? ' tabs__tab--active' : ''}`}
+            onClick={() => setActiveCategory(tab.value)}
+          >
+            {t(lang, tab.labelKey)}
+          </button>
+        ))}
+      </div>
 
-      {days.length === 0 ? (
-        <p className="catalog__status">{t(lang, 'noDatesSelected')}</p>
-      ) : (
-        <div className="catalog__grid catalog__grid--sets">
-          {filteredDays.map(({ date, set }, index) => (
+      <div className="catalog__grid catalog__grid--sets">
+        {filteredSets.map((set, index) => {
+          const activeDate = activeDateBySet.get(set.dayNumber)
+          const isActive = activeDate !== undefined
+          return (
             <SetCard
-              key={date}
+              key={set.id}
               index={index}
               set={set}
-              active
+              active={isActive}
               lang={lang}
-              dateLabel={formatDayLabel(date, lang)}
-              onSelect={() => handleOpenModal(date)}
+              dateLabel={isActive ? formatDayLabel(activeDate, lang) : undefined}
+              preview={!isActive}
+              onSelect={() => (isActive ? handleOpenModal(activeDate) : handleOpenPreview(set))}
             />
-          ))}
-        </div>
-      )}
+          )
+        })}
+      </div>
 
       {/* Нижняя панель */}
       {activeDays > 0 && totalPortions > 0 && (
@@ -333,7 +360,21 @@ function Catalog({
         </motion.div>
       )}
 
-      {/* Модальное окно детализации сета */}
+      {/* Календарная модалка выбора дат (draft → подтверждение) */}
+      <CalendarModal
+        isOpen={isCalendarOpen}
+        initialSelectedDates={days.map(d => d.date)}
+        minMonth={minMonth}
+        maxMonth={maxMonth}
+        lang={lang}
+        onConfirm={(dates) => {
+          onApplySelectedDates(dates)
+          setIsCalendarOpen(false)
+        }}
+        onClose={() => setIsCalendarOpen(false)}
+      />
+
+      {/* Модальное окно детализации сета (кастомизация выбранного дня) */}
       <SetDetailModal
         set={selectedDay?.set ?? null}
         isOpen={selectedDate !== null}
@@ -355,6 +396,24 @@ function Catalog({
           if (selectedDate) onSaladChange(selectedDate, salad)
         }}
         onApplySaladToAll={onApplySaladToAll}
+      />
+
+      {/* Предпросмотр сета из полного каталога (read-only) */}
+      <SetDetailModal
+        set={previewSet}
+        isOpen={previewSet !== null}
+        onClose={() => setPreviewSet(null)}
+        onConfirm={() => setPreviewSet(null)}
+        lang={lang}
+        readOnly
+        beverage="Вода"
+        onBeverageChange={() => {}}
+        onApplyBeverageToAll={() => {}}
+        portions={1}
+        onPortionsChange={() => {}}
+        salad={DEFAULT_SALAD}
+        onSaladChange={() => {}}
+        onApplySaladToAll={() => {}}
       />
     </div>
   )

@@ -1,16 +1,23 @@
 import type { Lang, PresetPattern } from '../types'
 import { MONTHS, WEEKDAYS_SHORT } from '../locales/translations'
 
-/** Ячейка календаря (один день месяца) */
+/** Ячейка календаря (один день месяца либо пустая ячейка выравнивания сетки) */
 export interface CalendarCell {
-  /** Дата в формате YYYY-MM-DD */
-  date: string
-  /** Число месяца (1..31) */
+  /** Дата в формате YYYY-MM-DD; отсутствует для пустых ячеек */
+  date?: string
+  /** Число месяца (1..31); 0 для пустых ячеек */
   dayOfMonth: number
   /** День недели по getDay(): 0 = Вс ... 6 = Сб */
   weekday: number
-  /** Рабочий день (Пн-Пт) — доступен для выбора */
-  isSelectable: boolean
+  /** Пустая ячейка выравнивания (день вне видимого месяца) */
+  isEmpty?: boolean
+  /** Выходной (Сб/Вс) — доступен для выбора, но визуально отличается */
+  isWeekend?: boolean
+}
+
+/** Неделя месяца — ровно 7 ячеек (Пн..Вс) */
+export interface CalendarWeek {
+  cells: CalendarCell[]
 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
@@ -54,12 +61,22 @@ export function parseMonthKey(monthKey: string): { year: number; monthIndex: num
   return { year, monthIndex: month - 1 }
 }
 
-/** Все дни видимого месяца в виде ячеек календаря (включая выходные) */
+/**
+ * Все дни видимого месяца в виде ячеек календаря.
+ * Сетка выравнивается по дню недели 1-го числа (колонка «Пн» — первый столбец):
+ * перед началом месяца добавляются пустые ячейки, в конце — до конца недели.
+ * Все реальные даты доступны для выбора, включая субботу и воскресенье.
+ */
 export function buildMonthGrid(month: Date): CalendarCell[] {
   const year = month.getFullYear()
   const monthIndex = month.getMonth()
   const daysInMonth = new Date(year, monthIndex + 1, 0).getDate()
   const cells: CalendarCell[] = []
+  // Ведущие пустые ячейки: сколько «слотов» занимает 1-е число в сетке Пн→Вс
+  const leadOffset = (new Date(year, monthIndex, 1).getDay() + 7 - 1) % 7
+  for (let i = 0; i < leadOffset; i++) {
+    cells.push({ dayOfMonth: 0, weekday: (1 + i) % 7, isEmpty: true })
+  }
   for (let day = 1; day <= daysInMonth; day++) {
     const date = new Date(year, monthIndex, day)
     const weekday = date.getDay()
@@ -67,10 +84,31 @@ export function buildMonthGrid(month: Date): CalendarCell[] {
       date: formatDate(date),
       dayOfMonth: day,
       weekday,
-      isSelectable: weekday !== 0 && weekday !== 6,
+      isWeekend: weekday === 0 || weekday === 6,
     })
   }
+  // Хвостовые пустые ячейки — до конца последней строки недели
+  while (cells.length % 7 !== 0) {
+    cells.push({ dayOfMonth: 0, weekday: 0, isEmpty: true })
+  }
   return cells
+}
+
+/** Недели видимого месяца (сетка из buildMonthGrid, разбитая по 7 ячеек) */
+export function buildMonthWeeks(month: Date): CalendarWeek[] {
+  const cells = buildMonthGrid(month)
+  const weeks: CalendarWeek[] = []
+  for (let i = 0; i < cells.length; i += 7) {
+    weeks.push({ cells: cells.slice(i, i + 7) })
+  }
+  return weeks
+}
+
+/** Пн–Пт конкретной недели (в пределах видимого месяца) — пресет «Вся рабочая неделя» */
+export function workWeekDatesOf(week: CalendarWeek): string[] {
+  return week.cells
+    .filter(cell => !cell.isEmpty && cell.date !== undefined && cell.weekday >= 1 && cell.weekday <= 5)
+    .map(cell => cell.date as string)
 }
 
 /** Все допустимые (Пн-Пт) даты месяца YYYY-MM */

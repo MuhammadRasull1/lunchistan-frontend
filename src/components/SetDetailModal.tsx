@@ -16,6 +16,8 @@ interface SetDetailModalProps {
   onClose: () => void
   onConfirm: () => void
   lang: Lang
+  /** Предпросмотр сета из полного каталога: без выбора напитка/салата/порций */
+  readOnly?: boolean
   /** Подпись даты (например "03.08 · Пн"); если не передана — используется день меню */
   dateLabel?: string
   beverage: Beverage
@@ -129,7 +131,7 @@ const SHEET_VARIANTS = {
   },
 }
 
-function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, dateLabel, beverage, onBeverageChange, onApplyBeverageToAll, salad, onSaladChange, onApplySaladToAll, portions, onPortionsChange }: SetDetailModalProps) {
+function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, readOnly, dateLabel, beverage, onBeverageChange, onApplyBeverageToAll, salad, onSaladChange, onApplySaladToAll, portions, onPortionsChange }: SetDetailModalProps) {
   const [isSaladPickerOpen, setSaladPickerOpen] = useState(false)
 
   const fixedItems = set
@@ -223,59 +225,65 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, dateLabel, beve
               </div>
 
               {/* Выбор салата */}
-              <div className="option-select">
-                <span className="option-select__label">
-                  <LeafyGreen size={14} strokeWidth={2.5} />
-                  {t(lang, 'salad')}
-                </span>
-                <button
-                  type="button"
-                  className="btn btn--outline salad-trigger"
-                  onClick={() => {
-                    hapticImpact('light')
-                    setSaladPickerOpen(true)
-                  }}
-                >
-                  <span>{t(lang, 'chooseSalad')}: {salad}</span>
-                  <ChevronRight size={16} strokeWidth={2.5} />
-                </button>
-                <button
-                  type="button"
-                  className="btn btn--outline option-select__apply-all"
-                  onClick={() => {
-                    hapticImpact('light')
-                    onApplySaladToAll(salad)
-                  }}
-                >
-                  {t(lang, 'applySaladToAll')}
-                </button>
-              </div>
+              {!readOnly && (
+                <div className="option-select">
+                  <span className="option-select__label">
+                    <LeafyGreen size={14} strokeWidth={2.5} />
+                    {t(lang, 'salad')}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn btn--outline salad-trigger"
+                    onClick={() => {
+                      hapticImpact('light')
+                      setSaladPickerOpen(true)
+                    }}
+                  >
+                    <span>{t(lang, 'chooseSalad')}: {salad}</span>
+                    <ChevronRight size={16} strokeWidth={2.5} />
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn--outline option-select__apply-all"
+                    onClick={() => {
+                      hapticImpact('light')
+                      onApplySaladToAll(salad)
+                    }}
+                  >
+                    {t(lang, 'applySaladToAll')}
+                  </button>
+                </div>
+              )}
 
               {/* Выбор напитка */}
-              <OptionPillGroup
-                icon={Wine}
-                label={t(lang, 'beverage')}
-                options={BEVERAGE_OPTIONS.map(opt => ({ value: opt.value, text: t(lang, opt.value === 'Вода' ? 'water' : 'compote'), icon: opt.icon }))}
-                value={beverage}
-                onChange={onBeverageChange}
-                onApplyToAll={() => onApplyBeverageToAll(beverage)}
-                applyAllLabel={t(lang, 'applyBeverageToAll')}
-              />
+              {!readOnly && (
+                <OptionPillGroup
+                  icon={Wine}
+                  label={t(lang, 'beverage')}
+                  options={BEVERAGE_OPTIONS.map(opt => ({ value: opt.value, text: t(lang, opt.value === 'Вода' ? 'water' : 'compote'), icon: opt.icon }))}
+                  value={beverage}
+                  onChange={onBeverageChange}
+                  onApplyToAll={() => onApplyBeverageToAll(beverage)}
+                  applyAllLabel={t(lang, 'applyBeverageToAll')}
+                />
+              )}
 
               {/* Порций на сотрудника */}
-              <div className="portions-select">
-                <span className="portions-select__label">
-                  <Users size={14} strokeWidth={2.5} />
-                  {t(lang, 'portionsLabel')}
-                </span>
-                <Stepper
-                  value={portions}
-                  min={1}
-                  onSet={onPortionsChange}
-                  ariaDecrease={t(lang, 'stepDecrease')}
-                  ariaIncrease={t(lang, 'stepIncrease')}
-                />
-              </div>
+              {!readOnly && (
+                <div className="portions-select">
+                  <span className="portions-select__label">
+                    <Users size={14} strokeWidth={2.5} />
+                    {t(lang, 'portionsLabel')}
+                  </span>
+                  <Stepper
+                    value={portions}
+                    min={1}
+                    onSet={onPortionsChange}
+                    ariaDecrease={t(lang, 'stepDecrease')}
+                    ariaIncrease={t(lang, 'stepIncrease')}
+                  />
+                </div>
+              )}
 
               {/* KBJU — Пищевая ценность */}
               <div className="modal-sheet__kbju">
@@ -309,7 +317,7 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, dateLabel, beve
                 whileTap={{ scale: 0.97 }}
               >
                 <Check size={18} strokeWidth={3} />
-                {t(lang, 'choose')}
+                {t(lang, readOnly ? 'close' : 'choose')}
               </motion.button>
             </div>
           </motion.div>
