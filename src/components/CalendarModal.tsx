@@ -108,18 +108,37 @@ function CalendarSheet({ initialSelectedDates, minMonth, maxMonth, lang, onConfi
     })
   }
 
-  /** Глобальные пресеты: перестраивают выбор в пределах видимого месяца (другие месяцы не трогаются) */
-  const applyPreset = (pattern: PresetPattern) => {
+  /** Глобальные пресеты: toggle. Первое нажатие добавляет даты пресета в видимый месяц,
+   * повторное — снимает ровно пресетные даты (вручную добавленные/снятые дни сохраняются).
+   * Даты других месяцев не затрагиваются. */
+  const togglePreset = (pattern: PresetPattern) => {
     hapticImpact('light')
     const presetDates = buildPresetDates(visibleMonthKey, pattern)
+    if (presetDates.length === 0) return
     setDraftDates(prev => {
       const next = new Set(prev)
-      for (const date of [...next]) {
-        if (monthKeyOfDate(date) === visibleMonthKey) next.delete(date)
+      const allSelected = presetDates.every(date => next.has(date))
+      if (allSelected) {
+        for (const date of presetDates) next.delete(date)
+      } else {
+        for (const date of presetDates) next.add(date)
       }
-      for (const date of presetDates) next.add(date)
       return next
     })
+  }
+
+  /** Пресет активен, если выбор видимого месяца в точности равен результату пресета */
+  const isPresetActive = (pattern: PresetPattern): boolean => {
+    const presetDates = new Set(buildPresetDates(visibleMonthKey, pattern))
+    if (presetDates.size === 0) return false
+    for (const date of draftDates) {
+      if (monthKeyOfDate(date) !== visibleMonthKey) continue
+      if (!presetDates.has(date)) return false
+    }
+    for (const date of presetDates) {
+      if (!draftDates.has(date)) return false
+    }
+    return true
   }
 
   const selectAllInMonth = () => {
@@ -224,8 +243,9 @@ function CalendarSheet({ initialSelectedDates, minMonth, maxMonth, lang, onConfi
               <button
                 key={p.value}
                 type="button"
-                className="calendar__preset"
-                onClick={() => applyPreset(p.value)}
+                className={`calendar__preset${isPresetActive(p.value) ? ' calendar__preset--active' : ''}`}
+                onClick={() => togglePreset(p.value)}
+                aria-pressed={isPresetActive(p.value)}
               >
                 {t(lang, p.labelKey)}
               </button>

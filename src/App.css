@@ -1759,6 +1759,14 @@ body {
   color: #fff;
 }
 
+.calendar__preset--active,
+.calendar__preset--active:hover {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(245, 129, 39, 0.35);
+}
+
 .calendar__preset:active {
   transform: scale(0.96);
 }
