@@ -135,12 +135,17 @@ const PATTERNS: Record<Exclude<PresetPattern, 'full'>, { cycle: number; workPosi
  * Паттерн начинается от даты начала подписки (1-е число месяца) как день №1 и
  * применяется к последовательности допустимых дней (Пн-Пт): выходные не выбираются.
  * 'full' — все допустимые даты месяца.
+ * Прошедшие даты (раньше сегодняшнего дня) всегда исключаются — график работает
+ * только с реально доступными для доставки днями.
  */
 export function buildPresetDates(monthKey: string, pattern: PresetPattern): string[] {
+  const today = formatDate(new Date())
   const selectable = getSelectableDates(monthKey)
-  if (pattern === 'full') return selectable
+  if (pattern === 'full') return selectable.filter(date => date >= today)
   const { cycle, workPositions } = PATTERNS[pattern]
-  return selectable.filter((_, index) => workPositions.includes(index % cycle))
+  return selectable
+    .filter((_, index) => workPositions.includes(index % cycle))
+    .filter(date => date >= today)
 }
 
 /** Человекочитаемая подпись даты: "03.08 · Пн" */
