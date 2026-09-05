@@ -3,13 +3,19 @@ import './App.css'
 import Catalog from './components/Catalog'
 import Cart from './components/Cart'
 import Success from './components/Success'
+import AppHeader from './components/AppHeader'
+import type { AppTab } from './components/AppHeader'
+import TeamsAuth from './components/TeamsAuth'
+import EmployeeView from './components/EmployeeView'
+import ManagerView from './components/ManagerView'
 import { MONTHLY_SETS, SET_PRICE, getSetForDate } from './data/mockMenu'
 import type { CartState, Screen, PaymentMethod, Beverage, Salad, Lang, SelectedDay } from './types'
 import { EMPLOYEE_MAX } from './types'
 import { t } from './locales/translations'
 import { showTelegramAlert } from './lib/telegram'
 import { loadSavedOrder, saveOrder, clearSavedOrder } from './lib/orderStorage'
-import { submitOrder } from './lib/api'
+import { submitOrder, getToken, setToken, fetchMe } from './lib/api'
+import type { AuthResponse, AuthUser } from './lib/api'
 import { DEFAULT_SALAD } from './components/saladOptions'
 import { isPastDate, isValidDateString } from './lib/calendar'
 
@@ -32,11 +38,16 @@ function makeDefaultDay(): CartState[string] {
 const savedOrder = loadSavedOrder()
 
 function App() {
+  const [tab, setTab] = useState<AppTab>('catalog')
   const [screen, setScreen] = useState<Screen>('catalog')
   const [employeeCount, setEmployeeCount] = useState<number>(() => Math.min(EMPLOYEE_MAX, savedOrder?.employeeCount ?? 1))
   const [lang, setLang] = useState<Lang>(loadInitialLang)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [successInfo, setSuccessInfo] = useState<{ method: PaymentMethod; total: number; employees: number; days: number } | null>(null)
+  // auth-состояние раздела «Команды»
+  const [user, setUser] = useState<AuthUser | null>(null)
+  const [employeesCount, setEmployeesCount] = useState(0)
+  const [booted, setBooted] = useState(false)
   // Единая модель: cartState ключуется по дате YYYY-MM-DD; наличие ключа = день выбран.
   // Первый запуск — ничего не выбрано (0 дней). Инвариант: нет прошедших дат.
   const [cartState, setCartState] = useState<CartState>(() => {
@@ -53,6 +64,49 @@ function App() {
   useEffect(() => {
     saveOrder({ employeeCount, cartState })
   }, [employeeCount, cartState])
+
+  // Восстановление сессии раздела «Команды»
+  useEffect(() => {
+    let cancelled = false
+    const boot = async () => {
+      if (!getToken()) {
+        setBooted(true)
+        return
+      }
+      try {
+        const data = await fetchMe()
+        if (!cancelled) {
+          setUser(data.user)
+          setEmployeesCount(data.employeesCount)
+        }
+      } catch {
+        setToken(null)
+      } finally {
+        if (!cancelled) setBooted(true)
+      }
+    }
+    boot()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const handleAuth = (result: AuthResponse) => {
+    setToken(result.token)
+    setUser(result.user)
+    if (result.user.role === 'admin') {
+      fetchMe()
+        .then(data => setEmployeesCount(data.employeesCount))
+        .catch(() => {})
+    } else {
+      setEmployeesCount(0)
+    }
+  }
+
+  const handleLogout = () => {
+    setToken(null)
+    setUser(null)
+  }
 
   // Единственный источник истины по количеству дней — выбранные даты.
   const selectedDates = Object.keys(cartState).sort()
@@ -209,9 +263,44 @@ function App() {
     }
   }
 
+  const handleTabChange = (next: AppTab) => {
+    setTab(next)
+    if (next === 'catalog' && screen !== 'catalog' && screen !== 'cart' && screen !== 'success') {
+      setScreen('catalog')
+    }
+  }
+
   return (
     <div className="app">
-      {screen === 'catalog' && (
+      {tab === 'teams' && (
+        <header className="view__header">
+          <AppHeader activeTab={tab} onTabChange={handleTabChange} lang={lang} onLangChange={handleLangChange} />
+        </header>
+      )}
+
+      {tab === 'teams' && !booted && <div className="view__body view__boot">…</div>}
+
+      {tab === 'teams' && booted && !user && (
+        <TeamsAuth lang={lang} onAuth={handleAuth} />
+      )}
+
+      {tab === 'teams' && booted && user?.role === 'employee' && (
+        <EmployeeView lang={lang} userName={user.name} companyName={user.companyName ?? ''} onLogout={handleLogout} />
+      )}
+
+      {tab === 'teams' && booted && user?.role === 'admin' && (
+        <ManagerView
+          lang={lang}
+          userName={user.name}
+          companyName={user.companyName ?? ''}
+          teamCode={user.companyCode}
+          teamSize={user.companySize}
+          employeesCount={employeesCount}
+          onLogout={handleLogout}
+        />
+      )}
+
+      {tab === 'catalog' && screen === 'catalog' && (
         <Catalog
           days={orderDays}
           allSetsCount={MONTHLY_SETS.length}
@@ -219,6 +308,8 @@ function App() {
           totalMonthlyPrice={totalMonthlyPrice}
           setPrice={SET_PRICE}
           lang={lang}
+          activeTab={tab}
+          onTabChange={handleTabChange}
           onApplySelectedDates={handleApplySelectedDates}
           onEmployeeCountChange={handleEmployeeCountChange}
           onBeverageChange={handleBeverageChange}
@@ -231,7 +322,7 @@ function App() {
         />
       )}
 
-      {screen === 'cart' && (
+      {tab === 'catalog' && screen === 'cart' && (
         <Cart
           days={orderDays}
           totalMonthlyPrice={totalMonthlyPrice}
@@ -245,7 +336,7 @@ function App() {
         />
       )}
 
-      {screen === 'success' && (
+      {tab === 'catalog' && screen === 'success' && (
         <Success
           lang={lang}
           onNewOrder={handleNewOrder}

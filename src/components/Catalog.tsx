@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { CalendarDays, UtensilsCrossed } from 'lucide-react'
+import { CalendarDays } from 'lucide-react'
 import type { Lang, SetCategory, Beverage, Salad, SelectedDay, LunchSet } from '../types'
 import { formatPrice, EMPLOYEE_MAX } from '../types'
 import { t } from '../locales/translations'
+import AppHeader from './AppHeader'
+import type { AppTab } from './AppHeader'
 import SetCard from './SetCard'
 import SetDetailModal from './SetDetailModal'
 import AnimatedCount from './AnimatedCount'
@@ -24,6 +26,8 @@ interface CatalogProps {
   totalMonthlyPrice: number
   setPrice: number
   lang: Lang
+  activeTab: AppTab
+  onTabChange: (tab: AppTab) => void
   /** Применяет подтверждённый выбор из календарной модалки к основному state заказа */
   onApplySelectedDates: (dates: string[]) => void
   onEmployeeCountChange: (count: number) => void
@@ -53,6 +57,8 @@ function Catalog({
   totalMonthlyPrice,
   setPrice,
   lang,
+  activeTab,
+  onTabChange,
   onApplySelectedDates,
   onEmployeeCountChange,
   onBeverageChange,
@@ -160,35 +166,7 @@ function Catalog({
   return (
     <div className="catalog">
       <header className="catalog__header">
-        <div className="catalog__header-top">
-          <div className="brand">
-            <span className="brand__logo"><UtensilsCrossed size={22} strokeWidth={2.2} /></span>
-            <span>
-              Lunch<span className="brand__accent">istan</span>
-            </span>
-          </div>
-
-          {/* Language switcher */}
-          <div className="lang-switcher">
-            <button
-              type="button"
-              className={`lang-btn${lang === 'ru' ? ' lang-btn--active' : ''}`}
-              onClick={() => onLangChange('ru')}
-              aria-label="Русский"
-            >
-              RU
-            </button>
-            <span className="lang-switcher__sep">|</span>
-            <button
-              type="button"
-              className={`lang-btn${lang === 'uz' ? ' lang-btn--active' : ''}`}
-              onClick={() => onLangChange('uz')}
-              aria-label="O'zbek"
-            >
-              UZ
-            </button>
-          </div>
-        </div>
+        <AppHeader activeTab={activeTab} onTabChange={onTabChange} lang={lang} onLangChange={onLangChange} />
         <h1 className="catalog__heading">{t(lang, 'headerTitle')}</h1>
         <p className="catalog__subtitle">
           {t(lang, 'headerSubtitle', { n: allSetsCount })}
