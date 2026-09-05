@@ -4,6 +4,7 @@ import type { Lang } from '../types'
 import { t, WEEKDAYS_SHORT } from '../locales/translations'
 import { fetchManagerDates, fetchDayReport, confirmDay } from '../lib/api'
 import type { DayReport, ManagerDate } from '../lib/api'
+import MyOrdersView from './MyOrdersView'
 
 interface ManagerViewProps {
   lang: Lang
@@ -29,6 +30,7 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
   const [confirming, setConfirming] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [sub, setSub] = useState<'orders' | 'team'>('orders')
 
   useEffect(() => {
     let cancelled = false
@@ -91,11 +93,23 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
 
   return (
     <main className="view__body">
-      <div className="catalog__heading" style={{ marginTop: 28 }}>{t(lang, 'managerTitle')}</div>
+      <div className="catalog__heading" style={{ marginTop: 28 }}>{companyName}</div>
       <p className="catalog__subtitle">
-        {userName} · {companyName} · <button className="auth-toggle with-ml" onClick={onLogout}>{t(lang, 'logout')}</button>
+        {userName} · <button className="auth-toggle with-ml" onClick={onLogout}>{t(lang, 'logout')}</button>
       </p>
 
+      <div className="tabs" style={{ marginTop: 8 }}>
+        <button className={`tabs__tab${sub === 'orders' ? ' tabs__tab--active' : ''}`} onClick={() => setSub('orders')}>
+          {t(lang, 'ordersSection')}
+        </button>
+        <button className={`tabs__tab${sub === 'team' ? ' tabs__tab--active' : ''}`} onClick={() => setSub('team')}>
+          {t(lang, 'teamSection')}
+        </button>
+      </div>
+
+      {sub === 'orders' && <MyOrdersView lang={lang} />}
+
+      {sub === 'team' && <>
       <div className="team-card">
         <div className="team-card__row">
           <span className="team-card__label">{t(lang, 'teamCode')}</span>
@@ -187,6 +201,7 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
           </div>
         </div>
       )}
+      </>}
     </main>
   )
 }

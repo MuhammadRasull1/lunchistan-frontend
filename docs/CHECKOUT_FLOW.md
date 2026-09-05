@@ -1,7 +1,7 @@
 # 🛒 Процесс оформления заказа (Checkout Flow)
 
-> Версия: 2.7  \
-> Последнее обновление: 05.09.2026  \
+> Версия: 3.0  \
+> Последнее обновление: 06.09.2026  \
 > Связанные файлы: [[B2B_RULES]], [[COMPONENTS]], [[STATE_MANAGEMENT]]
 
 ---
@@ -174,6 +174,50 @@ const handlePlaceOrder = async (method: PaymentMethod) => {
 ## 7. Потенциальные улучшения
 
 - 🟡 Хранение способа оплаты в `App.tsx` (сейчас локальный `useState` в Cart)
-- 🟡 Валидация обязательных полей перед отправкой
-- 🟢 Отправка данных на бэкенд (REST API)
-- 🟢 Telegram-уведомление о заказе
+- 🟢 Онлайн-оплата (сейчас — только фиксация способа, статус ведётся вручную владельцем)
+
+---
+
+## 8. 🆕 v3 — заказ сохраняется в БД + контакты
+
+Бэкенд `lunchistan-backend` переведён на PostgreSQL (Neon). `POST /api/orders` теперь
+**создаёт запись** `orders` + `order_lines`, а не только шлёт чек в Telegram.
+
+### 8.1. Два режима (по наличию токена компании)
+
+| | С входом (компания в кабинете) | Без входа (гость) |
+|---|---|---|
+| `Authorization: Bearer` | есть (интерсептор `api.ts` из `getToken()`) | нет |
+| В БД | `orders.is_lead = false`, `source = 'bulk'`, привязка к `company_id` | `is_lead = true`, `source = 'lead'`, без компании |
+| Обязательно в форме | ничего (данные из аккаунта) | `contactName` + `contactPhone` |
+| Экран Success | «Заказ оформлен» + номер `ORD-NNNN` + бейдж статуса | «Заявка принята» — «менеджер свяжется» |
+
+### 8.2. Контактная форма (`Cart.tsx`)
+
+Секция «Контакты для доставки» перед способом оплаты: `contactName`, `contactPhone`
+(гостю обязательны), `companyName`, `address`, `comment` (всегда необязательны).
+Для вошедшей компании имя/телефон/компания предзаполняются из `user` (пропс из `App.tsx`).
+`canCheckout` дополнительно требует `contactOk` (гость: имя ≥ 2 симв., телефон ≥ 5 симв.).
+
+### 8.3. Payload и ответ
+
+```
+POST /api/orders
+  { employeeCount, paymentMethod, totalMonthlyPrice,
+    lines: [{ date, setId, setName, mainDish, salad, beverage, portions, unitPrice, lineTotal }],
+    contactName?, contactPhone?, companyName?, address?, comment? }
+→ { success, orderId, orderNumber: "ORD-0007", status: "new", isLead, telegramSent }
+```
+
+`App.tsx` кладёт `orderNumber` / `status` / `isLead` в `successInfo` → экран Success
+([[COMPONENTS#7-successtsx]]).
+
+### 8.4. Статусы заказа
+
+`new → confirmed → in_progress → delivered → paid` (+ `cancelled`).
+Меняет владелец в разделе «Сводка» (`OrderDetailSheet`, [[COMPONENTS#13-раздел-сводка-владельца]]).
+Хелперы — `src/lib/orderStatus.ts` (`statusLabel`, `statusColor`, `nextStatuses`).
+
+### 8.5. Заказы компании
+
+`GET /api/my/orders` → раздел «Заказы» в кабинете компании (`MyOrdersView`, read-only).
