@@ -138,26 +138,44 @@ function compositionFor(dish: Dish) {
 }
 
 /**
- * Меню: 59 реальных блюд с локальными фото из public/images/dishes/.
+ * Меню: 56 реальных блюд с локальными фото из public/images/dishes/.
  * Каждый день — одно блюдо + стандартный состав обеда.
  */
 export const MONTHLY_SETS: LunchSet[] = DISHES.map((dish, index) => {
   const dayNumber = index + 1;
   const weekDayIndex = index % 5;
   const kbju = kbjuFor(index, dish.category);
+  const composition = compositionFor(dish);
   return {
     id: dayNumber,
     dayNumber,
     weekDay: WEEK_DAYS[weekDayIndex],
     category: dish.category,
     name: dish.name,
-    description: `${dish.name} + Салат + Лепёшка + Напиток`,
+    description: composition.map(c => c.name).join(' + '),
     price: SET_PRICE,
     imageUrl: dish.imageUrl,
     calories: kbju.calories,
     proteins: kbju.proteins,
     fats: kbju.fats,
     carbs: kbju.carbs,
-    composition: compositionFor(dish),
+    composition,
   };
 });
+
+/**
+ * Глобальная «порядковая» привязка дата → сет меню в пределах видимого окна
+ * календаря (текущий + следующий месяц). Даёт возможность заказать все 56 сетов:
+ * ordinal = количество дней с 1-го числа текущего месяца до даты + 1
+ * (даты следующего месяца продолжают счёт), затем модуль по числу сетов.
+ * Детерминировано: выбор/снятие других дат не меняет сет для данной даты.
+ */
+export function getSetForDate(date: string): LunchSet {
+  const today = new Date()
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
+  const [y, m, d] = date.split('-').map(Number)
+  const target = new Date(y, m - 1, d)
+  const ordinal = Math.floor((target.getTime() - monthStart.getTime()) / 86400000) + 1
+  const idx = ((ordinal - 1) % MONTHLY_SETS.length + MONTHLY_SETS.length) % MONTHLY_SETS.length
+  return MONTHLY_SETS[idx]
+}

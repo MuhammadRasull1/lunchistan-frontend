@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { X } from 'lucide-react'
+import { X, UtensilsCrossed, Building2, CreditCard, Banknote } from 'lucide-react'
 import type { SelectedDay, PaymentMethod, Lang } from '../types'
 import { formatPrice } from '../types'
 import { t } from '../locales/translations'
@@ -56,10 +56,10 @@ function Cart({
     return !!item?.salad && !!item?.beverage
   })
 
-  const paymentOptions: { value: PaymentMethod; label: string; icon: string }[] = [
-    { value: 'corporate', label: t(lang, 'corporate'), icon: '🏢' },
-    { value: 'card', label: t(lang, 'card'), icon: '💳' },
-    { value: 'cash', label: t(lang, 'cash'), icon: '💵' },
+  const paymentOptions: { value: PaymentMethod; label: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number }> }[] = [
+    { value: 'corporate', label: t(lang, 'corporate'), icon: Building2 },
+    { value: 'card', label: t(lang, 'card'), icon: CreditCard },
+    { value: 'cash', label: t(lang, 'cash'), icon: Banknote },
   ]
 
   const handleRemoveItem = (date: string) => {
@@ -77,7 +77,7 @@ function Cart({
 
     const handleClick = () => onPlaceOrderRef.current(paymentMethod)
     mainButton.setText(
-      isSubmitting ? t(lang, 'submitting') : t(lang, 'pay', { price: formatPrice(totalMonthlyPrice) })
+      isSubmitting ? t(lang, 'submitting') : t(lang, 'pay', { price: formatPrice(totalMonthlyPrice, lang) })
     )
     mainButton.onClick(handleClick)
 
@@ -162,7 +162,7 @@ function Cart({
                 }}
                 transition={{ duration: 0.35, ease: 'easeOut' }}
               >
-                <div className="cart__item-icon" aria-hidden="true">🍱</div>
+                <div className="cart__item-icon" aria-hidden="true"><UtensilsCrossed size={22} strokeWidth={1.8} /></div>
                 <div className="cart__item-info">
                   <span className="cart__item-name">
                     {set.name}
@@ -181,8 +181,8 @@ function Cart({
                   })()}
                 </div>
                 <div className="cart__item-sum">
-                  <div>{totalPortions} × {formatPrice(set.price)}</div>
-                  <div style={{ color: 'var(--brand)' }}>{formatPrice(set.price * totalPortions)}</div>
+                  <div>{totalPortions} × {formatPrice(set.price, lang)}</div>
+                  <div className="cart__item-sum-total">{formatPrice(set.price * totalPortions, lang)}</div>
                 </div>
                 <button
                   type="button"
@@ -205,7 +205,7 @@ function Cart({
           >
             <h3 className="payment__title">{t(lang, 'paymentMethod')}</h3>
             <div className="payment__options" style={{ gridTemplateColumns: '1fr' }}>
-              {paymentOptions.map(({ value, label, icon }) => (
+              {paymentOptions.map(({ value, label, icon: Icon }) => (
                 <motion.button
                   key={value}
                   type="button"
@@ -214,7 +214,9 @@ function Cart({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <span className="payment__icon">{icon}</span>
+                  <span className="payment__icon">
+                    <Icon size={20} strokeWidth={1.8} />
+                  </span>
                   <span className="payment__label">{label}</span>
                 </motion.button>
               ))}
@@ -229,7 +231,7 @@ function Cart({
             transition={{ delay: 0.35, duration: 0.4 }}
           >
             <span>{t(lang, 'totalToPay')}</span>
-            <span className="cart__summary-total">{formatPrice(totalMonthlyPrice)}</span>
+            <span className="cart__summary-total">{formatPrice(totalMonthlyPrice, lang)}</span>
           </motion.div>
 
           {!canCheckout && (
@@ -260,7 +262,7 @@ function Cart({
                 {t(lang, 'submitting')}
               </>
             ) : (
-              t(lang, 'pay', { price: formatPrice(totalMonthlyPrice) })
+              t(lang, 'pay', { price: formatPrice(totalMonthlyPrice, lang) })
             )}
           </motion.button>
         </>

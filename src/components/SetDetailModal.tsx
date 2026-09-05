@@ -304,7 +304,7 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, readOnly, dateL
             <div className="modal-sheet__bar">
               <div className="modal-sheet__bar-price">
                 <span className="modal-sheet__bar-price-label">{t(lang, 'priceLabel')}</span>
-                <span className="modal-sheet__bar-price-value">{formatPrice(set.price)}</span>
+                <span className="modal-sheet__bar-price-value">{formatPrice(set.price, lang)}</span>
               </div>
               <motion.button
                 type="button"

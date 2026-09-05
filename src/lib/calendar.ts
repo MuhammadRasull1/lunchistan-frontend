@@ -22,6 +22,14 @@ export interface CalendarWeek {
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
+/** Заказ на «сегодня» возможен только до этого часа (включительно с 00:00 до этого часа). */
+export const TODAY_ORDER_CUTOFF_HOUR = 10
+
+/** Текущее время как число-часов с долей (0..24) */
+function currentHourFraction(now: Date): number {
+  return now.getHours() + now.getMinutes() / 60
+}
+
 /** Валидация строки даты YYYY-MM-DD */
 export function isValidDateString(value: string): boolean {
   return DATE_RE.test(value)
@@ -135,17 +143,17 @@ const PATTERNS: Record<Exclude<PresetPattern, 'full'>, { cycle: number; workPosi
  * Паттерн начинается от даты начала подписки (1-е число месяца) как день №1 и
  * применяется к последовательности допустимых дней (Пн-Пт): выходные не выбираются.
  * 'full' — все допустимые даты месяца.
- * Прошедшие даты (раньше сегодняшнего дня) всегда исключаются — график работает
- * только с реально доступными для доставки днями.
+ * Недоступные даты (прошедшие или «сегодня» после временной резки) всегда
+ * исключаются единым предикатом canSelectDate — график работает только с
+ * реально доступными для доставки днями.
  */
 export function buildPresetDates(monthKey: string, pattern: PresetPattern): string[] {
-  const today = formatDate(new Date())
   const selectable = getSelectableDates(monthKey)
-  if (pattern === 'full') return selectable.filter(date => date >= today)
+  if (pattern === 'full') return selectable.filter(date => canSelectDate(date))
   const { cycle, workPositions } = PATTERNS[pattern]
   return selectable
     .filter((_, index) => workPositions.includes(index % cycle))
-    .filter(date => date >= today)
+    .filter(date => canSelectDate(date))
 }
 
 /** Человекочитаемая подпись даты: "03.08 · Пн" */
@@ -161,4 +169,24 @@ export function formatDayLabel(date: string, lang: Lang): string {
 /** Название месяца для заголовка календаря: "Август 2026" */
 export function formatMonthLabel(month: Date, lang: Lang): string {
   return `${MONTHS[lang][month.getMonth()]} ${month.getFullYear()}`
+}
+
+/** Дату уже нельзя заказать — она раньше сегодняшнего дня (по календарным компонентам). */
+export function isPastDate(date: string): boolean {
+  return date < formatDate(new Date())
+}
+
+/**
+ * Можно ли выбрать дату для доставки.
+ * Дата не должна быть раньше сегодняшнего дня, а «сегодня» доступна только
+ * до временной резки TODAY_ORDER_CUTOFF_HOUR (иначе заказать на сегодня нельзя).
+ */
+export function canSelectDate(date: string): boolean {
+  const now = new Date()
+  const todayKey = formatDate(now)
+  if (date < todayKey) return false
+  if (date === todayKey) {
+    return currentHourFraction(now) < TODAY_ORDER_CUTOFF_HOUR
+  }
+  return true
 }

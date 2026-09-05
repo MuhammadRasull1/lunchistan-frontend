@@ -1,7 +1,7 @@
 # 🛒 Процесс оформления заказа (Checkout Flow)
 
-> Версия: 2.0  \
-> Последнее обновление: 13.08.2026  \
+> Версия: 2.7  \
+> Последнее обновление: 05.09.2026  \
 > Связанные файлы: [[B2B_RULES]], [[COMPONENTS]], [[STATE_MANAGEMENT]]
 
 ---
@@ -92,9 +92,10 @@ UI: три кнопки с иконками, `payment__option--active` для в
 2. **Заголовок**: «Заказ оформлен!» / «Buyurtma qabul qilindi!»
 3. **Текст**: «Спасибо! Мы уже передали заказ на кухню Lunchistan.» / «Rahmat! Buyurtmangiz Lunchistan oshxonasiga topshirildi.»
 4. **Номер заказа**: `#ORD-NNNN` (случайный 4-значный, генерируется при монтировании)
-5. **Кнопка**: «Сделать новый заказ» / «Yangi buyurtma» → полный сброс ([[STATE_MANAGEMENT#7-сброс-состояния-new-order]])
+5. 🆆 **Сводка заказа** (v2.7): способ оплаты, число дней × сотрудников, итоговая сумма (`paymentMethod`, `activeDays`, `employeeCount`, `totalMonthlyPrice` из `successInfo`)
+6. **Кнопка**: «Сделать новый заказ» / «Yangi buyurtma» → полный сброс ([[STATE_MANAGEMENT#7-сброс-состояния-new-order]])
 
-### 5.2. Обработка заказа (v2.0)
+### 5.2. Обработка заказа (v2.0, сброс v2.7)
 
 Главный источник данных — массив дней. Каждый выбранный день из календаря гарантированно попадает в `days[]`:
 
@@ -108,6 +109,12 @@ days[] (массив OrderLine с date)
 order payload
         ↓
 POST /api/orders
+        ↓
+фиксация successInfo (method, total, employees, days)
+        ↓
+СБРОС ЗАКАЗА: cartState = {}, employeeCount = 1, clearSavedOrder()   ← 🆆 v2.7
+        ↓
+screen = 'success'
 ```
 
 ```typescript
@@ -117,7 +124,7 @@ const handlePlaceOrder = async (method: PaymentMethod) => {
     const totalPortions = portions * employeeCount
     const mainDish = set?.composition.find(c => c.optional !== true)?.name ?? set?.name ?? ''
     return {
-      date,                       // 🆆 реальная дата YYYY-MM-DD
+      date,                       // реальная дата YYYY-MM-DD
       day: Number(date.slice(8, 10)),
       setName: set?.name,
       mainDish,
@@ -128,21 +135,22 @@ const handlePlaceOrder = async (method: PaymentMethod) => {
       lineTotal: (set?.price ?? SET_PRICE) * totalPortions,
     }
   })
-  const payload = {
-    employeeCount,
-    workDaysCount: lines.length,    // теперь = количеству выбранных дат
-    activeDays: lines.length,
-    days: lines,                    // 🆆 канонический массив дней
-    lines,                          // (совместимость с прежним контрактом)
-    totalMonthlyPrice,
-    paymentMethod: method,
-  }
+  const payload = { ... }
   await submitOrder(payload)
+  // 🆆 v2.7: фиксируем данные для Success ДО сброса
+  setSuccessInfo({ method, total: totalMonthlyPrice, employees: employeeCount, days: lines.length })
+  // 🆆 v2.7: очищаем заказ после успешной отправки — оплаченный заказ
+  // не восстанавливается автоприсейвом и не может быть оплачен повторно
+  setCartState({})
+  setEmployeeCount(1)
+  clearSavedOrder()
   setScreen('success')
 }
 ```
 
 > **🆆 v2.0:** вместо абстрактного `workDaysCount: 24` фронтенд отправляет **конкретные даты** (`days[].date`). Поле `workDaysCount` в payload теперь производное (`lines.length`). Каждый день в календаре имеет полный объект `{ date, mainDish, salad, beverage, portions }` — день не может быть выбран в календаре и отсутствовать в `days[]`.
+>
+> **🆆 v2.7:** после успешной отправки заказ принудительно очищается; экран Success получает зафиксированную сводку (`successInfo`). `isSubmitting`-гард против двойной отправки сохранён.
 
 ⚠️ **Важно:** отправка на сервер через `submitOrder()` ([[ARCHITECTURE]] / `src/lib/api.ts`), `axios.post(API_BASE_URL + '/api/orders')`.
 

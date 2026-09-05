@@ -67,6 +67,9 @@ export type Lang = 'ru' | 'uz';
 
 export type Screen = 'catalog' | 'cart' | 'success';
 
-export function formatPrice(price: number): string {
-  return price.toLocaleString('ru-RU') + ' сум';
+export const EMPLOYEE_MAX = 500;
+
+export function formatPrice(price: number, lang: Lang = 'ru'): string {
+  const suffix = lang === 'uz' ? "so'm" : 'сум';
+  return price.toLocaleString('ru-RU') + ' ' + suffix;
 }

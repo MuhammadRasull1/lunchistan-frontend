@@ -7,11 +7,13 @@ import {
   buildMonthGrid,
   buildMonthWeeks,
   buildPresetDates,
+  canSelectDate,
   formatDate,
   formatMonthLabel,
   monthKeyOf,
   monthKeyOfDate,
   workWeekDatesOf,
+  TODAY_ORDER_CUTOFF_HOUR,
 } from '../lib/calendar'
 import { hapticImpact } from '../lib/telegram'
 
@@ -61,12 +63,18 @@ const SHEET_VARIANTS = {
  * поэтому черновой выбор и видимый месяц инициализируются из пропсов без эффектов.
  */
 function CalendarSheet({ initialSelectedDates, minMonth, maxMonth, lang, onConfirm, onClose }: Omit<CalendarModalProps, 'isOpen'>) {
-  const [draftDates, setDraftDates] = useState<Set<string>>(() => new Set(initialSelectedDates))
+  const [draftDates, setDraftDates] = useState<Set<string>>(() =>
+    new Set(initialSelectedDates.filter(date => canSelectDate(date)))
+  )
   const [visibleMonth, setVisibleMonth] = useState<Date>(() => new Date(minMonth.getTime()))
 
   const visibleMonthKey = monthKeyOf(visibleMonth.getFullYear(), visibleMonth.getMonth())
   const weeks = buildMonthWeeks(visibleMonth)
-  const monthDayCount = buildMonthGrid(visibleMonth).filter(cell => !cell.isEmpty).length
+  const monthCells = buildMonthGrid(visibleMonth)
+  // Все даты месяца, доступные для заказа (не прошлое и, если сегодня, до временной резки)
+  const monthSelectableDates = monthCells
+    .filter(cell => !cell.isEmpty && cell.date !== undefined && canSelectDate(cell.date))
+    .map(cell => cell.date as string)
   const draftCount = draftDates.size
   const todayKey = formatDate(new Date())
 
@@ -79,6 +87,8 @@ function CalendarSheet({ initialSelectedDates, minMonth, maxMonth, lang, onConfi
   }
 
   const toggleDate = (date: string) => {
+    // Прошедшие даты и «сегодня» после временной резки выбрать нельзя.
+    if (!canSelectDate(date)) return
     hapticImpact('light')
     setDraftDates(prev => {
       const next = new Set(prev)
@@ -94,7 +104,7 @@ function CalendarSheet({ initialSelectedDates, minMonth, maxMonth, lang, onConfi
   /** Пресет «Вся рабочая неделя»: выбирает Пн–Пт той недели, на которую нажали (повторно — снимает) */
   const toggleWorkWeek = (weekIndex: number) => {
     hapticImpact('light')
-    const weekDates = workWeekDatesOf(weeks[weekIndex])
+    const weekDates = workWeekDatesOf(weeks[weekIndex]).filter(date => canSelectDate(date))
     if (weekDates.length === 0) return
     setDraftDates(prev => {
       const next = new Set(prev)
@@ -145,9 +155,7 @@ function CalendarSheet({ initialSelectedDates, minMonth, maxMonth, lang, onConfi
     hapticImpact('light')
     setDraftDates(prev => {
       const next = new Set(prev)
-      for (const cell of buildMonthGrid(visibleMonth)) {
-        if (!cell.isEmpty && cell.date) next.add(cell.date)
-      }
+      for (const date of monthSelectableDates) next.add(date)
       return next
     })
   }
@@ -211,6 +219,7 @@ function CalendarSheet({ initialSelectedDates, minMonth, maxMonth, lang, onConfi
         <div className="modal-sheet__scroll calendar-modal__scroll">
           <h2 className="calendar-modal__title">{t(lang, 'calendarModalTitle')}</h2>
           <p className="calendar-modal__subtitle">{t(lang, 'calendarSubtitle')}</p>
+          <p className="calendar-modal__hint">{t(lang, 'calendarLockedHint', { n: TODAY_ORDER_CUTOFF_HOUR })}</p>
 
           {/* Навигация по месяцам (текущий → следующий) */}
           <div className="calendar__header">
@@ -286,13 +295,16 @@ function CalendarSheet({ initialSelectedDates, minMonth, maxMonth, lang, onConfi
                       return <div key={cellIndex} className="calendar__day calendar__day--empty" />
                     }
                     const selected = draftDates.has(cell.date)
+                    const locked = !canSelectDate(cell.date)
                     return (
                       <button
                         key={cellIndex}
                         type="button"
-                        className={`calendar__day${selected ? ' calendar__day--selected' : ''}${cell.isWeekend ? ' calendar__day--weekend' : ''}${cell.date === todayKey ? ' calendar__day--today' : ''}`}
+                        disabled={locked}
+                        className={`calendar__day${selected ? ' calendar__day--selected' : ''}${cell.isWeekend ? ' calendar__day--weekend' : ''}${cell.date === todayKey ? ' calendar__day--today' : ''}${locked ? ' calendar__day--disabled' : ''}`}
                         onClick={() => toggleDate(cell.date!)}
                         aria-pressed={selected}
+                        aria-disabled={locked}
                         aria-label={cell.date}
                       >
                         {cell.dayOfMonth}
@@ -311,7 +323,7 @@ function CalendarSheet({ initialSelectedDates, minMonth, maxMonth, lang, onConfi
               className="btn btn--outline"
               onClick={selectAllInMonth}
             >
-              {t(lang, 'selectAll', { n: monthDayCount })}
+              {t(lang, 'selectAll', { n: monthSelectableDates.length })}
             </button>
             <button
               type="button"

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
+import { CalendarDays, UtensilsCrossed } from 'lucide-react'
 import type { Lang, SetCategory, Beverage, Salad, SelectedDay, LunchSet } from '../types'
-import { formatPrice } from '../types'
+import { formatPrice, EMPLOYEE_MAX } from '../types'
 import { t } from '../locales/translations'
 import SetCard from './SetCard'
 import SetDetailModal from './SetDetailModal'
@@ -11,7 +12,7 @@ import CalendarModal from './CalendarModal'
 import { getTelegramWebApp, hapticImpact } from '../lib/telegram'
 import { DEFAULT_SALAD } from './saladOptions'
 import { startOfMonth, addMonths, formatDayLabel } from '../lib/calendar'
-import { MONTHLY_SETS } from '../data/mockMenu'
+import { MONTHLY_SETS, getSetForDate } from '../data/mockMenu'
 
 type CategoryFilter = SetCategory | 'all'
 
@@ -90,13 +91,13 @@ function Catalog({
   const [minMonth] = useState(() => startOfMonth(new Date()))
   const maxMonth = useMemo(() => addMonths(minMonth, 1), [minMonth])
 
-  // Полный каталог меню: карточки выбранных дней активны (по числу месяца),
-  // остальные — предпросмотр сета.
+  // Карточки выбранных дней активны: сет для даты берётся единым способом через
+  // getSetForDate (глобальная порядковая привязка), остальные — предпросмотр сета.
   const activeDateBySet = useMemo(() => {
-    const map = new Map<number, string>()
+    const map = new Map<string | number, string>()
     for (const d of days) {
-      const dayOfMonth = Number(d.date.slice(8, 10))
-      if (!map.has(dayOfMonth)) map.set(dayOfMonth, d.date)
+      const set = getSetForDate(d.date)
+      if (!map.has(set.id)) map.set(set.id, d.date)
     }
     return map
   }, [days])
@@ -161,7 +162,7 @@ function Catalog({
       <header className="catalog__header">
         <div className="catalog__header-top">
           <div className="brand">
-            <span className="brand__logo">🍽️</span>
+            <span className="brand__logo"><UtensilsCrossed size={22} strokeWidth={2.2} /></span>
             <span>
               Lunch<span className="brand__accent">istan</span>
             </span>
@@ -226,7 +227,15 @@ function Catalog({
         </div>
 
         {activeDays === 0 && (
-          <p className="catalog__status">{t(lang, 'noDatesSelected')}</p>
+          <div className="empty-state">
+            <div className="empty-state__visual" aria-hidden="true">
+              <CalendarDays size={26} strokeWidth={1.6} />
+            </div>
+            <div className="empty-state__body">
+              <span className="empty-state__title">{t(lang, 'noDatesTitle')}</span>
+              <span className="empty-state__text">{t(lang, 'noDatesSelected')}</span>
+            </div>
+          </div>
         )}
 
         {/* Количество сотрудников */}
@@ -240,6 +249,7 @@ function Catalog({
           <Stepper
             value={employeeCount}
             min={1}
+            max={EMPLOYEE_MAX}
             onSet={onEmployeeCountChange}
             ariaDecrease={t(lang, 'stepDecrease')}
             ariaIncrease={t(lang, 'stepIncrease')}
@@ -278,11 +288,11 @@ function Catalog({
           </div>
           <div className="subscription__calc-row">
             <span>{t(lang, 'pricePerPortion')}</span>
-            <span className="subscription__calc-value">{formatPrice(setPrice)}</span>
+            <span className="subscription__calc-value">{formatPrice(setPrice, lang)}</span>
           </div>
           <div className="subscription__calc-row subscription__calc-row--total">
             <span>{t(lang, 'totalToPay')}</span>
-            <span className="subscription__calc-value">{formatPrice(totalMonthlyPrice)}</span>
+            <span className="subscription__calc-value">{formatPrice(totalMonthlyPrice, lang)}</span>
           </div>
           {customizedDays > 0 && (
             <div className="subscription__calc-row">
@@ -295,10 +305,10 @@ function Catalog({
         </motion.div>
       </section>
 
-      {/* Полное меню на месяц — всегда отображается, независимо от выбранных дней */}
-      <h2 className="catalog__section-title">{t(lang, 'menuTitle', { n: filteredSets.length })}</h2>
+      {/* Полное меню на 2 месяца — заголовок всегда показывает полное число сетов */}
+      <h2 className="catalog__section-title">{t(lang, 'menuTitle', { n: allSetsCount })}</h2>
 
-      <div className="tabs" role="tablist" aria-label={t(lang, 'menuTitle', { n: filteredSets.length })}>
+      <div className="tabs" role="tablist" aria-label={t(lang, 'menuTitle', { n: allSetsCount })}>
         {CATEGORY_TABS.map(tab => (
           <button
             key={tab.value}
@@ -315,7 +325,7 @@ function Catalog({
 
       <div className="catalog__grid catalog__grid--sets">
         {filteredSets.map((set, index) => {
-          const activeDate = activeDateBySet.get(set.dayNumber)
+          const activeDate = activeDateBySet.get(set.id)
           const isActive = activeDate !== undefined
           return (
             <SetCard
@@ -344,7 +354,7 @@ function Catalog({
             <span className="sticky-bar__count">
               {t(lang, 'stickyBarLabel', { active: activeDays, employees: employeeCount, portions: totalItems })}
             </span>
-            <span className="sticky-bar__total">{formatPrice(totalMonthlyPrice)}</span>
+            <span className="sticky-bar__total">{formatPrice(totalMonthlyPrice, lang)}</span>
           </div>
           {!hasMainButton && (
             <motion.button

@@ -3,19 +3,25 @@ import './App.css'
 import Catalog from './components/Catalog'
 import Cart from './components/Cart'
 import Success from './components/Success'
-import { MONTHLY_SETS, SET_PRICE } from './data/mockMenu'
+import { MONTHLY_SETS, SET_PRICE, getSetForDate } from './data/mockMenu'
 import type { CartState, Screen, PaymentMethod, Beverage, Salad, Lang, SelectedDay } from './types'
+import { EMPLOYEE_MAX } from './types'
 import { t } from './locales/translations'
 import { showTelegramAlert } from './lib/telegram'
 import { loadSavedOrder, saveOrder, clearSavedOrder } from './lib/orderStorage'
 import { submitOrder } from './lib/api'
 import { DEFAULT_SALAD } from './components/saladOptions'
-import { isValidDateString } from './lib/calendar'
+import { isPastDate, isValidDateString } from './lib/calendar'
 
-/** Сет меню для даты — стабильно по числу месяца: 15-е число → сет №15 */
-function getSetForDate(date: string) {
-  const dayOfMonth = Number(date.slice(8, 10))
-  return MONTHLY_SETS[Math.min(dayOfMonth, MONTHLY_SETS.length) - 1]
+const LANG_STORAGE_KEY = 'lunchistan_lang'
+
+function loadInitialLang(): Lang {
+  try {
+    const raw = localStorage.getItem(LANG_STORAGE_KEY)
+    return raw === 'uz' ? 'uz' : 'ru'
+  } catch {
+    return 'ru'
+  }
 }
 
 function makeDefaultDay(): CartState[string] {
@@ -27,16 +33,18 @@ const savedOrder = loadSavedOrder()
 
 function App() {
   const [screen, setScreen] = useState<Screen>('catalog')
-  const [employeeCount, setEmployeeCount] = useState<number>(() => savedOrder?.employeeCount ?? 1)
-  const [lang, setLang] = useState<Lang>('ru')
+  const [employeeCount, setEmployeeCount] = useState<number>(() => Math.min(EMPLOYEE_MAX, savedOrder?.employeeCount ?? 1))
+  const [lang, setLang] = useState<Lang>(loadInitialLang)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [successInfo, setSuccessInfo] = useState<{ method: PaymentMethod; total: number; employees: number; days: number } | null>(null)
   // Единая модель: cartState ключуется по дате YYYY-MM-DD; наличие ключа = день выбран.
-  // Первый запуск — ничего не выбрано (0 дней).
+  // Первый запуск — ничего не выбрано (0 дней). Инвариант: нет прошедших дат.
   const [cartState, setCartState] = useState<CartState>(() => {
     if (!savedOrder) return {}
     const merged: CartState = {}
     for (const [date, item] of Object.entries(savedOrder.cartState)) {
-      if (isValidDateString(date)) merged[date] = item
+      // Защитный слой: сохранённые прошедшие даты не восстанавливаются.
+      if (isValidDateString(date) && !isPastDate(date)) merged[date] = item
     }
     return merged
   })
@@ -64,6 +72,8 @@ function App() {
         delete next[date]
         return next
       }
+      // Защитный слой: прошедшие даты нельзя включить (удаление всегда разрешено).
+      if (isPastDate(date)) return prev
       return { ...prev, [date]: makeDefaultDay() }
     })
   }
@@ -122,6 +132,8 @@ function App() {
     setCartState(prev => {
       const next: CartState = {}
       for (const date of dates) {
+        // Защитный слой: прошедшие даты не применяются.
+        if (isPastDate(date)) continue
         next[date] = prev[date] ?? makeDefaultDay()
       }
       return next
@@ -129,7 +141,7 @@ function App() {
   }
 
   const handleEmployeeCountChange = (count: number) => {
-    setEmployeeCount(Math.max(1, count))
+    setEmployeeCount(Math.min(EMPLOYEE_MAX, Math.max(1, count)))
   }
 
   const handlePlaceOrder = async (method: PaymentMethod) => {
@@ -164,6 +176,13 @@ function App() {
       }
       console.log('Заказ оформлен:', payload)
       await submitOrder(payload)
+      // Фиксируем данные для экрана Success ДО сброса заказа.
+      setSuccessInfo({ method, total: totalMonthlyPrice, employees: employeeCount, days: lines.length })
+      // Очищаем заказ после успешной отправки — уже оплаченный заказ не должен
+      // восстанавливаться автоприсейвом и не может быть оплачен повторно.
+      setCartState({})
+      setEmployeeCount(1)
+      clearSavedOrder()
       setScreen('success')
     } catch (error) {
       console.error('Ошибка при отправке заказа:', error)
@@ -176,12 +195,18 @@ function App() {
   const handleNewOrder = () => {
     setCartState({})
     setEmployeeCount(1)
+    setSuccessInfo(null)
     setScreen('catalog')
     clearSavedOrder()
   }
 
   const handleLangChange = (newLang: Lang) => {
     setLang(newLang)
+    try {
+      localStorage.setItem(LANG_STORAGE_KEY, newLang)
+    } catch {
+      // ignore
+    }
   }
 
   return (
@@ -221,7 +246,14 @@ function App() {
       )}
 
       {screen === 'success' && (
-        <Success lang={lang} onNewOrder={handleNewOrder} />
+        <Success
+          lang={lang}
+          onNewOrder={handleNewOrder}
+          paymentMethod={successInfo?.method}
+          totalMonthlyPrice={successInfo?.total}
+          employeeCount={successInfo?.employees}
+          activeDays={successInfo?.days}
+        />
       )}
     </div>
   )

@@ -5,7 +5,7 @@ const translations: Record<Lang, Record<string, string>> = {
     // Brand & Header
     brand: 'Lunchistan',
     headerTitle: 'Корпоративная подписка на месяц',
-    headerSubtitle: 'Сбалансированные комплексные обеды для вашей команды — до {n} рабочих дней',
+    headerSubtitle: 'Сбалансированные комплексные обеды для вашей команды — полное меню на 2 месяца ({n} сетов)',
 
     // Calculator
     calculatorTitle: 'Калькулятор стоимости',
@@ -20,19 +20,21 @@ const translations: Record<Lang, Record<string, string>> = {
     noDatesSelected: 'Выберите даты в календаре, чтобы собрать меню',
     workingDays: 'Рабочих дней в месяце',
     employees: 'Количество сотрудников',
-    selectAll: '✅ Выбрать все {n} дней',
-    deselectAll: '❌ Сбросить все',
+    selectAll: 'Выбрать все {n} дней',
+    deselectAll: 'Сбросить все',
     chooseDays: 'Выбрать дни',
     calendarModalTitle: 'Выбор дат доставки',
+    calendarLockedHint: 'Прошедшие даты недоступны; сегодня можно заказать до {n}:00',
     weekWorkPreset: 'Вся рабочая неделя',
     confirm: 'Подтвердить',
+    noDatesTitle: 'Даты ещё не выбраны',
     selectedDays: 'Выбрано дней',
     employeesShort: 'Сотрудников',
     totalPortions: 'Всего порций (на сотр.)',
     totalPortionsAll: 'Всего порций (на всех)',
     pricePerPortion: 'Цена одной порции',
     totalToPay: 'Итого к оплате',
-    menuTitle: 'Меню на месяц ({n} дней)',
+    menuTitle: 'Меню на 2 месяца ({n} сетов)',
     from: 'из',
     stepDecrease: 'Уменьшить',
     stepIncrease: 'Увеличить',
@@ -77,7 +79,7 @@ const translations: Record<Lang, Record<string, string>> = {
     choose: 'Выбрать',
 
     // Cart
-    back: '← Назад',
+    back: 'Назад',
     cartTitle: 'Оформление заказа',
     noSelectedDays: 'Нет выбранных дней',
     days: 'дней',
@@ -95,8 +97,8 @@ const translations: Record<Lang, Record<string, string>> = {
     removeFromCart: 'Удалить из корзины',
 
     // Success
-    orderTitle: 'Заказ оформлен!',
-    orderText: 'Спасибо! Мы уже передали заказ на кухню Lunchistan.',
+    orderTitle: 'Заказ оформлен',
+    orderText: 'Спасибо. Мы уже передали заказ на кухню Lunchistan.',
     orderNumber: 'Номер заказа',
     newOrder: 'Сделать новый заказ',
 
@@ -104,7 +106,7 @@ const translations: Record<Lang, Record<string, string>> = {
     stickyBarLabel: '{active} дн. · {employees} чел. · {portions} порц.',
 
     // Order alert
-    orderAlert: 'Предзаказ на {employees} сотрудников оформлен!\nСпособ оплаты: {method}\nОбщая сумма: {price}',
+    orderAlert: 'Предзаказ на {employees} сотрудников оформлен.\nСпособ оплаты: {method}\nОбщая сумма: {price}',
     corporateLabel: 'Перечислением (Для юрлиц)',
     cardLabel: 'Перевод на карту (P2P)',
     cashLabel: 'Наличными курьеру',
@@ -119,7 +121,7 @@ const translations: Record<Lang, Record<string, string>> = {
     // Brand & Header
     brand: 'Lunchistan',
     headerTitle: 'Bir oylik korporativ obuna',
-    headerSubtitle: 'Jamoangiz uchun muvozanatli tushliklar — {n} ish kunigacha',
+    headerSubtitle: "Jamoangiz uchun muvozanatli tushliklar — 2 oylik to'liq menyu ({n} set)",
 
     // Calculator
     calculatorTitle: 'Narx hisoblagichi',
@@ -134,19 +136,21 @@ const translations: Record<Lang, Record<string, string>> = {
     noDatesSelected: "Taqvimda sanalarni tanlang, menyu shakllanadi",
     workingDays: 'Oylik ish kunlari',
     employees: 'Xodimlar soni',
-    selectAll: '✅ Barcha {n} kunni tanlash',
-    deselectAll: '❌ Bekor qilish',
+    selectAll: 'Barcha {n} kunni tanlash',
+    deselectAll: 'Bekor qilish',
     chooseDays: 'Kunlarni tanlash',
     calendarModalTitle: 'Yetkazib berish sanalarini tanlash',
+    calendarLockedHint: "O'tgan sanalar mavjud emas; bugun soat {n}:00 gacha buyurtma berish mumkin",
     weekWorkPreset: "To'liq ish haftasi",
     confirm: 'Tasdiqlash',
+    noDatesTitle: "Sanalar hali tanlanmagan",
     selectedDays: 'Tanlangan kunlar',
     employeesShort: 'Xodimlar',
     totalPortions: 'Jami porsiyalar (1 xodimga)',
     totalPortionsAll: 'Jami porsiyalar (barchaga)',
     pricePerPortion: 'Bir porsiya narxi',
     totalToPay: "To'lov summasi",
-    menuTitle: "Oylik menyu ({n} kun)",
+    menuTitle: "2 oylik menyu ({n} set)",
     from: 'dan',
     stepDecrease: 'Kamaytirish',
     stepIncrease: "Oshirish",
@@ -191,7 +195,7 @@ const translations: Record<Lang, Record<string, string>> = {
     choose: 'Tanlash',
 
     // Cart
-    back: '← Orqaga',
+    back: 'Orqaga',
     cartTitle: "Buyurtma rasmiylashtirish",
     noSelectedDays: 'Kunlar tanlanmagan',
     days: 'kun',
@@ -209,8 +213,8 @@ const translations: Record<Lang, Record<string, string>> = {
     removeFromCart: "Savatdan o'chirish",
 
     // Success
-    orderTitle: "Buyurtma qabul qilindi!",
-    orderText: "Rahmat! Buyurtmangiz Lunchistan oshxonasiga topshirildi.",
+    orderTitle: "Buyurtma qabul qilindi",
+    orderText: "Rahmat. Buyurtmangiz Lunchistan oshxonasiga topshirildi.",
     orderNumber: "Buyurtma raqami",
     newOrder: 'Yangi buyurtma',
 
@@ -218,7 +222,7 @@ const translations: Record<Lang, Record<string, string>> = {
     stickyBarLabel: '{active} kun · {employees} xodim · {portions} pors.',
 
     // Order alert
-    orderAlert: "{employees} xodim uchun buyurtma rasmiylashtirildi!\nTo'lov usuli: {method}\nUmumiy summa: {price}",
+    orderAlert: "{employees} xodim uchun buyurtma rasmiylashtirildi.\nTo'lov usuli: {method}\nUmumiy summa: {price}",
     corporateLabel: "Ko'chirma orqali",
     cardLabel: "Kartaga o'tkazma",
     cashLabel: "Naqd pul",

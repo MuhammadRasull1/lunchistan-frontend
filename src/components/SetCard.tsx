@@ -31,15 +31,15 @@ function SetCard({ set, index, active, lang, dateLabel, preview, onSelect }: Set
   return (
     <motion.article
       className={`set-card${cardActive ? ' set-card--active' : ' set-card--inactive'}`}
-      initial={{ opacity: 0, y: 40, scale: 0.97 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-40px' }}
       transition={{
-        duration: 0.5,
+        duration: 0.45,
         delay: (index % 6) * 0.08,
         ease: [0.25, 0.46, 0.45, 0.94],
       }}
-      whileHover={cardActive ? { y: -4, scale: 1.01, transition: { duration: 0.25, ease: 'easeOut' } } : undefined}
+      whileHover={cardActive ? { y: -2, transition: { duration: 0.2, ease: 'easeOut' } } : undefined}
       onClick={() => onSelect?.(set.id)}
       style={{ cursor: 'pointer' }}
     >
@@ -95,7 +95,7 @@ function SetCard({ set, index, active, lang, dateLabel, preview, onSelect }: Set
 
         {/* Цена */}
         <div className="set-card__price-row">
-          <span className="set-card__price">{formatPrice(set.price)}</span>
+          <span className="set-card__price">{formatPrice(set.price, lang)}</span>
           <span className="set-card__per-day">{t(lang, 'perPortion')}</span>
         </div>
       </div>

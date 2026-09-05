@@ -1,10 +1,25 @@
 import { useState } from 'react'
-import type { Lang } from '../types'
+import type { Lang, PaymentMethod } from '../types'
+import { formatPrice } from '../types'
 import { t } from '../locales/translations'
 
 interface SuccessProps {
   lang: Lang
   onNewOrder: () => void
+  /** Способ оплаты, выбранный при оформлении */
+  paymentMethod?: PaymentMethod
+  /** Итоговая сумма заказа */
+  totalMonthlyPrice?: number
+  /** Количество сотрудников */
+  employeeCount?: number
+  /** Количество выбранных дней */
+  activeDays?: number
+}
+
+const METHOD_LABEL_KEYS: Record<PaymentMethod, string> = {
+  corporate: 'corporateLabel',
+  card: 'cardLabel',
+  cash: 'cashLabel',
 }
 
 function generateOrderNumber() {
@@ -12,9 +27,11 @@ function generateOrderNumber() {
   return `#ORD-${num}`
 }
 
-function Success({ lang, onNewOrder }: SuccessProps) {
+function Success({ lang, onNewOrder, paymentMethod, totalMonthlyPrice, employeeCount, activeDays }: SuccessProps) {
   // Генерируем номер один раз при монтировании экрана.
   const [orderNumber] = useState(generateOrderNumber)
+
+  const showSummary = paymentMethod !== undefined && totalMonthlyPrice !== undefined
 
   return (
     <div className="success">
@@ -38,6 +55,25 @@ function Success({ lang, onNewOrder }: SuccessProps) {
         <span className="success__order-label">{t(lang, 'orderNumber')}</span>
         <span className="success__order-number">{orderNumber}</span>
       </div>
+
+      {showSummary && (
+        <div className="success__summary">
+          <div className="success__summary-row">
+            <span>{t(lang, 'paymentMethod')}</span>
+            <span>{t(lang, METHOD_LABEL_KEYS[paymentMethod])}</span>
+          </div>
+          {activeDays !== undefined && employeeCount !== undefined && (
+            <div className="success__summary-row">
+              <span>{t(lang, 'selectedDays')}</span>
+              <span>{activeDays} {t(lang, 'days')} · {employeeCount} {t(lang, 'employeesPlural')}</span>
+            </div>
+          )}
+          <div className="success__summary-row success__summary-row--total">
+            <span>{t(lang, 'totalToPay')}</span>
+            <span>{formatPrice(totalMonthlyPrice, lang)}</span>
+          </div>
+        </div>
+      )}
 
       <button type="button" className="btn btn--primary btn--lg" onClick={onNewOrder}>
         {t(lang, 'newOrder')}

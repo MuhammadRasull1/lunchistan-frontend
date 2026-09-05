@@ -1,7 +1,7 @@
 # ⚙️ Управление состоянием (State Management)
 
-> Версия: 2.2  \
-> Последнее обновление: 14.08.2026  \
+> Версия: 2.3  \
+> Последнее обновление: 05.09.2026  \
 > Связанные файлы: [[ARCHITECTURE]], [[COMPONENTS]], [[B2B_RULES]]
 
 ---
@@ -22,9 +22,9 @@
 | Переменная       | Тип        | Начальное значение | Описание                              |
 | ---------------- | ---------- | ------------------ | ------------------------------------- |
 | `screen`         | `Screen`   | `'catalog'`        | Текущий экран (`catalog` / `cart` / `success`) |
-| `employeeCount`  | `number`   | `1`                | Множитель стоимости (сотрудники)      |
-| `cartState`      | `CartState`| `{}` (0 дней)      | Выбранные даты (`YYYY-MM-DD`) с настройками дня |
-| `lang`           | `Lang`     | `'ru'`             | Текущий язык интерфейса (RU/UZ)       |
+| `employeeCount`  | `number`   | `1` (из localStorage, clamp [1, 500]) | Множитель стоимости (сотрудники)      |
+| `cartState`      | `CartState`| `{}` (0 дней)      | Выбранные даты (`YYYY-MM-DD`) с настройками дня; **прошедшие даты исключаются** |
+| `lang`           | `Lang`     | из localStorage (`lunchistan_lang`) | Текущий язык интерфейса (RU/UZ), персистится |
 
 ### 2.2. CartState — детальная структура
 
@@ -48,7 +48,7 @@ interface CartItem {
 }
 ```
 
-Сопоставление дата → сет меню стабильно по числу месяца (`MONTHLY_SETS[день-1]`), см. [[COMPONENTS#calendartsx]].
+Сопоставление дата → сет меню — глобальная порядковая привязка (`getSetForDate`: `MONTHLY_SETS[(ordinal-1) % 56]`, ordinal = счёт дней от 1-го числа текущего месяца), см. [[ARCHITECTURE#6-привязка-дата-→-сет-и-правила-выбора-дат]]. Детерминировано — сет даты не зависит от выбора других дат.
 
 ---
 
@@ -71,17 +71,17 @@ totalMonthlyPrice        = totalPortionsFromActive × employeeCount × SET_PRICE
 
 | Функция                         | Действие                                           |
 | ------------------------------- | ------------------------------------------------- |
-| `handleToggleDate(date)`        | Включить/выключить день (используется корзиной: удаление строки) |
-| `handleApplySelectedDates(dates)` | 🆆 Применить подтверждённый выбор из календарной модалки: новые даты получают дефолтный конфиг, конфиги остающихся дат сохраняются, снятые — удаляются |
+| `handleToggleDate(date)`        | Включить/выключить день (используется корзиной: удаление строки). **Защитный слой:** прошедшие даты не включаются (`isPastDate`), удаление всегда разрешено. Резка «сегодня после 10:00» — на уровне UI ([[COMPONENTS#35-calendarmodaltsx—модалка-выбора-дат-v22]]) через `canSelectDate` |
+| `handleApplySelectedDates(dates)` | 🆆 Применить подтверждённый выбор из календарной модалки: новые даты получают дефолтный конфиг, конфиги остающихся дат сохраняются, снятые — удаляются. Прошедшие даты отфильтровываются (`isPastDate`) |
 | `handleBeverageChange(date, bev)` | Сменить напиток для даты                        |
 | `handleSaladChange(date, salad)` | Сменить салат для даты                           |
 | `handlePortionsChange(date, n)` | Увеличить/уменьшить порции для даты (мин. 1)     |
 | `handleApplyBeverageToAll(bev)` | Применить напиток ко всем выбранным датам         |
 | `handleApplySaladToAll(salad)`  | Применить салат ко всем выбранным датам           |
-| `handleEmployeeCountChange(n)`  | Установить количество сотрудников (мин. 1)          |
-| `handlePlaceOrder(method)`      | Оформить заказ → POST /api/orders с массивом `days[]` → screen = 'success' |
+| `handleEmployeeCountChange(n)`  | Установить количество сотрудников (clamp в [1, EMPLOYEE_MAX=500]) |
+| `handlePlaceOrder(method)`      | Оформить заказ → POST /api/orders с массивом `days[]` → **сброс заказа** (cartState={}, employeeCount=1, `clearSavedOrder()`) → screen = 'success' c `successInfo` |
 | `handleNewOrder()`              | Сбросить всё → screen = 'catalog'                   |
-| `handleLangChange(newLang)`     | Сменить язык интерфейса                          |
+| `handleLangChange(newLang)`     | Сменить язык интерфейса и **сохранить в localStorage** (`lunchistan_lang`) |
 
 ### 4.1. Черновой выбор и календарная модалка (v2.1) 🆆
 
