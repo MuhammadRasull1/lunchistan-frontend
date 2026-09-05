@@ -1213,14 +1213,14 @@ body {
    SetDetailModal — Bottom Sheet / Half-Screen Modal
    ============================================================= */
 
-/* Overlay с backdrop-blur */
+/* Overlay: тёмная завеса без backdrop-blur.
+   blur на полноэкранных fixed-слоях в Android WebView (Telegram) вызывает
+   text-ghosting — «призрачный» дубль слоя поверх основного содержимого. */
 .modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: rgba(23, 23, 25, 0.4);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(23, 23, 25, 0.45);
 }
 
 /* Bottom Sheet */
@@ -1582,9 +1582,7 @@ body {
   gap: 14px;
   padding: 14px 20px;
   border-top: 1px solid var(--hairline);
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  background: var(--card-bg);
   border-radius: 0 0 28px 28px;
 }
 

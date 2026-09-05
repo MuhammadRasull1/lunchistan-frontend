@@ -112,47 +112,56 @@ export function buildMonthWeeks(month: Date): CalendarWeek[] {
   return weeks
 }
 
-/** Пн–Пт конкретной недели (в пределах видимого месяца) — пресет «Вся рабочая неделя» */
+/** Пн–Сб конкретной недели (в пределах видимого месяца) — пресет «Вся рабочая неделя».
+ *  Рабочая неделя в UZ-контексте — 6 дней: Пн–Сб, воскресенье — выходной. */
 export function workWeekDatesOf(week: CalendarWeek): string[] {
   return week.cells
-    .filter(cell => !cell.isEmpty && cell.date !== undefined && cell.weekday >= 1 && cell.weekday <= 5)
+    .filter(cell => !cell.isEmpty && cell.date !== undefined && cell.weekday >= 1 && cell.weekday <= 6)
     .map(cell => cell.date as string)
 }
 
-/** Все допустимые (Пн-Пт) даты месяца YYYY-MM */
-export function getSelectableDates(monthKey: string): string[] {
+/** Все календарные даты месяца YYYY-MM (Пн..Вс) с их днём недели. */
+function allMonthDates(monthKey: string): { date: string; weekday: number }[] {
   const { year, monthIndex } = parseMonthKey(monthKey)
   const daysInMonth = new Date(year, monthIndex + 1, 0).getDate()
-  const dates: string[] = []
+  const dates: { date: string; weekday: number }[] = []
   for (let day = 1; day <= daysInMonth; day++) {
-    const date = new Date(year, monthIndex, day)
-    const weekday = date.getDay()
-    if (weekday !== 0 && weekday !== 6) dates.push(formatDate(date))
+    const d = new Date(year, monthIndex, day)
+    dates.push({ date: formatDate(d), weekday: d.getDay() })
   }
   return dates
 }
 
-const PATTERNS: Record<Exclude<PresetPattern, 'full'>, { cycle: number; workPositions: number[] }> = {
-  '2/2': { cycle: 4, workPositions: [0, 1] },
-  '5/2': { cycle: 7, workPositions: [0, 1, 2, 3, 4] },
-  '6/1': { cycle: 7, workPositions: [0, 1, 2, 3, 4, 5] },
+/** Рабочие дни недели по пресету (getDay(): 0=Вс..6=Сб). */
+const WEEKDAY_WORK: Record<'5/2' | '6/1', Set<number>> = {
+  '5/2': new Set([1, 2, 3, 4, 5]),
+  '6/1': new Set([1, 2, 3, 4, 5, 6]),
 }
 
 /**
  * Строит график рабочих дней по пресету для месяца YYYY-MM.
- * Паттерн начинается от даты начала подписки (1-е число месяца) как день №1 и
- * применяется к последовательности допустимых дней (Пн-Пт): выходные не выбираются.
- * 'full' — все допустимые даты месяца.
+ * Семантика пресетов:
+ * - '5/2' — рабочие пн–пт, выходные сб–вс;
+ * - '6/1' — рабочие пн–сб, выходной вс;
+ * - '2/2' — цикл «2 рабочих → 2 выходных» по ВСЕМ календарным дням месяца,
+ *   якорь — 1-е число месяца как день №1 (сб/вс участвуют в цикле наравне);
+ * - 'full' — все календарные дни месяца.
  * Недоступные даты (прошедшие или «сегодня» после временной резки) всегда
  * исключаются единым предикатом canSelectDate — график работает только с
  * реально доступными для доставки днями.
  */
 export function buildPresetDates(monthKey: string, pattern: PresetPattern): string[] {
-  const selectable = getSelectableDates(monthKey)
-  if (pattern === 'full') return selectable.filter(date => canSelectDate(date))
-  const { cycle, workPositions } = PATTERNS[pattern]
-  return selectable
-    .filter((_, index) => workPositions.includes(index % cycle))
+  const days = allMonthDates(monthKey)
+  if (pattern === 'full') return days.map(({ date }) => date).filter(date => canSelectDate(date))
+  if (pattern === '2/2') {
+    return days
+      .filter((_, index) => index % 4 < 2)
+      .map(({ date }) => date)
+      .filter(date => canSelectDate(date))
+  }
+  return days
+    .filter(({ weekday }) => WEEKDAY_WORK[pattern].has(weekday))
+    .map(({ date }) => date)
     .filter(date => canSelectDate(date))
 }
 
