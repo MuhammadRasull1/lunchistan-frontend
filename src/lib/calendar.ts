@@ -112,11 +112,10 @@ export function buildMonthWeeks(month: Date): CalendarWeek[] {
   return weeks
 }
 
-/** Пн–Сб конкретной недели (в пределах видимого месяца) — пресет «Вся рабочая неделя».
- *  Рабочая неделя в UZ-контексте — 6 дней: Пн–Сб, воскресенье — выходной. */
+/** Все даты конкретной недели (в пределах видимого месяца) — пресет «Вся неделя» (Пн..Вс). */
 export function workWeekDatesOf(week: CalendarWeek): string[] {
   return week.cells
-    .filter(cell => !cell.isEmpty && cell.date !== undefined && cell.weekday >= 1 && cell.weekday <= 6)
+    .filter(cell => !cell.isEmpty && cell.date !== undefined)
     .map(cell => cell.date as string)
 }
 

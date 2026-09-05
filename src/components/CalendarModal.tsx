@@ -101,7 +101,7 @@ function CalendarSheet({ initialSelectedDates, minMonth, maxMonth, lang, onConfi
     })
   }
 
-  /** Пресет «Вся рабочая неделя»: выбирает Пн–Пт той недели, на которую нажали (повторно — снимает) */
+  /** Пресет «Вся неделя»: выбирает все дни Пн..Вс той недели, на которую нажали (повторно — снимает) */
   const toggleWorkWeek = (weekIndex: number) => {
     hapticImpact('light')
     const weekDates = workWeekDatesOf(weeks[weekIndex]).filter(date => canSelectDate(date))
@@ -276,7 +276,7 @@ function CalendarSheet({ initialSelectedDates, minMonth, maxMonth, lang, onConfi
             </div>
           </div>
 
-          {/* Недели месяца: строка = 7 дней + кнопка «Вся рабочая неделя» */}
+          {/* Недели месяца: строка = 7 дней + кнопка «Вся неделя» */}
           <div className="calendar__weeks">
             {weeks.map((_, weekIndex) => (
               <div key={weekIndex} className="calendar__week">
