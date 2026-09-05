@@ -76,18 +76,13 @@ lunchistan-frontend/
 │   │   └── mockMenu.ts               # Мок-данные: 56 реальных блюд + категории + КБЖУ
 │   │
 │   ├── lib/                           # 🆕 Утилиты
-│   │   ├── api.ts                     # API-клиент контура «выбор блюд» (auth/schedule/choice/report, axios Bearer, VITE_API_BASE_URL) + легаси submitOrder
+│   │   ├── api.ts                     # Отправка заказа на backend (payload с days[])
 │   │   ├── calendar.ts                # 🆆 Даты, сетка месяца, недели, пресеты + привязка дата→сет (глобальный порядок, модуль 56) + canSelectDate (запрет прошлых дат и «сегодня» после 10:00)
 │   │   ├── orderStorage.ts            # Сохранение конфигурации (v2, ключи — даты)
 │   │   └── telegram.ts                # Telegram WebApp, вибрация, алерты
 │   │
 │   └── components/
-│       ├── App.tsx (root)             # Auth-shell: login → EmployeeView / ManagerView
-│       ├── AuthScreen.tsx             # Вход/регистрация (менеджер создаёт компанию+код, сотрудник — по коду)
-│       ├── EmployeeView.tsx           # Мои дни: выбор дат (CalendarModal) + выбор блюд (SetPicker), lock закрытых дней
-│       ├── ManagerView.tsx            # Сводка дня: чипы дат, chosen×N, подтверждение, Telegram-чек
-│       ├── SetPicker.tsx              # Bottom-sheet выбора сета из 56 (поиск, категории, подсветка текущего)
-│       ├── Catalog.tsx               # Главный экран легаси copy-флоу: сводка выбора дат + калькулятор + табы + полное меню
+│       ├── Catalog.tsx               # Главный экран: сводка выбора дат + калькулятор + табы + полное меню
 │       ├── CalendarModal.tsx         # 🆆 Модалка выбора дат (черновик → подтверждение), пресеты + «Вся неделя»
 │       ├── SetCard.tsx               # Карточка дня/сета (премиум B2B, lucide-иконки)
 │       ├── SetDetailModal.tsx        # Выплывающее окно детализации сета (+ исключение ингредиентов)
@@ -126,16 +121,15 @@ lunchistan-frontend/
 
 ## 4. Маршрутизация
 
-**Роутинг отсутствует** (ни react-router, ни URL). Корневой `App.tsx` — auth-shell:
+**Роутинг отсутствует.** Используется условный рендеринг на основе `screen`:
 
 ```tsx
-// boot: token в localStorage (lunchistan_token) → fetchMe() → роль
-{!user && <AuthScreen lang onAuth />}                 // нет токена или 401
-{user?.role === 'admin' && <ManagerView ... />}       // менеджер фирмы: сводка + подтверждение
-{user?.role === 'employee' && <EmployeeView ... />}   // сотрудник: мои дни + выбор блюд
+{screen === 'catalog' && <Catalog ... />}
+{screen === 'cart'    && <Cart ... />}
+{screen === 'success' && <Success ... />}
 ```
 
-Легаси copy-флоу (Catalog/Cart/Success) по-прежнему доступен напрямую (не в auth-shell). Для полноценной SPA-маршрутизации — `react-router-dom`.
+Для перехода в полноценную SPA-маршрутизацию — установить `react-router-dom` и заменить условный рендеринг на `<Routes>`.
 
 ---
 

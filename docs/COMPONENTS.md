@@ -347,34 +347,3 @@ interface StepperProps {
 ### 11.3. Область покрытия
 
 Все тексты основного интерфейса переведены: заголовки, кнопки, подписи калькулятора, способ оплаты, экран успеха, детали модалки (включая названия напитков, макронутриентов, категорий и исключённых ингредиентов). Внутренние данные (названия блюд, дни недели) остаются на русском.
-
----
-
-## 12. Контур «выбор блюд» (модель токенов, v3.0) 🆆
-
-Дополнительный авторизованный флоу поверх легаси copy-каталога. Рутовый `App.tsx` читает `lunchistan_token` → `fetchMe()` и рендерит:
-
-### 12.1. AuthScreen.tsx — вход/регистрация
-- Режимы: логин (телефон+пароль) и регистрация (менеджер: имя/компания → создаёт компанию + код 6 символов; сотрудник: имя/код компании → присоединяется).
-- Props: `lang`, `onAuth(result: AuthResponse)` (App сохраняет token + user).
-- Валидация: телефон/пароль непустые; busy-состояние; ошибки через `.auth-error`.
-
-### 12.2. EmployeeView.tsx — «мои дни» (роль employee)
-- Загрузка `fetchMyDays()` → список `MyDay[]` (дата, choice, defaultSet, locked).
-- «Выбрать дни»: переиспользует `CalendarModal` (`initialSelectedDates`, `minMonth`=текущий, `maxMonth`=+1 мес) → `putMyDays(dates)`.
-- На каждый день: SetPicker → `putMyChoice(date, setId)`. Дни `locked` (закрыты/прошли) блокируют выбор.
-- Дефолт-сет показывается, если choice не выбран (подпись `defaultSetNote`).
-
-### 12.3. ManagerView.tsx — сводка менеджера (роль admin)
-- `fetchManagerDates()` → чипы дат (scheduled / locked / confirmed).
-- Активная дата → `fetchDayReport(date)` → сводка `DayReport`: scheduled, unpicked, totalSum, perSet (название, цена, count, defaults), confirmed.
-- Подтверждение → `confirmDay(date)` → Telegram-чек (бекенд), статус чипов обновляется. Повторный confirm → 409.
-
-### 12.4. SetPicker.tsx — bottom-sheet выбора сета
-- Список 56 сетов из `MONTHLY_SETS`, локальный поиск по названию, категории-бейджи.
-- Структура: `.modal-sheet__handle` + шапка + поиск + `.modal-sheet__scroll` список.
-- Выбирает `Number(set.id)` (в `LunchSet.id` типизирован как `string | number`).
-- Подсветка текущего выбора (`set-picker-item--current`).
-
-### 12.5. Новые CSS-классы (App.css, блок «контуры»)
-- `.view__header` / `.view__body`, `.view__section-*`, `.auth-*` (spec экрана входа), `.days-list` / `.day-row*`, `.set-picker*`, `.manager-dates*`, `.report-line*`, `.stat-tile*`, `.auth-error--ok`, `.btn__spinner`.
