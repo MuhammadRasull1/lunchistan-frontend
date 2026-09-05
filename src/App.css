@@ -47,6 +47,21 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
+html,
+body {
+  /* Защита от горизонтального скролла в Telegram Mini App.
+     clip (а не hidden) не создаёт scroll-контейнер и не ломает position: sticky. */
+  max-width: 100%;
+  overflow-x: clip;
+  /* Убирает «резиновое» горизонтальное дёрганье (overscroll bounce) на телефоне */
+  overscroll-behavior-x: none;
+}
+
+#root {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
 body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -55,6 +70,12 @@ body {
   min-height: 100vh;
   line-height: 1.5;
   letter-spacing: -0.011em;
+  overflow-wrap: break-word;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
 }
 
 /* Уважение prefers-reduced-motion: отключаем декоративную анимацию */
@@ -75,12 +96,48 @@ body {
   padding: 24px 20px calc(150px + var(--safe-bottom));
 }
 
+/* ---------- Адаптив под телефоны / Telegram Mini App ---------- */
+@media (max-width: 480px) {
+  .app {
+    padding: 16px 14px calc(140px + var(--safe-bottom));
+  }
+
+  /* Внутренние карточки-контейнеры: убираем «кабинетные» отступы 28px,
+     из-за которых контент на телефоне выглядел зажатым / широким */
+  .subscription,
+  .cart {
+    padding: 20px 16px;
+  }
+
+  .subscription__calc {
+    padding: 16px;
+  }
+
+  .success {
+    padding: 36px 20px;
+  }
+
+  /* Раздел «Команды»: шапка и тело не должны добавлять второй слой отступов */
+  .view__header {
+    padding: 10px 14px;
+  }
+
+  .view__body {
+    padding: 0 14px 40px;
+  }
+
+  .auth-screen--section {
+    padding: 20px 14px;
+  }
+}
+
 /* ---------- Brand ---------- */
 .brand {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 26px;
+  min-width: 0;
+  font-size: clamp(20px, 5vw, 26px);
   font-weight: 800;
   letter-spacing: -0.03em;
   color: var(--text);
@@ -178,6 +235,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
   margin-bottom: 28px;
 }
 
@@ -302,11 +361,19 @@ body {
   display: flex;
   gap: 6px;
   overflow-x: auto;
+  /* Скролл ленты категорий не «тянет» страницу и не показывает полосу прокрутки */
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   padding: 4px;
   margin: 0 0 28px;
   background: var(--surface);
   border: 1px solid var(--hairline);
   border-radius: var(--radius-md);
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .tabs__tab {
@@ -1589,6 +1656,7 @@ body {
 .modal-sheet__bar-price {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .modal-sheet__bar-price-label {
@@ -1608,7 +1676,9 @@ body {
 .modal-sheet__bar-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  flex-shrink: 0;
   border: none;
   border-radius: var(--radius-md);
   padding: 14px 28px;
@@ -1756,7 +1826,8 @@ body {
   padding: 12px 4px;
   border-radius: var(--radius-md);
   cursor: pointer;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  hyphens: auto;
   transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
 }
 
@@ -1926,9 +1997,57 @@ body {
   }
 }
 
+/* Очень узкие телефоны (≤360px): плотнее сетка, пресеты в 2 колонки —
+   иначе строка календаря (кнопка недели + 7 дней) распирает модалку вбок */
+@media (max-width: 360px) {
+  .calendar__presets {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .calendar__week,
+  .calendar__header-row {
+    gap: 4px;
+  }
+
+  .calendar__weekdays,
+  .calendar__week-days {
+    gap: 3px;
+  }
+
+  .calendar__week-preset,
+  .calendar__week-preset-spacer {
+    width: 24px;
+    flex-basis: 24px;
+  }
+
+  .calendar__day {
+    min-height: 34px;
+    font-size: 13px;
+  }
+}
+
 /* ---------- Вкладки Каталог / Команды ---------- */
 .app-header {
   gap: 16px;
+}
+
+/* На узких экранах вкладки уезжают на отдельную строку во всю ширину,
+   бренд и переключатель языка остаются сверху — шапка перестаёт быть «широкой» */
+@media (max-width: 560px) {
+  .app-header {
+    gap: 10px 12px;
+  }
+
+  .app-header .app-tabs {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .app-header .app-tabs__tab {
+    flex: 1 1 auto;
+    text-align: center;
+  }
 }
 
 .app-tabs {
@@ -2459,6 +2578,7 @@ body {
 
 .manager-report__stats {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 

@@ -1,6 +1,6 @@
 # 🧩 Компоненты Lunchistan
 
-> Версия: 2.3  \
+> Версия: 2.4  \
 > Последнее обновление: 05.09.2026  \
 > Связанные файлы: [[ARCHITECTURE]], [[STATE_MANAGEMENT]], [[CHECKOUT_FLOW]], [[B2B_RULES]]
 
@@ -319,7 +319,12 @@ interface StepperProps {
 - **Дизайн-токены в `:root`**: палитра apple.com-style (`--bg: #fff`, `--surface: #f5f5f7`, `--text: #1d1d1f`, `--text-muted: #6e6e73`, hairline `rgba(0,0,0,0.06)`), радиусы `--radius-lg: 20px` / `--radius-md: 14px`, единые тени `--shadow-soft` / `--shadow-raise`. Оранжевый `--brand` используется только у главных действий; выделение выбора — тёмным `#1d1d1f` и мягкими `--brand-soft`/`--brand-ring`
 - **БЭМ-подобная нотация**: `.set-card__head`, `.pill--active`
 - **Стекло**: `backdrop-filter: saturate(180%) blur(20px)` в sticky-bar и нижних плашках модалок
-- **Адаптив**: `@media (max-width: 480px)` для Telegram Mini App
+- **Адаптив** (v2.4, ревизия под телефоны): базовые брейкпоинты `@media (max-width: 560px)` (шапка), `480px` (отступы контейнеров) и `360px` (плотная сетка календаря) для Telegram Mini App.
+  - `html, body { max-width: 100%; overflow-x: clip }` — жёсткая защита от горизонтального скролла (`clip`, а не `hidden`, чтобы не ломать `position: sticky` у `.view__header`).
+  - `AppHeader` (`.catalog__header-top` / `.app-header`): `flex-wrap: wrap`; на `≤560px` вкладки `Каталог | Команды` (`.app-tabs`) уходят на отдельную строку во всю ширину (`order: 3; width: 100%`), бренд `.brand` — `font-size: clamp(20px, 5vw, 26px)`. До правки шапка держала минимальную ширину ~500px и распирала страницу вбок.
+  - `≤480px`: `.app` padding `24/20 → 16/14`; «кабинетные» отступы `28px` у `.subscription` / `.cart` → `20px/16px`; `.view__header` / `.view__body` раздела «Команды» больше не добавляют второй слой `24px`.
+  - Календарь `≤360px`: `.calendar__presets` в 2 колонки (`presetFull` «Весь месяц» больше не обрезается — убран `white-space: nowrap`), уменьшены `gap`, `.calendar__day` min-height `38 → 34`, `.calendar__week-preset` `30 → 24px`.
+  - `img { max-width: 100% }`, `.modal-sheet__bar-btn { flex-shrink: 0 }` + `.modal-sheet__bar-price { min-width: 0 }` (длинная цена не выталкивает кнопку).
 - **Пустое состояние**: `.empty-state` (иконка + заголовок + текст) при 0 выбранных дней
 - **🆕 Language Switcher**: `.lang-switcher`, `.lang-btn`, `.lang-btn--active` — pill-стиль, активный язык на тёмном `#1d1d1f`
 - **🆕 Табы категорий**: переиспользуют `.tabs`, `.tabs__tab`, `.tabs__tab--active`
