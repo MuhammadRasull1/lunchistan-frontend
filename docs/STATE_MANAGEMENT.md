@@ -158,3 +158,21 @@ const handleNewOrder = () => {
 - `employeeCount` → 1
 - `screen` → `'catalog'`
 - `lang` **не сбрасывается** (язык сохраняется между заказами)
+
+---
+
+## 8. 🆆 Auth-shell контура «выбор блюд» (v3.0)
+
+Корневой `App.tsx` теперь auth-shell: состояние `user: AuthUser | null`, `employeesCount`, `lang` (персист `lunchistan_lang`), `booted`.
+
+```tsx
+boot (useEffect): getToken() ? fetchMe() → setUser+setEmployeesCount : booted
+!booted → спиннер; !user  → <AuthScreen onAuth=(result) => setToken+t.User>
+user.role==='admin'    → <ManagerView lang user company employeesCount onLogout onLangChange>
+user.role==='employee' → <EmployeeView lang user company onLogout onLangChange>
+```
+
+- **Токен**: `lunchistan_token` (localStorage), автоподстановка Bearer в axios-интерцепторе (`src/lib/api.ts`). 401 → logout.
+- **Logout**: `setToken(null); setUser(null)` → возврат в AuthScreen.
+- Состояние легаси copy-флоу (cartState/employeeCount/screen в Catalog) — изолировано от auth-shell.
+- Экраны EmployeeView/ManagerView держат **своё** состояние (дни, отчёт, дата, busy) локально через `useState` и перезагружают после каждого мутирующего запроса (PUT schedule → refetch my/days; confirm → refetch dates).
