@@ -118,7 +118,7 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // Tabs
     tabCatalog: 'Каталог',
-    tabTeams: 'Команды',
+    tabTeams: 'Кабинет',
 
     // Teams — вход / создание
     authTitle: 'Вход',
@@ -173,6 +173,62 @@ const translations: Record<Lang, Record<string, string>> = {
     reportEmpty: 'На этот день никто не запланирован',
     confirmSuccess: 'Заказ на день подтверждён. Чек отправлен в Telegram.',
     totalSum: 'Итого',
+
+    // ── v3: контакты в чекауте ──────────────────────────────────
+    contactSection: 'Контакты для доставки',
+    contactName: 'Контактное лицо',
+    contactPhone: 'Телефон',
+    contactCompany: 'Компания',
+    contactAddress: 'Адрес доставки',
+    contactComment: 'Комментарий',
+    contactRequiredHint: 'Укажите имя и телефон — по ним с вами свяжутся',
+    optionalField: 'необязательно',
+    loginToTrackHint: 'Войдите в кабинет, чтобы видеть заказ и его статус',
+
+    // ── v3: статусы заказа ──────────────────────────────────────
+    orderStatusLabel: 'Статус',
+    status_new: 'Новый',
+    status_confirmed: 'Подтверждён',
+    status_in_progress: 'Готовится',
+    status_delivered: 'Доставлен',
+    status_paid: 'Оплачен',
+    status_cancelled: 'Отменён',
+
+    // ── v3: Success для заявки ──────────────────────────────────
+    leadTitle: 'Заявка принята',
+    leadText: 'Спасибо! Менеджер Lunchistan свяжется с вами, чтобы подтвердить заказ.',
+
+    // ── v3: Кабинет ─────────────────────────────────────────────
+    cabinetLogin: 'Вход в кабинет',
+    myOrders: 'Мои заказы',
+    myOrdersEmpty: 'Пока нет заказов',
+    ordersSection: 'Заказы',
+    teamSection: 'Команда',
+    orderLinesLabel: 'Состав',
+    refresh: 'Обновить',
+    loadingLabel: 'Загрузка…',
+
+    // ── v3: Сводка владельца ───────────────────────────────────
+    ownerTitle: 'Сводка',
+    ownerSubtitle: 'Что происходит с заказами',
+    rangeWeek: 'Неделя',
+    range2Weeks: '2 недели',
+    rangeMonth: 'Месяц',
+    moneyOrdered: 'Заказано',
+    moneyPaid: 'Оплачено',
+    moneyUnpaid: 'Долг',
+    ordersByStatus: 'Заказы по статусам',
+    leadsNew: 'Новые заявки',
+    leadsNoneNew: 'Новых заявок нет',
+    callLead: 'Позвонить',
+    kitchenSheet: 'Лист для кухни',
+    kitchenEmpty: 'На эти даты заказов нет',
+    portionsShort: 'порц.',
+    orderDetail: 'Заказ',
+    changeStatus: 'Сменить статус',
+    statusChanged: 'Статус обновлён',
+    teamsPlanned: 'Команды · запланировано',
+    allOrders: 'Все заказы',
   },
 
   uz: {
@@ -292,7 +348,7 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // Tabs
     tabCatalog: 'Katalog',
-    tabTeams: 'Jamoalar',
+    tabTeams: 'Kabinet',
 
     // Teams — kirish / yaratish
     authTitle: 'Kirish',
@@ -347,6 +403,62 @@ const translations: Record<Lang, Record<string, string>> = {
     reportEmpty: "Bu kunga hech kim rejalashtirilmagan",
     confirmSuccess: "Kun buyurtmasi tasdiqlandi. Chek Telegram-ga yuborildi.",
     totalSum: 'Jami',
+
+    // ── v3: yetkazib berish kontaktlari ────────────────────────
+    contactSection: 'Yetkazib berish kontaktlari',
+    contactName: 'Aloqa shaxsi',
+    contactPhone: 'Telefon',
+    contactCompany: 'Kompaniya',
+    contactAddress: 'Yetkazib berish manzili',
+    contactComment: 'Izoh',
+    contactRequiredHint: "Ism va telefon kiriting — shu orqali bog'lanamiz",
+    optionalField: 'ixtiyoriy',
+    loginToTrackHint: "Buyurtma va uning holatini ko'rish uchun kabinetga kiring",
+
+    // ── v3: buyurtma holatlari ─────────────────────────────────
+    orderStatusLabel: 'Holat',
+    status_new: 'Yangi',
+    status_confirmed: 'Tasdiqlangan',
+    status_in_progress: 'Tayyorlanmoqda',
+    status_delivered: 'Yetkazilgan',
+    status_paid: "To'langan",
+    status_cancelled: 'Bekor qilingan',
+
+    // ── v3: ariza uchun Success ────────────────────────────────
+    leadTitle: 'Ariza qabul qilindi',
+    leadText: "Rahmat! Lunchistan menejeri buyurtmani tasdiqlash uchun siz bilan bog'lanadi.",
+
+    // ── v3: Kabinet ────────────────────────────────────────────
+    cabinetLogin: 'Kabinetga kirish',
+    myOrders: 'Buyurtmalarim',
+    myOrdersEmpty: "Hozircha buyurtma yo'q",
+    ordersSection: 'Buyurtmalar',
+    teamSection: 'Jamoa',
+    orderLinesLabel: 'Tarkib',
+    refresh: 'Yangilash',
+    loadingLabel: 'Yuklanmoqda…',
+
+    // ── v3: Egasi svodkasi ─────────────────────────────────────
+    ownerTitle: 'Svodka',
+    ownerSubtitle: "Buyurtmalar bilan nima bo'lyapti",
+    rangeWeek: 'Hafta',
+    range2Weeks: '2 hafta',
+    rangeMonth: 'Oy',
+    moneyOrdered: 'Buyurtma qilingan',
+    moneyPaid: "To'langan",
+    moneyUnpaid: 'Qarz',
+    ordersByStatus: 'Holat bo\'yicha buyurtmalar',
+    leadsNew: 'Yangi arizalar',
+    leadsNoneNew: "Yangi ariza yo'q",
+    callLead: "Qo'ng'iroq qilish",
+    kitchenSheet: 'Oshxona uchun ro\'yxat',
+    kitchenEmpty: "Bu sanalarga buyurtma yo'q",
+    portionsShort: 'pors.',
+    orderDetail: 'Buyurtma',
+    changeStatus: "Holatni o'zgartirish",
+    statusChanged: 'Holat yangilandi',
+    teamsPlanned: 'Jamoalar · rejalashtirilgan',
+    allOrders: 'Barcha buyurtmalar',
   },
 }
 

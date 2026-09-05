@@ -8,6 +8,7 @@ import type { AppTab } from './components/AppHeader'
 import TeamsAuth from './components/TeamsAuth'
 import EmployeeView from './components/EmployeeView'
 import ManagerView from './components/ManagerView'
+import OwnerView from './components/OwnerView'
 import { MONTHLY_SETS, SET_PRICE, getSetForDate } from './data/mockMenu'
 import type { CartState, Screen, PaymentMethod, Beverage, Salad, Lang, SelectedDay } from './types'
 import { EMPLOYEE_MAX } from './types'
@@ -15,7 +16,7 @@ import { t } from './locales/translations'
 import { showTelegramAlert } from './lib/telegram'
 import { loadSavedOrder, saveOrder, clearSavedOrder } from './lib/orderStorage'
 import { submitOrder, getToken, setToken, fetchMe } from './lib/api'
-import type { AuthResponse, AuthUser } from './lib/api'
+import type { AuthResponse, AuthUser, OrderContact } from './lib/api'
 import { DEFAULT_SALAD } from './components/saladOptions'
 import { isPastDate, isValidDateString } from './lib/calendar'
 
@@ -43,7 +44,10 @@ function App() {
   const [employeeCount, setEmployeeCount] = useState<number>(() => Math.min(EMPLOYEE_MAX, savedOrder?.employeeCount ?? 1))
   const [lang, setLang] = useState<Lang>(loadInitialLang)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [successInfo, setSuccessInfo] = useState<{ method: PaymentMethod; total: number; employees: number; days: number } | null>(null)
+  const [successInfo, setSuccessInfo] = useState<{
+    method: PaymentMethod; total: number; employees: number; days: number
+    orderNumber?: string; status?: string; isLead?: boolean
+  } | null>(null)
   // auth-состояние раздела «Команды»
   const [user, setUser] = useState<AuthUser | null>(null)
   const [employeesCount, setEmployeesCount] = useState(0)
@@ -198,7 +202,7 @@ function App() {
     setEmployeeCount(Math.min(EMPLOYEE_MAX, Math.max(1, count)))
   }
 
-  const handlePlaceOrder = async (method: PaymentMethod) => {
+  const handlePlaceOrder = async (method: PaymentMethod, contact: OrderContact = {}) => {
     if (isSubmitting) return
     setIsSubmitting(true)
     try {
@@ -227,11 +231,14 @@ function App() {
         lines,
         totalMonthlyPrice,
         paymentMethod: method,
+        ...contact,
       }
-      console.log('Заказ оформлен:', payload)
-      await submitOrder(payload)
+      const result = await submitOrder(payload)
       // Фиксируем данные для экрана Success ДО сброса заказа.
-      setSuccessInfo({ method, total: totalMonthlyPrice, employees: employeeCount, days: lines.length })
+      setSuccessInfo({
+        method, total: totalMonthlyPrice, employees: employeeCount, days: lines.length,
+        orderNumber: result.orderNumber, status: result.status, isLead: result.isLead,
+      })
       // Очищаем заказ после успешной отправки — уже оплаченный заказ не должен
       // восстанавливаться автоприсейвом и не может быть оплачен повторно.
       setCartState({})
@@ -284,6 +291,10 @@ function App() {
         <TeamsAuth lang={lang} onAuth={handleAuth} />
       )}
 
+      {tab === 'teams' && booted && user?.role === 'owner' && (
+        <OwnerView lang={lang} userName={user.name} onLogout={handleLogout} />
+      )}
+
       {tab === 'teams' && booted && user?.role === 'employee' && (
         <EmployeeView lang={lang} userName={user.name} companyName={user.companyName ?? ''} onLogout={handleLogout} />
       )}
@@ -330,6 +341,7 @@ function App() {
           totalItems={totalItems}
           lang={lang}
           isSubmitting={isSubmitting}
+          user={user}
           onBack={() => setScreen('catalog')}
           onPlaceOrder={handlePlaceOrder}
           onRemoveItem={handleToggleDate}
@@ -340,6 +352,9 @@ function App() {
         <Success
           lang={lang}
           onNewOrder={handleNewOrder}
+          orderNumber={successInfo?.orderNumber}
+          status={successInfo?.status}
+          isLead={successInfo?.isLead}
           paymentMethod={successInfo?.method}
           totalMonthlyPrice={successInfo?.total}
           employeeCount={successInfo?.employees}

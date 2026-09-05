@@ -6,6 +6,7 @@ import { formatPrice } from '../types'
 import { t } from '../locales/translations'
 import { getTelegramWebApp, hapticImpact } from '../lib/telegram'
 import { formatDayLabel } from '../lib/calendar'
+import type { AuthUser, OrderContact } from '../lib/api'
 
 interface CartLine {
   date: string
@@ -22,8 +23,9 @@ interface CartProps {
   totalItems: number
   lang: Lang
   isSubmitting: boolean
+  user: AuthUser | null
   onBack: () => void
-  onPlaceOrder: (method: PaymentMethod) => void
+  onPlaceOrder: (method: PaymentMethod, contact: OrderContact) => void
   onRemoveItem: (date: string) => void
 }
 
@@ -34,11 +36,27 @@ function Cart({
   totalItems,
   lang,
   isSubmitting,
+  user,
   onBack,
   onPlaceOrder,
   onRemoveItem,
 }: CartProps) {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('corporate')
+  const [contactName, setContactName] = useState(user?.name ?? '')
+  const [contactPhone, setContactPhone] = useState(user?.phone ?? '')
+  const [companyName, setCompanyName] = useState(user?.companyName ?? '')
+  const [address, setAddress] = useState('')
+  const [comment, setComment] = useState('')
+
+  const contact: OrderContact = {
+    contactName: contactName.trim() || undefined,
+    contactPhone: contactPhone.trim() || undefined,
+    companyName: companyName.trim() || undefined,
+    address: address.trim() || undefined,
+    comment: comment.trim() || undefined,
+  }
+  // Гость обязан оставить имя и телефон; вошедшая компания — нет (данные из аккаунта).
+  const contactOk = Boolean(user) || (contactName.trim().length > 1 && contactPhone.trim().length >= 5)
 
   const activeLines: CartLine[] = days.map(({ date, set, item }) => {
     const portions = item?.portions ?? 1
@@ -52,7 +70,7 @@ function Cart({
   })
 
   const activeDays = activeLines.length
-  const canCheckout = activeLines.length > 0 && activeLines.every(({ item }) => {
+  const canCheckout = activeLines.length > 0 && contactOk && activeLines.every(({ item }) => {
     return !!item?.salad && !!item?.beverage
   })
 
@@ -75,7 +93,13 @@ function Cart({
     const mainButton = getTelegramWebApp()?.MainButton
     if (!mainButton) return
 
-    const handleClick = () => onPlaceOrderRef.current(paymentMethod)
+    const handleClick = () => onPlaceOrderRef.current(paymentMethod, {
+      contactName: contactName.trim() || undefined,
+      contactPhone: contactPhone.trim() || undefined,
+      companyName: companyName.trim() || undefined,
+      address: address.trim() || undefined,
+      comment: comment.trim() || undefined,
+    })
     mainButton.setText(
       isSubmitting ? t(lang, 'submitting') : t(lang, 'pay', { price: formatPrice(totalMonthlyPrice, lang) })
     )
@@ -96,7 +120,8 @@ function Cart({
       mainButton.offClick(handleClick)
       mainButton.hide()
     }
-  }, [lang, activeLines.length, canCheckout, totalMonthlyPrice, paymentMethod, isSubmitting])
+  }, [lang, activeLines.length, canCheckout, totalMonthlyPrice, paymentMethod, isSubmitting,
+      contactName, contactPhone, companyName, address, comment])
 
   return (
     <motion.div
@@ -196,6 +221,40 @@ function Cart({
             ))}
           </motion.ul>
 
+          {/* Контакты для доставки */}
+          <motion.section
+            className="payment"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.4 }}
+          >
+            <h3 className="payment__title">{t(lang, 'contactSection')}</h3>
+            <div className="auth-card" style={{ gap: 12 }}>
+              <div className="auth-field">
+                <label>{t(lang, 'contactName')}</label>
+                <input value={contactName} onChange={(e) => setContactName(e.target.value)} autoComplete="name" />
+              </div>
+              <div className="auth-field">
+                <label>{t(lang, 'contactPhone')}</label>
+                <input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} inputMode="tel" autoComplete="tel" />
+              </div>
+              <div className="auth-field">
+                <label>{t(lang, 'contactCompany')} <span className="auth-hint">— {t(lang, 'optionalField')}</span></label>
+                <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} autoComplete="organization" />
+              </div>
+              <div className="auth-field">
+                <label>{t(lang, 'contactAddress')} <span className="auth-hint">— {t(lang, 'optionalField')}</span></label>
+                <input value={address} onChange={(e) => setAddress(e.target.value)} />
+              </div>
+              <div className="auth-field">
+                <label>{t(lang, 'contactComment')} <span className="auth-hint">— {t(lang, 'optionalField')}</span></label>
+                <input value={comment} onChange={(e) => setComment(e.target.value)} />
+              </div>
+              {!user && <span className="auth-hint">{t(lang, 'contactRequiredHint')}</span>}
+              {!user && <span className="auth-hint">{t(lang, 'loginToTrackHint')}</span>}
+            </div>
+          </motion.section>
+
           {/* Способ оплаты */}
           <motion.section
             className="payment"
@@ -248,7 +307,7 @@ function Cart({
           <motion.button
             type="button"
             className={`btn btn--primary btn--lg${isSubmitting ? ' btn--loading' : ''}`}
-            onClick={() => onPlaceOrder(paymentMethod)}
+            onClick={() => onPlaceOrder(paymentMethod, contact)}
             disabled={isSubmitting || !canCheckout}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}

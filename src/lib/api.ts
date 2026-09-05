@@ -32,7 +32,7 @@ http.interceptors.request.use(config => {
 // ── Типы контура «Команды» ─────────────────────────────────────────
 export interface AuthUser {
   id: number
-  role: 'admin' | 'employee'
+  role: 'owner' | 'admin' | 'employee'
   name: string
   phone: string
   companyId: number
@@ -165,10 +165,11 @@ export function apiErrorMessage(err: unknown): string | null {
   return null
 }
 
-// ══ Легаси: отправка заказа с посадочной (без авторизации) ══════════
+// ══ Оптовый заказ / заявка ═════════════════════════════════════════
 export interface OrderLine {
   date: string
   day: number
+  setId?: number
   setName?: string
   mainDish: string
   salad: string
@@ -178,7 +179,15 @@ export interface OrderLine {
   lineTotal: number
 }
 
-export interface OrderPayload {
+export interface OrderContact {
+  contactName?: string
+  contactPhone?: string
+  companyName?: string
+  address?: string
+  comment?: string
+}
+
+export interface OrderPayload extends OrderContact {
   employeeCount: number
   workDaysCount: number
   activeDays: number
@@ -188,8 +197,107 @@ export interface OrderPayload {
   paymentMethod: string
 }
 
-/** Отправляет заказ на backend. При неудаче бросает Error — вызывающий код показывает пользователю понятное сообщение. */
-export async function submitOrder(payload: OrderPayload): Promise<void> {
-  const { data } = await http.post('/api/orders', payload, { timeout: 15000 })
+export interface OrderResult {
+  success: boolean
+  orderId: number
+  orderNumber: string
+  status: string
+  isLead: boolean
+  telegramSent: boolean
+}
+
+/**
+ * Отправляет заказ на backend. С валидным токеном (компания вошла) — заказ компании,
+ * иначе — заявка-лид (нужны contactName/contactPhone). Бросает Error при неудаче.
+ */
+export async function submitOrder(payload: OrderPayload): Promise<OrderResult> {
+  const { data } = await http.post<OrderResult>('/api/orders', payload, { timeout: 15000 })
   return data
+}
+
+// ── Заказы моей компании ───────────────────────────────────────────
+export interface OrderView {
+  id: number
+  number: string
+  status: string
+  source: string
+  isLead: boolean
+  companyName: string | null
+  contactName: string | null
+  contactPhone: string | null
+  address: string | null
+  comment: string | null
+  paymentMethod: string | null
+  employeeCount: number
+  totalAmount: number
+  createdAt: string
+  lines: {
+    date: string
+    setId: number | null
+    setName: string
+    mainDish: string | null
+    salad: string | null
+    beverage: string | null
+    excluded: string[]
+    portions: number
+    unitPrice: number
+    lineTotal: number
+  }[]
+  log?: { status: string; note: string | null; changed_at: string }[]
+}
+
+export async function fetchMyOrders(): Promise<OrderView[]> {
+  const { data } = await http.get<{ orders: OrderView[] }>('/api/my/orders')
+  return data.orders
+}
+
+// ── Сводка владельца ───────────────────────────────────────────────
+export const ORDER_STATUSES = ['new', 'confirmed', 'in_progress', 'delivered', 'paid', 'cancelled'] as const
+export type OrderStatus = typeof ORDER_STATUSES[number]
+
+export interface OwnerSummary {
+  range: { from: string; to: string }
+  orders: { total: number; byStatus: Record<OrderStatus, number> }
+  money: { ordered: number; paid: number; unpaid: number }
+  byDate: { date: string; portions: number; amount: number; bySet: { setName: string; portions: number }[] }[]
+  teams: { pickedPortions: number; amount: number }
+  leads: {
+    new: number
+    recent: { id: number; number: string; contactName: string | null; contactPhone: string | null; companyName: string | null; createdAt: string }[]
+  }
+}
+
+export async function fetchOwnerSummary(from?: string, to?: string): Promise<OwnerSummary> {
+  const { data } = await http.get<OwnerSummary>('/api/owner/summary', { params: { from, to } })
+  return data
+}
+
+export interface KitchenDay {
+  date: string
+  totalPortions: number
+  lines: { setName: string; salad: string | null; beverage: string | null; excluded: string[]; portions: number; company: string | null }[]
+}
+
+export async function fetchOwnerKitchen(date: string): Promise<KitchenDay> {
+  const { data } = await http.get<KitchenDay>('/api/owner/kitchen', { params: { date } })
+  return data
+}
+
+export async function fetchOwnerOrders(opts: { status?: string; leads?: '0' | '1' } = {}): Promise<OrderView[]> {
+  const { data } = await http.get<{ orders: OrderView[] }>('/api/owner/orders', { params: opts })
+  return data.orders
+}
+
+export async function fetchOwnerOrder(id: number): Promise<OrderView> {
+  const { data } = await http.get<OrderView>(`/api/owner/orders/${id}`)
+  return data
+}
+
+export async function setOrderStatus(id: number, status: OrderStatus, note?: string): Promise<OrderView> {
+  const { data } = await http.post<OrderView>(`/api/owner/orders/${id}/status`, { status, note })
+  return data
+}
+
+export async function changePassword(oldPassword: string, newPassword: string): Promise<void> {
+  await http.post('/api/auth/password', { oldPassword, newPassword })
 }

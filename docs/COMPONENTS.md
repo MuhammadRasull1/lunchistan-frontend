@@ -1,7 +1,7 @@
 # 🧩 Компоненты Lunchistan
 
-> Версия: 2.4  \
-> Последнее обновление: 05.09.2026  \
+> Версия: 3.0  \
+> Последнее обновление: 06.09.2026  \
 > Связанные файлы: [[ARCHITECTURE]], [[STATE_MANAGEMENT]], [[CHECKOUT_FLOW]], [[B2B_RULES]]
 
 ---
@@ -376,3 +376,44 @@ interface StepperProps {
 
 ### 12.5. SetPicker.tsx — выбор сета (bottom-sheet)
 - 56 сетов `MONTHLY_SETS`, локальный поиск, категории (ru/uz), подсветка текущего выбора. `Number(set.id)` — в `LunchSet.id` тип `string | number`.
+
+---
+
+## 13. 🆕 v3 — раздел «Кабинет»: заказы компании и сводка владельца
+
+Вкладка `tabTeams` переименована в **«Кабинет»** (`Кабинет` / `Kabinet`). После входа
+(`TeamsAuth`, phone+password) `App.tsx` ветвится по `user.role`:
+
+| role | Экран |
+|---|---|
+| `owner` | **`OwnerView`** — сводка (деньги, заказы, заявки, лист кухни) |
+| `admin` | **`ManagerView`** с под-вкладками «Заказы» (`MyOrdersView`) / «Команда» (прежний функционал) |
+| `employee` | `EmployeeView` (без изменений) |
+
+### 13.1. OwnerView.tsx — сводка владельца
+
+- Диапазон: `Неделя` / `2 недели` / `Месяц` (today → today+7/14/30). Перезагрузка через `reloadKey`.
+- `GET /api/owner/summary?from&to` → рендер:
+  - **Деньги** (`.owner-money`, 3 `.stat-tile`): Заказано / Оплачено (зелёный) / Долг (красный при > 0).
+  - **Заказы по статусам** — чипы `.manager-dates__chip` + `.status-dot`; кнопка «Все заказы» → `OrdersListSheet` (`GET /api/owner/orders`).
+  - **Новые заявки** — `summary.leads.recent`, кнопка `tel:` «Позвонить».
+  - **Лист для кухни** — `summary.byDate` (кликабельные `.day-row--btn`) → `KitchenDaySheet` (`GET /api/owner/kitchen?date=`): порции по сетам с салатом/напитком/исключениями и компанией.
+- Вложенные компоненты в файле: `KitchenDaySheet`, `OrdersListSheet` (оба — bottom-sheet с `key`-ами на motion-детях внутри `AnimatePresence`).
+
+### 13.2. MyOrdersView.tsx — заказы моей компании
+
+`GET /api/my/orders` → список `.day-row--btn` (номер, дата, сумма, бейдж статуса `.status-badge`) → `OrderDetailSheet` (read-only).
+
+### 13.3. OrderDetailSheet.tsx — карточка заказа (bottom-sheet)
+
+Props: `orderId`, `owner?` (можно менять статус), `preset?` (заказ уже под рукой из списка).
+Владельцу — блок «Сменить статус» (`nextStatuses(current)` из `lib/orderStatus.ts`),
+`POST /api/owner/orders/:id/status`. Контакты клиента, состав (`report-line`), сумма, оплата.
+
+### 13.4. Новые стили (`App.css`)
+
+`.status-badge`, `.status-dot`, `.status-actions`, `.owner-money` (3-колоночная сетка, `1fr` на ≤400px), `.day-row--btn` (сброс `button` + hover).
+
+### 13.5. `src/lib/orderStatus.ts`
+
+`statusLabel(lang, status)`, `statusColor(status)`, `nextStatuses(current)`, `formatMoney(n, lang)`, `dateChip(date, lang)`.

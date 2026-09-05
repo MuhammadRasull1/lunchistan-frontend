@@ -1,7 +1,7 @@
 # 🏗️ Архитектура Lunchistan Frontend
 
-> Версия: 2.8  \
-> Последнее обновление: 05.09.2026  \
+> Версия: 3.0  \
+> Последнее обновление: 06.09.2026  \
 > Связанные файлы: [[COMPONENTS]], [[STATE_MANAGEMENT]], [[B2B_RULES]], [[CHECKOUT_FLOW]]
 
 ---
@@ -19,11 +19,17 @@
 | **Линтер**       | ESLint + typescript-eslint          | ^10.6.0    |
 | **Линтер (alt)** | oxlint (конфиг .oxlintrc.json)      | —          |
 | **Интернационализация** | Кастомный словарь (src/locales/translations.ts) | —          |
-| **HTTP**         | axios (установлен, в проекте не используется) | ^1.18.1 |
-| **Бэкенд**       | Отсутствует (заглушка mockMenu.ts)  | —          |
-| **Telegram Bot** | Отсутствует                         | —          |
+| **HTTP**         | axios (`src/lib/api.ts`, интерсептор Bearer) | ^1.18.1 |
+| **Бэкенд**       | `lunchistan-backend` — Express 5 + **PostgreSQL (Neon)**, деплой Render, автодеплой из GitHub | — |
+| **Telegram Bot** | Уведомления о заказах/заявках (бэкенд шлёт чек в чат) | —          |
 
-> **Примечание:** На данный момент проект является чистым фронтендом. Данные берутся из `src/data/mockMenu.ts`. Бэкенд и Telegram Bot не реализованы. Изображения сетов — **локальные JPG-файлы в `public/images/dishes/<категория>/`** (транслит-папки: hot-dishes, salads, sides, fastfood, appetizers, soups, misc), импортированы скриптом `scripts/import-images.mjs` из `~/Загрузки/Telegram Desktop` со сжатием (1200px, q80). Меню состоит **исключительно из реальных фото** (56 блюд); fallback на [[Unsplash]] срабатывает только при ошибке загрузки файла (подробнее → [[COMPONENTS]]). Категории меню: `hot | salad | side | fastfood | appetizer | soup` (подробнее → [[B2B_RULES]]). Добавлена мультиязычность RU/UZ через `src/locales/translations.ts` (подробнее → [[COMPONENTS#11-мультиязычность-ruuz]]).
+> **Каталог/меню на фронте** — по-прежнему `src/data/mockMenu.ts` (56 сетов). Оформление
+> заказа, контур «Команды» и раздел «Сводка» владельца работают через `lunchistan-backend`
+> (`VITE_API_BASE_URL`, по умолчанию `https://lunchistan-backend.onrender.com`).
+> Схема Б, эндпойнты и модель заказов — см. `lunchistan-backend/README.md`;
+> клиентские экраны v3 — [[COMPONENTS#13-раздел-кабинет]], [[CHECKOUT_FLOW#8-v3]].
+>
+> Изображения сетов — **локальные JPG-файлы в `public/images/dishes/<категория>/`** (транслит-папки: hot-dishes, salads, sides, fastfood, appetizers, soups, misc), импортированы скриптом `scripts/import-images.mjs` из `~/Загрузки/Telegram Desktop` со сжатием (1200px, q80). Меню состоит **исключительно из реальных фото** (56 блюд); fallback на [[Unsplash]] срабатывает только при ошибке загрузки файла (подробнее → [[COMPONENTS]]). Категории меню: `hot | salad | side | fastfood | appetizer | soup` (подробнее → [[B2B_RULES]]). Добавлена мультиязычность RU/UZ через `src/locales/translations.ts` (подробнее → [[COMPONENTS#11-мультиязычность-ruuz]]).
 
 ---
 
