@@ -2315,6 +2315,262 @@ img {
   color: #22a058;
 }
 
+/* ---------- Onboarding: плавное появление текста ---------- */
+.ob-screen {
+  justify-content: center;
+}
+
+.ob-card {
+  max-width: 440px;
+  text-align: center;
+}
+
+.ob-phase {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.ob-logo-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.ob-title {
+  margin: 0;
+  font-size: clamp(34px, 8vw, 46px);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: var(--text);
+}
+
+.ob-overline {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--brand);
+}
+
+.ob-slow-text {
+  margin: 0;
+  max-width: 340px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.ob-slow-word {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+.ob-start-row {
+  margin-top: 18px;
+}
+
+.ob-step {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--brand);
+}
+
+.ob-h2 {
+  margin: 0;
+  font-size: clamp(24px, 6vw, 30px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.ob-h2--center {
+  text-align: center;
+}
+
+.ob-sub {
+  margin: 0 0 4px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  max-width: 320px;
+}
+
+.ob-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.ob-field__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ob-field__row:focus-within {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-ring);
+}
+
+.ob-field__row > svg {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.ob-field__row:focus-within > svg {
+  color: var(--brand);
+}
+
+.ob-field__row input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 16px;
+  color: var(--text);
+}
+
+.ob-field__ok {
+  color: var(--brand);
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.ob-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.ob-next {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.ob-back {
+  margin-top: 10px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.ob-back:hover {
+  color: var(--text);
+}
+
+.ob-paths {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.ob-path {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1.5px solid var(--divider);
+  border-radius: var(--radius-lg);
+  background: var(--card-bg);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+
+.ob-path:hover {
+  border-color: var(--brand);
+  transform: translateY(-1px);
+}
+
+.ob-path--active {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
+
+.ob-path__emoji {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.ob-submit-area {
+  width: 100%;
+  text-align: left;
+}
+
+/* ---------- Появление названия компании после входа ---------- */
+.reveal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: var(--bg);
+}
+
+.reveal-brand {
+  font-size: clamp(44px, 12vw, 72px);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: var(--brand);
+}
+
+.reveal-company {
+  font-size: clamp(18px, 5vw, 24px);
+  font-weight: 700;
+  color: var(--text);
+}
+
+.reveal-tagline {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* ---------- Анимации появление секций команд ---------- */
+.view__enter {
+  animation: viewFadeUp 0.5s ease-out both;
+}
+
+@keyframes viewFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* ---------- Карточка команды (менеджер) ---------- */
 .team-card {
   margin-top: 20px;

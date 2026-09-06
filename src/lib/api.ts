@@ -95,7 +95,7 @@ export interface ManagerDate {
 // ── Авторизация ─────────────────────────────────────────────────────
 export async function registerTeam(params: {
   name: string
-  phone: string
+  phone?: string
   password: string
   companyName: string
   companySize?: number
@@ -106,7 +106,7 @@ export async function registerTeam(params: {
 
 export async function joinTeam(params: {
   name: string
-  phone: string
+  phone?: string
   password: string
   companyCode: string
 }): Promise<AuthResponse> {
@@ -114,7 +114,7 @@ export async function joinTeam(params: {
   return data
 }
 
-export async function login(params: { phone: string; password: string }): Promise<AuthResponse> {
+export async function login(params: { name: string; password: string; companyCode?: string }): Promise<AuthResponse> {
   const { data } = await http.post<AuthResponse>('/api/auth/login', params)
   return data
 }

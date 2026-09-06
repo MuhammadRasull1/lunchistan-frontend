@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import './App.css'
 import Catalog from './components/Catalog'
 import Cart from './components/Cart'
 import Success from './components/Success'
 import AppHeader from './components/AppHeader'
 import type { AppTab } from './components/AppHeader'
-import TeamsAuth from './components/TeamsAuth'
+import Onboarding from './components/Onboarding'
 import EmployeeView from './components/EmployeeView'
 import ManagerView from './components/ManagerView'
 import OwnerView from './components/OwnerView'
@@ -54,6 +55,8 @@ function App() {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [employeesCount, setEmployeesCount] = useState(0)
   const [booted, setBooted] = useState(false)
+  // Анимация появления названия компании сразу после входа
+  const [revealCompany, setRevealCompany] = useState<string | null>(null)
   // Единая модель: cartState ключуется по дате YYYY-MM-DD; наличие ключа = день выбран.
   // Первый запуск — ничего не выбрано (0 дней). Инвариант: нет прошедших дат.
   const [cartState, setCartState] = useState<CartState>(() => {
@@ -100,6 +103,8 @@ function App() {
   const handleAuth = (result: AuthResponse) => {
     setToken(result.token)
     setUser(result.user)
+    setRevealCompany(result.user.companyName ?? '')
+    window.setTimeout(() => setRevealCompany(null), 1600)
     if (result.user.role === 'admin') {
       fetchMe()
         .then(data => setEmployeesCount(data.employeesCount))
@@ -314,7 +319,7 @@ function App() {
       {tab === 'teams' && !booted && <div className="view__body view__boot">…</div>}
 
       {tab === 'teams' && booted && !user && (
-        <TeamsAuth lang={lang} onAuth={handleAuth} />
+        <Onboarding lang={lang} onAuth={handleAuth} />
       )}
 
       {tab === 'teams' && booted && user?.role === 'owner' && (
@@ -322,19 +327,40 @@ function App() {
       )}
 
       {tab === 'teams' && booted && user?.role === 'employee' && (
-        <EmployeeView lang={lang} userName={user.name} companyName={user.companyName ?? ''} onLogout={handleLogout} />
+        <div className="view__enter">
+          <EmployeeView
+            lang={lang}
+            userName={user.name}
+            companyName={user.companyName ?? ''}
+            onLogout={handleLogout}
+          />
+        </div>
       )}
 
       {tab === 'teams' && booted && user?.role === 'admin' && (
-        <ManagerView
-          lang={lang}
-          userName={user.name}
-          companyName={user.companyName ?? ''}
-          teamCode={user.companyCode}
-          teamSize={user.companySize}
-          employeesCount={employeesCount}
-          onLogout={handleLogout}
-        />
+        <div className="view__enter">
+          <ManagerView
+            lang={lang}
+            userName={user.name}
+            companyName={user.companyName ?? ''}
+            teamCode={user.companyCode}
+            teamSize={user.companySize}
+            employeesCount={employeesCount}
+            onLogout={handleLogout}
+          />
+        </div>
+      )}
+
+      {revealCompany && (
+        <div className="reveal-overlay">
+          <motion.div initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.5, ease: 'easeOut' }}>
+            <div className="reveal-brand">Lunchistan</div>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.35, ease: 'easeOut' }}>
+            <div className="reveal-company">{revealCompany}</div>
+            <div className="reveal-tagline">{t(lang, 'obRevealTagline')}</div>
+          </motion.div>
+        </div>
       )}
 
       {tab === 'teams' && booted && <SupportLink lang={lang} />}
