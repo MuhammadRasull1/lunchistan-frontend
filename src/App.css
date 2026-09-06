@@ -2390,6 +2390,31 @@ img {
   flex-shrink: 0;
 }
 
+/* ---------- Выбранные дни в каталоге (клиентский поток) ---------- */
+.selected-days {
+  margin: 8px 0 4px;
+}
+
+.day-row__dish--btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.day-row--empty {
+  border-color: var(--brand-ring);
+  background: var(--brand-soft);
+}
+
+.day-row__hint--warn {
+  color: var(--brand);
+  font-weight: 600;
+}
+
 /* ---------- Пикер сетов (bottom sheet) ---------- */
 .set-picker__head {
   display: flex;

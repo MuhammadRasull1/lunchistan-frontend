@@ -70,7 +70,8 @@ function Cart({
   })
 
   const activeDays = activeLines.length
-  const canCheckout = activeLines.length > 0 && contactOk && activeLines.every(({ item }) => {
+  const allDishesChosen = activeLines.length > 0 && activeLines.every(({ item }) => item?.setId != null)
+  const canCheckout = allDishesChosen && contactOk && activeLines.every(({ item }) => {
     return !!item?.salad && !!item?.beverage
   })
 
@@ -300,7 +301,7 @@ function Cart({
               animate={{ opacity: 1 }}
               transition={{ delay: 0.35 }}
             >
-              {t(lang, 'incompleteSelectionHint')}
+              {t(lang, allDishesChosen ? 'incompleteSelectionHint' : 'chooseDishForEveryDay')}
             </motion.p>
           )}
 

@@ -1,7 +1,7 @@
 # ⚙️ Управление состоянием (State Management)
 
-> Версия: 2.3  \
-> Последнее обновление: 05.09.2026  \
+> Версия: 2.4 — блюдо на день (`CartItem.setId`, модель токенов)  \
+> Последнее обновление: 06.09.2026  \
 > Связанные файлы: [[ARCHITECTURE]], [[COMPONENTS]], [[B2B_RULES]]
 
 ---
@@ -38,17 +38,17 @@ interface CartItem {
   portions: number            // порций на одного сотрудника
   beverage: Beverage          // 'Вода' | 'Компот в ассортименте'
   salad: Salad                // выбранный салат
+  setId: number | null        // 🆆 v3.2 выбранное клиентом блюдо; null — не выбрано («токен» не потрачен)
 }
 
 // Пример:
 {
-  "2026-08-03": { active: true, portions: 2, beverage: "Вода",                   salad: "Греческий салат" },
-  "2026-08-04": { active: true, portions: 1, beverage: "Компот в ассортименте",   salad: "Оливье с мясом" },
-  "2026-08-07": { active: true, portions: 1, beverage: "Вода",                   salad: "Морковча" }
+  "2026-08-03": { active: true, portions: 2, beverage: "Вода", salad: "Греческий салат", setId: 5 },
+  "2026-08-04": { active: true, portions: 1, beverage: "Компот в ассортименте", salad: "Оливье с мясом", setId: null },
 }
 ```
 
-Сопоставление дата → сет меню — глобальная порядковая привязка (`getSetForDate`: `MONTHLY_SETS[(ordinal-1) % 56]`, ordinal = счёт дней от 1-го числа текущего месяца), см. [[ARCHITECTURE#6-привязка-дата-→-сет-и-правила-выбора-дат]]. Детерминировано — сет даты не зависит от выбора других дат.
+🆆 **v3.2:** блюдо дня — это `item.setId` (выбор клиента через `SetPicker`), резолвится `getSetById`. `getSetForDate` (ротация `MONTHLY_SETS[(ordinal-1) % 56]`) больше **не** источник блюда — только плейсхолдер `SelectedDay.set` для ещё не выбранного дня. `makeDefaultDay()` создаёт день с `setId: null`. Сохранёнка — `lunchistan:order:v3` ([[STATE_MANAGEMENT#7-сброс-состояния-new-order]]).
 
 ---
 
@@ -56,7 +56,11 @@ interface CartItem {
 
 ```typescript
 selectedDates            = Object.keys(cartState).sort()            // единственный источник количества дней
-orderDays: SelectedDay[] = selectedDates.map(date => ({ date, set: getSetForDate(date), item: cartState[date] }))
+orderDays: SelectedDay[] = selectedDates.map(date => {              // 🆆 v3.2
+  const chosenSet = getSetById(cartState[date].setId)
+  return { date, set: chosenSet ?? getSetForDate(date), chosen: chosenSet !== undefined, item: cartState[date] }
+})
+allDishesChosen          = orderDays.length > 0 && orderDays.every(d => d.chosen)   // 🆆 v3.2 gate оформления
 activeDays               = selectedDates.length
 totalPortionsFromActive  = Σ(portions каждого выбранного дня)
 totalItems               = totalPortionsFromActive × employeeCount
@@ -75,11 +79,12 @@ totalMonthlyPrice        = totalPortionsFromActive × employeeCount × SET_PRICE
 | `handleApplySelectedDates(dates)` | 🆆 Применить подтверждённый выбор из календарной модалки: новые даты получают дефолтный конфиг, конфиги остающихся дат сохраняются, снятые — удаляются. Прошедшие даты отфильтровываются (`isPastDate`) |
 | `handleBeverageChange(date, bev)` | Сменить напиток для даты                        |
 | `handleSaladChange(date, salad)` | Сменить салат для даты                           |
+| 🆆 `handleSetChange(date, setId)` | Клиент выбрал блюдо на день («потратил токен») — `cartState[date].setId = setId` |
 | `handlePortionsChange(date, n)` | Увеличить/уменьшить порции для даты (мин. 1)     |
 | `handleApplyBeverageToAll(bev)` | Применить напиток ко всем выбранным датам         |
 | `handleApplySaladToAll(salad)`  | Применить салат ко всем выбранным датам           |
 | `handleEmployeeCountChange(n)`  | Установить количество сотрудников (clamp в [1, EMPLOYEE_MAX=500]) |
-| `handlePlaceOrder(method)`      | Оформить заказ → POST /api/orders с массивом `days[]` → **сброс заказа** (cartState={}, employeeCount=1, `clearSavedOrder()`) → screen = 'success' c `successInfo` |
+| `handlePlaceOrder(method)`      | 🆆 v3.2: гард `allDishesChosen` (иначе alert + выход). Оформить → POST /api/orders (`lines[].setId` — выбранное блюдо) → **сброс заказа** (cartState={}, employeeCount=1, `clearSavedOrder()`) → screen = 'success' c `successInfo` |
 | `handleNewOrder()`              | Сбросить всё → screen = 'catalog'                   |
 | `handleLangChange(newLang)`     | Сменить язык интерфейса и **сохранить в localStorage** (`lunchistan_lang`) |
 

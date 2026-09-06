@@ -9,7 +9,7 @@ import TeamsAuth from './components/TeamsAuth'
 import EmployeeView from './components/EmployeeView'
 import ManagerView from './components/ManagerView'
 import OwnerView from './components/OwnerView'
-import { MONTHLY_SETS, SET_PRICE, getSetForDate } from './data/mockMenu'
+import { MONTHLY_SETS, SET_PRICE, getSetForDate, getSetById } from './data/mockMenu'
 import type { CartState, Screen, PaymentMethod, Beverage, Salad, Lang, SelectedDay } from './types'
 import { EMPLOYEE_MAX } from './types'
 import { t } from './locales/translations'
@@ -32,7 +32,8 @@ function loadInitialLang(): Lang {
 }
 
 function makeDefaultDay(): CartState[string] {
-  return { active: true, portions: 1, beverage: 'Вода', salad: DEFAULT_SALAD }
+  // setId: null — блюдо на день ещё не выбрано («токен» не потрачен).
+  return { active: true, portions: 1, beverage: 'Вода', salad: DEFAULT_SALAD, setId: null }
 }
 
 // Читаем и валидируем сохранённую конфигурацию один раз при загрузке модуля.
@@ -114,11 +115,20 @@ function App() {
 
   // Единственный источник истины по количеству дней — выбранные даты.
   const selectedDates = Object.keys(cartState).sort()
-  const orderDays: SelectedDay[] = selectedDates.map(date => ({
-    date,
-    set: getSetForDate(date),
-    item: cartState[date],
-  }))
+  const orderDays: SelectedDay[] = selectedDates.map(date => {
+    const item = cartState[date]
+    // Сет дня = выбор клиента (item.setId). Ротация getSetForDate — только
+    // визуальный плейсхолдер, пока блюдо не выбрано.
+    const chosenSet = getSetById(item?.setId)
+    return {
+      date,
+      set: chosenSet ?? getSetForDate(date),
+      chosen: chosenSet !== undefined,
+      item,
+    }
+  })
+  // Все дни с выбранным блюдом? (иначе заказ оформить нельзя)
+  const allDishesChosen = orderDays.length > 0 && orderDays.every(d => d.chosen)
   const totalPortionsFromActive = selectedDates.reduce((sum, date) => sum + (cartState[date]?.portions ?? 1), 0)
   const totalMonthlyPrice = totalPortionsFromActive * employeeCount * SET_PRICE
   const totalItems = totalPortionsFromActive * employeeCount
@@ -181,6 +191,15 @@ function App() {
     })
   }
 
+  /** Клиент выбрал блюдо на день («потратил токен»). */
+  const handleSetChange = (date: string, setId: number) => {
+    setCartState(prev => {
+      const item = prev[date]
+      if (!item) return prev
+      return { ...prev, [date]: { ...item, setId } }
+    })
+  }
+
   /**
    * Применение подтверждённого выбора из календарной модалки.
    * Новые даты получают конфиг дня по умолчанию; конфиги уже выбранных дат сохраняются;
@@ -204,6 +223,11 @@ function App() {
 
   const handlePlaceOrder = async (method: PaymentMethod, contact: OrderContact = {}) => {
     if (isSubmitting) return
+    // Защитный слой: заказ нельзя оформить, пока на каждый день не выбрано блюдо.
+    if (!allDishesChosen) {
+      showTelegramAlert(t(lang, 'chooseDishForEveryDay'))
+      return
+    }
     setIsSubmitting(true)
     try {
       // Массив дней строится напрямую из выбранных дат — день из календаря всегда есть в days[].
@@ -214,6 +238,7 @@ function App() {
         return {
           date,
           day: Number(date.slice(8, 10)),
+          setId: Number(set.id),
           setName: set?.name,
           mainDish,
           salad: item?.salad ?? DEFAULT_SALAD,
@@ -321,6 +346,7 @@ function App() {
           lang={lang}
           activeTab={tab}
           onTabChange={handleTabChange}
+          allDishesChosen={allDishesChosen}
           onApplySelectedDates={handleApplySelectedDates}
           onEmployeeCountChange={handleEmployeeCountChange}
           onBeverageChange={handleBeverageChange}
@@ -328,6 +354,7 @@ function App() {
           onPortionsChange={handlePortionsChange}
           onSaladChange={handleSaladChange}
           onApplySaladToAll={handleApplySaladToAll}
+          onSetChange={handleSetChange}
           onGoToCart={() => setScreen('cart')}
           onLangChange={handleLangChange}
         />

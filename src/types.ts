@@ -46,6 +46,11 @@ export interface CartItem {
   beverage: Beverage;
   /** Выбранный салат для этого дня */
   salad: Salad;
+  /**
+   * Выбранное клиентом блюдо (id сета из MONTHLY_SETS) — «токен» дня.
+   * null — блюдо ещё не выбрано; оформить заказ в этом случае нельзя.
+   */
+  setId: number | null;
 }
 
 export type CartState = Record<string | number, CartItem>;
@@ -53,12 +58,17 @@ export type CartState = Record<string | number, CartItem>;
 /** Пресет графика рабочих дней. Паттерн строится от даты начала подписки (1-е число видимого месяца). */
 export type PresetPattern = '2/2' | '5/2' | '6/1' | 'full';
 
-/** День подписки: конкретная дата + привязанный к ней сет меню + настройки дня */
+/** День подписки: конкретная дата + выбранное блюдо + настройки дня */
 export interface SelectedDay {
   /** Дата в формате YYYY-MM-DD */
   date: string;
-  /** Сет меню для этой даты (стабильно по числу месяца) */
+  /**
+   * Сет меню для этой даты. Если клиент выбрал блюдо (item.setId) — это оно;
+   * иначе сет по ротации (getSetForDate) как визуальный плейсхолдер.
+   */
   set: LunchSet;
+  /** Клиент выбрал блюдо на этот день (item.setId !== null) */
+  chosen: boolean;
   /** Настройки дня (напиток, салат, порции) */
   item: CartItem;
 }

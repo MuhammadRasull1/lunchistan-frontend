@@ -8,13 +8,14 @@ import AppHeader from './AppHeader'
 import type { AppTab } from './AppHeader'
 import SetCard from './SetCard'
 import SetDetailModal from './SetDetailModal'
+import SetPicker from './SetPicker'
 import AnimatedCount from './AnimatedCount'
 import Stepper from './Stepper'
 import CalendarModal from './CalendarModal'
 import { getTelegramWebApp, hapticImpact } from '../lib/telegram'
 import { DEFAULT_SALAD } from './saladOptions'
 import { startOfMonth, addMonths, formatDayLabel } from '../lib/calendar'
-import { MONTHLY_SETS, getSetForDate } from '../data/mockMenu'
+import { MONTHLY_SETS } from '../data/mockMenu'
 
 type CategoryFilter = SetCategory | 'all'
 
@@ -28,6 +29,8 @@ interface CatalogProps {
   lang: Lang
   activeTab: AppTab
   onTabChange: (tab: AppTab) => void
+  /** Все выбранные дни имеют выбранное блюдо (иначе оформить заказ нельзя) */
+  allDishesChosen: boolean
   /** Применяет подтверждённый выбор из календарной модалки к основному state заказа */
   onApplySelectedDates: (dates: string[]) => void
   onEmployeeCountChange: (count: number) => void
@@ -36,6 +39,8 @@ interface CatalogProps {
   onPortionsChange: (date: string, portions: number) => void
   onSaladChange: (date: string, salad: Salad) => void
   onApplySaladToAll: (salad: Salad) => void
+  /** Клиент выбрал блюдо на день («потратил токен») */
+  onSetChange: (date: string, setId: number) => void
   onGoToCart: () => void
   onLangChange: (lang: Lang) => void
 }
@@ -59,6 +64,7 @@ function Catalog({
   lang,
   activeTab,
   onTabChange,
+  allDishesChosen,
   onApplySelectedDates,
   onEmployeeCountChange,
   onBeverageChange,
@@ -66,6 +72,7 @@ function Catalog({
   onPortionsChange,
   onSaladChange,
   onApplySaladToAll,
+  onSetChange,
   onGoToCart,
   onLangChange,
 }: CatalogProps) {
@@ -88,6 +95,8 @@ function Catalog({
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   // Предпросмотр сета из полного каталога (невыбранный день)
   const [previewSet, setPreviewSet] = useState<LunchSet | null>(null)
+  // Дата, для которой открыт пикер выбора блюда («трата токена»)
+  const [pickForDate, setPickForDate] = useState<string | null>(null)
   // Фильтр категорий меню
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all')
   // Календарная модалка выбора дат
@@ -97,16 +106,15 @@ function Catalog({
   const [minMonth] = useState(() => startOfMonth(new Date()))
   const maxMonth = useMemo(() => addMonths(minMonth, 1), [minMonth])
 
-  // Карточки выбранных дней активны: сет для даты берётся единым способом через
-  // getSetForDate (глобальная порядковая привязка), остальные — предпросмотр сета.
-  const activeDateBySet = useMemo(() => {
-    const map = new Map<string | number, string>()
-    for (const d of days) {
-      const set = getSetForDate(d.date)
-      if (!map.has(set.id)) map.set(set.id, d.date)
-    }
-    return map
+  // Id блюд, выбранных клиентом хотя бы на один день — подсвечиваем их в каталоге.
+  const chosenSetIds = useMemo(() => {
+    const ids = new Set<number>()
+    for (const d of days) if (d.chosen) ids.add(Number(d.set.id))
+    return ids
   }, [days])
+
+  // День, для которого открыт пикер блюда (для передачи текущего выбора в SetPicker)
+  const pickForDay = pickForDate ? days.find(d => d.date === pickForDate) ?? null : null
 
   const filteredSets = activeCategory === 'all'
     ? MONTHLY_SETS
@@ -146,11 +154,15 @@ function Catalog({
     if (!mainButton) return
 
     const handleClick = () => onGoToCartRef.current()
-    mainButton.setText(t(lang, 'order'))
+    const ready = activeDays > 0 && totalPortions > 0 && allDishesChosen
+    mainButton.setText(ready ? t(lang, 'order') : t(lang, 'chooseDishForEveryDay'))
     mainButton.onClick(handleClick)
 
-    if (activeDays > 0 && totalPortions > 0) {
+    if (ready) {
       mainButton.enable()
+      mainButton.show()
+    } else if (activeDays > 0 && totalPortions > 0) {
+      mainButton.disable()
       mainButton.show()
     } else {
       mainButton.disable()
@@ -161,7 +173,7 @@ function Catalog({
       mainButton.offClick(handleClick)
       mainButton.hide()
     }
-  }, [lang, activeDays, totalPortions])
+  }, [lang, activeDays, totalPortions, allDishesChosen])
 
   return (
     <div className="catalog">
@@ -283,6 +295,52 @@ function Catalog({
         </motion.div>
       </section>
 
+      {/* Выбранные дни: на каждый день клиент сам выбирает блюдо («тратит токен») */}
+      {activeDays > 0 && (
+        <section className="selected-days">
+          <div className="view__section-head">
+            <h2 className="view__section-title">{t(lang, 'selectedDaysTitle')}</h2>
+            <span className="view__section-desc">
+              {days.filter(d => d.chosen).length} / {activeDays} {t(lang, 'chosenSets')}
+            </span>
+          </div>
+          {!allDishesChosen && (
+            <p className="view__section-desc view__section-desc--muted">{t(lang, 'chooseDishForEveryDay')}</p>
+          )}
+          <div className="days-list">
+            {days.map(day => (
+              <div key={day.date} className={`day-row${day.chosen ? '' : ' day-row--empty'}`}>
+                <div className="day-row__date">{formatDayLabel(day.date, lang)}</div>
+                <button
+                  type="button"
+                  className="day-row__dish day-row__dish--btn"
+                  onClick={() => (day.chosen ? handleOpenModal(day.date) : setPickForDate(day.date))}
+                >
+                  {day.chosen ? (
+                    <>
+                      <span className="day-row__name">{day.set.name}</span>
+                      <span className="day-row__hint">
+                        {day.item.salad} · {t(lang, day.item.beverage === 'Вода' ? 'water' : 'compote')}
+                        {' · '}{day.item.portions} {t(lang, 'portionsPerEmployee')}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="day-row__hint day-row__hint--warn">{t(lang, 'daySetNotChosen')}</span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--outline day-row__pick"
+                  onClick={() => setPickForDate(day.date)}
+                >
+                  {day.chosen ? t(lang, 'changeSet') : t(lang, 'chooseSet')}
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Полное меню на 2 месяца — заголовок всегда показывает полное число сетов */}
       <h2 className="catalog__section-title">{t(lang, 'menuTitle', { n: allSetsCount })}</h2>
 
@@ -303,18 +361,16 @@ function Catalog({
 
       <div className="catalog__grid catalog__grid--sets">
         {filteredSets.map((set, index) => {
-          const activeDate = activeDateBySet.get(set.id)
-          const isActive = activeDate !== undefined
+          const isChosen = chosenSetIds.has(Number(set.id))
           return (
             <SetCard
               key={set.id}
               index={index}
               set={set}
-              active={isActive}
+              active={isChosen}
               lang={lang}
-              dateLabel={isActive ? formatDayLabel(activeDate, lang) : undefined}
-              preview={!isActive}
-              onSelect={() => (isActive ? handleOpenModal(activeDate) : handleOpenPreview(set))}
+              preview={!isChosen}
+              onSelect={() => handleOpenPreview(set)}
             />
           )
         })}
@@ -339,10 +395,11 @@ function Catalog({
               type="button"
               className="btn btn--primary"
               onClick={onGoToCart}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
+              disabled={!allDishesChosen}
+              whileHover={allDishesChosen ? { scale: 1.03 } : undefined}
+              whileTap={allDishesChosen ? { scale: 0.97 } : undefined}
             >
-              {t(lang, 'order')}
+              {allDishesChosen ? t(lang, 'order') : t(lang, 'chooseDishForEveryDay')}
             </motion.button>
           )}
         </motion.div>
@@ -402,6 +459,19 @@ function Catalog({
         salad={DEFAULT_SALAD}
         onSaladChange={() => {}}
         onApplySaladToAll={() => {}}
+      />
+
+      {/* Пикер выбора блюда на день («трата токена») */}
+      <SetPicker
+        isOpen={pickForDate !== null}
+        lang={lang}
+        current={pickForDay?.chosen
+          ? { setId: Number(pickForDay.set.id), setName: pickForDay.set.name, setPrice: pickForDay.set.price }
+          : null}
+        onPick={(setId) => {
+          if (pickForDate) onSetChange(pickForDate, setId)
+        }}
+        onClose={() => setPickForDate(null)}
       />
     </div>
   )

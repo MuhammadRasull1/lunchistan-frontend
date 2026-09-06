@@ -179,3 +179,9 @@ export function getSetForDate(date: string): LunchSet {
   const idx = ((ordinal - 1) % MONTHLY_SETS.length + MONTHLY_SETS.length) % MONTHLY_SETS.length
   return MONTHLY_SETS[idx]
 }
+
+/** Сет по id (выбор клиента). undefined — если id не из текущего меню. */
+export function getSetById(id: number | string | null | undefined): LunchSet | undefined {
+  if (id == null) return undefined
+  return MONTHLY_SETS.find(set => Number(set.id) === Number(id))
+}

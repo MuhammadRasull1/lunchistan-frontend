@@ -1,7 +1,8 @@
 import type { CartState } from '../types'
 import { isValidDateString } from './calendar'
 
-const STORAGE_KEY = 'lunchistan:order:v2'
+// v3 — у дня появилось выбранное блюдо (setId); старые сохранёнки несовместимы.
+const STORAGE_KEY = 'lunchistan:order:v3'
 
 export interface SavedOrder {
   employeeCount: number
@@ -11,11 +12,13 @@ export interface SavedOrder {
 function isValidCartItem(value: unknown): value is CartState[string] {
   if (!value || typeof value !== 'object') return false
   const item = value as Record<string, unknown>
+  const setIdOk = item.setId === null || item.setId === undefined || typeof item.setId === 'number'
   return (
     typeof item.active === 'boolean' &&
     typeof item.portions === 'number' && item.portions >= 1 &&
     (item.beverage === 'Вода' || item.beverage === 'Компот в ассортименте') &&
-    typeof item.salad === 'string'
+    typeof item.salad === 'string' &&
+    setIdOk
   )
 }
 
@@ -32,7 +35,9 @@ export function loadSavedOrder(): SavedOrder | null {
     const validCartState: CartState = {}
     for (const [date, item] of Object.entries(parsed.cartState)) {
       // Ключом дня является дата YYYY-MM-DD; всё остальное (устаревшие id) отбрасываем.
-      if (isValidDateString(date) && isValidCartItem(item)) validCartState[date] = item
+      if (isValidDateString(date) && isValidCartItem(item)) {
+        validCartState[date] = { ...item, setId: typeof item.setId === 'number' ? item.setId : null }
+      }
     }
     if (Object.keys(validCartState).length === 0) return null
 
