@@ -1,6 +1,6 @@
 # 🧩 Компоненты Lunchistan
 
-> Версия: 3.0  \
+> Версия: 3.3  \
 > Последнее обновление: 06.09.2026  \
 > Связанные файлы: [[ARCHITECTURE]], [[STATE_MANAGEMENT]], [[CHECKOUT_FLOW]], [[B2B_RULES]]
 
@@ -423,3 +423,16 @@ Props: `orderId`, `owner?` (можно менять статус), `preset?` (з
 ### 13.5. `src/lib/orderStatus.ts`
 
 `statusLabel(lang, status)`, `statusColor(status)`, `nextStatuses(current)`, `formatMoney(n, lang)`, `dateChip(date, lang)`.
+
+---
+
+## 14. 🆆 SupportLink.tsx — блок техподдержки
+
+Секция «Связаться с техподдержкой» внизу вкладки **«Кабинет»** (`tab === 'teams' && booted` в `App.tsx`) — видна и на экране входа (`TeamsAuth`), и во всех ролевых экранах (`owner` / `admin` / `employee`).
+
+- **Контакт:** `SUPPORT_USERNAME = 'burn1ng_sky'` → основная ссылка `https://t.me/burn1ng_sky`. `SUPPORT_TG_ID = '6635199967'` — запасной `href="tg://user?id=..."` (срабатывает лишь внутри Telegram у существующих контактов; обычный клик его `preventDefault`-ит и идёт по username).
+- Открытие — `openTelegramLink()` из [[#telegram.ts]] (`src/lib/telegram.ts`): внутри Telegram — нативный `WebApp.openTelegramLink`, иначе `window.open` в новой вкладке. Перед открытием — `hapticImpact('light')`.
+- Разметка: `.support-note` (флекс-колонка, `border-top` хайрлайн, `max-width: 720px`), `.support-note__title` / `__desc` / `__btn` (`.btn .btn--outline`, иконка `LifeBuoy`). На `≤480px` кнопка тянется во всю ширину.
+- Строки: `supportTitle`, `supportDesc`, `supportButton` (ru/uz) в [[translations.ts]].
+
+Props: `{ lang: Lang }`.

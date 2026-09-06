@@ -9,6 +9,7 @@ import TeamsAuth from './components/TeamsAuth'
 import EmployeeView from './components/EmployeeView'
 import ManagerView from './components/ManagerView'
 import OwnerView from './components/OwnerView'
+import SupportLink from './components/SupportLink'
 import { MONTHLY_SETS, SET_PRICE, getSetForDate, getSetById } from './data/mockMenu'
 import type { CartState, Screen, PaymentMethod, Beverage, Salad, Lang, SelectedDay } from './types'
 import { EMPLOYEE_MAX } from './types'
@@ -335,6 +336,8 @@ function App() {
           onLogout={handleLogout}
         />
       )}
+
+      {tab === 'teams' && booted && <SupportLink lang={lang} />}
 
       {tab === 'catalog' && screen === 'catalog' && (
         <Catalog

@@ -85,9 +85,10 @@ lunchistan-frontend/
 │   │   ├── api.ts                     # Отправка заказа на backend (payload с days[])
 │   │   ├── calendar.ts                # 🆆 Даты, сетка месяца, недели, пресеты + привязка дата→сет (глобальный порядок, модуль 56) + canSelectDate (запрет прошлых дат и «сегодня» после 10:00)
 │   │   ├── orderStorage.ts            # Сохранение конфигурации (v2, ключи — даты)
-│   │   └── telegram.ts                # Telegram WebApp, вибрация, алерты
+│   │   └── telegram.ts                # Telegram WebApp: вибрация, алерты, openTelegramLink (t.me — нативно/новая вкладка)
 │   │
 │   └── components/
+│       ├── SupportLink.tsx           # 🆆 Блок «Связаться с техподдержкой» (t.me/burn1ng_sky) — низ вкладки «Кабинет»
 │       ├── Catalog.tsx               # Главный экран: сводка выбора дат + калькулятор + табы + полное меню
 │       ├── CalendarModal.tsx         # 🆆 Модалка выбора дат (черновик → подтверждение), пресеты + «Вся неделя»
 │       ├── SetCard.tsx               # Карточка дня/сета (премиум B2B, lucide-иконки)

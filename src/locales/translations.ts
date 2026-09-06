@@ -149,6 +149,11 @@ const translations: Record<Lang, Record<string, string>> = {
     authError: 'Не удалось войти. Проверьте данные',
     logout: 'Выйти',
 
+    // Техподдержка
+    supportTitle: 'Нужна помощь?',
+    supportDesc: 'Вопросы по заказу, оплате или меню — напишите нам в Telegram.',
+    supportButton: 'Связаться с техподдержкой',
+
     // Employee — мои дни
     myDays: 'Мои дни',
     myDaysSubtitle: 'Сколько дней выбрал — столько токенов на выбор блюда',
@@ -384,6 +389,11 @@ const translations: Record<Lang, Record<string, string>> = {
     registerEmployeeHint: 'Qo\'shilish uchun jamoa kodini kiriting',
     authError: 'Kirish imkoni bo\'lmadi. Ma\'lumotlarni tekshiring',
     logout: 'Chiqish',
+
+    // Texnik yordam
+    supportTitle: 'Yordam kerakmi?',
+    supportDesc: 'Buyurtma, to\'lov yoki menyu bo\'yicha savollar — Telegram orqali yozing.',
+    supportButton: 'Texnik yordam bilan bog\'lanish',
 
     // Employee — mening kunlarim
     myDays: 'Mening kunlarim',

@@ -27,6 +27,8 @@ export interface TelegramWebApp {
   colorScheme?: 'light' | 'dark'
   setHeaderColor?: (color: string) => void
   setBackgroundColor?: (color: string) => void
+  openTelegramLink?: (url: string) => void
+  openLink?: (url: string, options?: { try_instant_view?: boolean }) => void
   MainButton?: TelegramMainButton
   HapticFeedback?: TelegramHapticFeedback
 }
@@ -73,6 +75,25 @@ export function showTelegramAlert(message: string): void {
   }
   if (typeof window !== 'undefined') {
     window.alert(message)
+  }
+}
+
+/**
+ * Открыть ссылку на Telegram-аккаунт/бота (`https://t.me/...`).
+ * Внутри Telegram — нативно (`openTelegramLink`), иначе — новая вкладка браузера.
+ */
+export function openTelegramLink(url: string): void {
+  const tg = getTelegramWebApp()
+  try {
+    if (tg?.openTelegramLink) {
+      tg.openTelegramLink(url)
+      return
+    }
+  } catch {
+    // API недоступен — падаем на обычное открытие ссылки
+  }
+  if (typeof window !== 'undefined') {
+    window.open(url, '_blank', 'noopener,noreferrer')
   }
 }
 
