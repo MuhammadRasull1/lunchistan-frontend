@@ -80,6 +80,9 @@ function Catalog({
   const activeDays = days.length
   const totalPortions = days.reduce((sum, d) => sum + (d.item?.portions ?? 1), 0)
   const totalItems = totalPortions * employeeCount
+  // Токены: 1 выбранный день = 1 токен на блюдо. Свободные — дни без выбранного блюда.
+  const chosenDaysCount = days.filter(d => d.chosen).length
+  const freeTokens = activeDays - chosenDaysCount
 
   // Внутри Telegram оформление уже доступно через нативный MainButton —
   // кастомная кнопка в нижней панели в этом случае не дублируется.
@@ -300,13 +303,11 @@ function Catalog({
         <section className="selected-days">
           <div className="view__section-head">
             <h2 className="view__section-title">{t(lang, 'selectedDaysTitle')}</h2>
-            <span className="view__section-desc">
-              {days.filter(d => d.chosen).length} / {activeDays} {t(lang, 'chosenSets')}
+            <span className={`tokens-badge${freeTokens > 0 ? '' : ' tokens-badge--done'}`}>
+              {freeTokens > 0 ? t(lang, 'tokensFree', { n: freeTokens }) : t(lang, 'tokensAllSpent')}
             </span>
           </div>
-          {!allDishesChosen && (
-            <p className="view__section-desc view__section-desc--muted">{t(lang, 'chooseDishForEveryDay')}</p>
-          )}
+          <p className="view__section-desc view__section-desc--muted">{t(lang, 'tokensHint')}</p>
           <div className="days-list">
             {days.map(day => (
               <div key={day.date} className={`day-row${day.chosen ? '' : ' day-row--empty'}`}>
@@ -465,6 +466,7 @@ function Catalog({
       <SetPicker
         isOpen={pickForDate !== null}
         lang={lang}
+        dayLabel={pickForDate ? formatDayLabel(pickForDate, lang) : undefined}
         current={pickForDay?.chosen
           ? { setId: Number(pickForDay.set.id), setName: pickForDay.set.name, setPrice: pickForDay.set.price }
           : null}

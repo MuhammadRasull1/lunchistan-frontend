@@ -147,6 +147,7 @@ export default function EmployeeView({ lang, userName, companyName, onLogout }: 
       <SetPicker
         isOpen={pickFor !== null}
         lang={lang}
+        dayLabel={pickFor ? dayLabel(pickFor.date, lang) : undefined}
         current={pickFor?.choice ?? null}
         onPick={pickSet}
         onClose={() => setPickFor(null)}

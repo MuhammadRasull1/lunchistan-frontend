@@ -2395,6 +2395,28 @@ img {
   margin: 8px 0 4px;
 }
 
+/* Компактная раскладка строки дня: дата+блюдо в ряд, кнопка — во всю ширину снизу */
+.selected-days .day-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 10px 12px;
+}
+
+.selected-days .day-row__date {
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.selected-days .day-row__name {
+  white-space: normal;
+}
+
+.selected-days .day-row__pick {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
 .day-row__dish--btn {
   appearance: none;
   border: 0;
@@ -2467,72 +2489,73 @@ img {
   background: var(--bg);
 }
 
-.set-picker__list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+/* Категории внутри пикера — фиксированы над скроллом сетки, лента скроллится вбок */
+.set-picker__tabs {
+  margin: 4px 24px 12px;
+  flex-shrink: 0;
 }
 
-.set-picker-item {
+.set-picker__tabs .tabs__tab {
+  flex: 0 0 auto;
+}
+
+.set-picker__day {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Сетка карточек с фото внутри пикера */
+.set-picker__grid-wrap {
+  padding-top: 0;
+}
+
+.set-picker__grid {
+  gap: 16px;
+}
+
+.set-picker__card {
+  position: relative;
+}
+
+.set-picker__card--current .set-card {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: var(--radius-lg);
+}
+
+.set-picker__card-check {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--brand);
+  color: #fff;
   display: flex;
   align-items: center;
-  gap: 12px;
-  width: 100%;
-  text-align: left;
-  padding: 12px 14px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-md);
-  background: var(--card-bg);
-  color: var(--text);
-  cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.4);
 }
 
-.set-picker-item:hover {
-  border-color: var(--divider);
-  background: var(--surface);
-}
-
-.set-picker-item--current {
-  border-color: var(--brand);
-  box-shadow: 0 0 0 3px var(--brand-ring);
-}
-
-.set-picker-item__info {
-  flex: 1;
-  min-width: 0;
-}
-
-.set-picker-item__name {
-  display: block;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-  overflow: hidden;
-  text-overflow: ellipsis;
+/* Бейдж «свободные токены» в заголовке секции «Выбранные дни» */
+.tokens-badge {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--brand);
+  background: var(--brand-soft);
+  border: 1px solid var(--brand-ring);
+  border-radius: 999px;
+  padding: 4px 12px;
   white-space: nowrap;
 }
 
-.set-picker-item__price {
-  display: block;
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-top: 2px;
-}
-
-.set-picker-item__badge {
-  flex-shrink: 0;
-  font-size: 11px;
-  color: var(--brand);
-  border: 1px solid var(--brand);
-  border-radius: 999px;
-  padding: 2px 8px;
-  font-weight: 700;
-}
-
-.set-picker-item__check {
-  flex-shrink: 0;
-  color: var(--brand);
+.tokens-badge--done {
+  color: #15803d;
+  background: rgba(21, 128, 61, 0.10);
+  border-color: rgba(21, 128, 61, 0.30);
 }
 
 .set-picker-empty {
