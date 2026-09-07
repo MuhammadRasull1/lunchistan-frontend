@@ -1,8 +1,12 @@
 import axios from 'axios'
+import { cloudSetItem, cloudGetItem, cloudRemoveItem } from './telegram'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'https://lunchistan-backend.onrender.com'
 
 const TOKEN_KEY = 'lunchistan_token'
+// Тот же ключ в CloudStorage Telegram — localStorage TMA стирается при закрытии,
+// CloudStorage переживает любые перезапуски и остаётся привязан к аккаунту.
+const TOKEN_CLOUD_KEY = 'lunchistan_token_v1'
 
 export function getToken(): string | null {
   try {
@@ -19,6 +23,22 @@ export function setToken(token: string | null) {
   } catch {
     // ignore
   }
+  // Дубль в CloudStorage Telegram (fire-and-forget, ошибки игнорируем).
+  if (token) void cloudSetItem(TOKEN_CLOUD_KEY, token)
+  else void cloudRemoveItem(TOKEN_CLOUD_KEY)
+}
+
+/**
+ * Восстановить токен из Telegram CloudStorage (когда localStorage был очищен).
+ * Возвращает токен и также кладёт его в localStorage. null — токена нет нигде.
+ */
+export async function restoreTokenFromCloud(): Promise<string | null> {
+  const token = await cloudGetItem(TOKEN_CLOUD_KEY)
+  if (token) {
+    try { localStorage.setItem(TOKEN_KEY, token) } catch { /* ignore */ }
+    return token
+  }
+  return null
 }
 
 const http = axios.create({ baseURL: API_BASE_URL, timeout: 15000 })

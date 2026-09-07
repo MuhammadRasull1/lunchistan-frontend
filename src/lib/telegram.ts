@@ -19,6 +19,12 @@ export interface TelegramHapticFeedback {
   notificationOccurred: (type: 'error' | 'success' | 'warning') => void
 }
 
+export interface TelegramCloudStorage {
+  setItem: (key: string, value: string, callback?: (error: string | null, value?: string) => void) => void
+  getItem: (key: string, callback: (error: string | null, value?: string) => void) => void
+  removeItem: (key: string, callback?: (error: string | null) => void) => void
+}
+
 export interface TelegramUser {
   id: number
   username?: string
@@ -43,6 +49,7 @@ export interface TelegramWebApp {
   }
   MainButton?: TelegramMainButton
   HapticFeedback?: TelegramHapticFeedback
+  CloudStorage?: TelegramCloudStorage
 }
 
 declare global {
@@ -133,4 +140,49 @@ export function getTelegramUser(): TelegramUser | null {
     firstName: user.firstName,
     lastName: user.lastName,
   }
+}
+
+// ── CloudStorage: персистентное хранилище Telegram ─────────────────
+// local/WebView localStorage в Telegram стирается при закрытии, а CloudStorage
+// живёт у Telegram и привязан к аккаунту пользователя. Используем его как
+// дублирующий слой для токена сессии (см. lib/api.ts).
+
+function getCloudStorage(): TelegramCloudStorage | undefined {
+  return getTelegramWebApp()?.CloudStorage
+}
+
+export function cloudSetItem(key: string, value: string): Promise<void> {
+  const cs = getCloudStorage()
+  if (!cs) return Promise.resolve()
+  return new Promise(resolve => {
+    try {
+      cs.setItem(key, value, () => resolve())
+    } catch {
+      resolve()
+    }
+  })
+}
+
+export function cloudGetItem(key: string): Promise<string | null> {
+  const cs = getCloudStorage()
+  if (!cs) return Promise.resolve(null)
+  return new Promise(resolve => {
+    try {
+      cs.getItem(key, (err, value) => resolve(err ? null : value ?? null))
+    } catch {
+      resolve(null)
+    }
+  })
+}
+
+export function cloudRemoveItem(key: string): Promise<void> {
+  const cs = getCloudStorage()
+  if (!cs) return Promise.resolve()
+  return new Promise(resolve => {
+    try {
+      cs.removeItem(key, () => resolve())
+    } catch {
+      resolve()
+    }
+  })
 }

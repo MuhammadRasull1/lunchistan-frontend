@@ -17,7 +17,7 @@ import { EMPLOYEE_MAX } from './types'
 import { t } from './locales/translations'
 import { showTelegramAlert } from './lib/telegram'
 import { loadSavedOrder, saveOrder, clearSavedOrder } from './lib/orderStorage'
-import { submitOrder, getToken, setToken, fetchMe } from './lib/api'
+import { submitOrder, getToken, setToken, fetchMe, restoreTokenFromCloud } from './lib/api'
 import type { AuthResponse, AuthUser, OrderContact } from './lib/api'
 import { DEFAULT_SALAD } from './components/saladOptions'
 import { isPastDate, isValidDateString } from './lib/calendar'
@@ -78,7 +78,10 @@ function App() {
   useEffect(() => {
     let cancelled = false
     const boot = async () => {
-      if (!getToken()) {
+      // localStorage TMA мог быть очищен при закрытии — подтягиваем токен из
+      // CloudStorage Telegram (персистентное хранилище, привязано к аккаунту).
+      const token = getToken() ?? (await restoreTokenFromCloud())
+      if (!token) {
         setBooted(true)
         return
       }
