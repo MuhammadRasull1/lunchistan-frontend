@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Flame, Beef, Droplets, Wheat, Check, Wine, Droplet, Lock, Users, LeafyGreen, ChevronRight } from 'lucide-react'
-import type { LunchSet, Beverage, Salad, Lang, ApplyField } from '../types'
+import type { LunchSet, Beverage, Salad, Lang } from '../types'
 import { formatPrice } from '../types'
 import { t, localizeIngredient } from '../locales/translations'
 import Stepper from './Stepper'
@@ -28,10 +28,8 @@ interface SetDetailModalProps {
   onApplySaladToAll: (salad: Salad) => void
   portions: number
   onPortionsChange: (portions: number) => void
-  /** Число остальных выбранных дней — включает блок «применить к N дням» */
-  remainingDaysCount?: number
-  /** Применить поле (салат/напиток) текущего значения к N другим дням */
-  onApplyToDays?: (field: ApplyField, count: number) => void
+  /** Общее число выбранных дней — для отображения переключателя «Все дни / этот день» */
+  daysCount?: number
 }
 
 /** Форматирование макроса */
@@ -67,14 +65,12 @@ const BEVERAGE_OPTIONS: { value: Beverage; icon: React.ComponentType<{ size?: nu
 ]
 
 /** Группа сегментированных пилюль для выбора одного варианта из фиксированного списка (салат/напиток) */
-function OptionPillGroup<T extends string>({ icon: SectionIcon, label, options, value, onChange, onApplyToAll, applyAllLabel }: {
+function OptionPillGroup<T extends string>({ icon: SectionIcon, label, options, value, onChange }: {
   icon: React.ComponentType<{ size?: number; strokeWidth?: number }>
   label: string
   options: { value: T; text: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number }> }[]
   value: T
   onChange: (value: T) => void
-  onApplyToAll: () => void
-  applyAllLabel: string
 }) {
   return (
     <div className="option-select">
@@ -104,50 +100,45 @@ function OptionPillGroup<T extends string>({ icon: SectionIcon, label, options, 
           )
         })}
       </div>
-      <button
-        type="button"
-        className="btn btn--outline option-select__apply-all"
-        onClick={() => {
-          hapticImpact('light')
-          onApplyToAll()
-        }}
-      >
-        {applyAllLabel}
-      </button>
     </div>
   )
 }
 
-/** Контрол «применить к N дням»: счётчик количества + кнопка применения */
-function ApplyToDaysControl({ lang, maxCount, onApply }: {
+/** Переключатель области применения: «Все дни» / «Только этот день» */
+function ApplyScopeToggle({ lang, scope, daysCount, onScopeChange }: {
   lang: Lang
-  maxCount: number
-  onApply: (count: number) => void
+  scope: 'all' | 'this'
+  daysCount: number
+  onScopeChange: (scope: 'all' | 'this') => void
 }) {
-  const [count, setCount] = useState(Math.max(1, maxCount))
   return (
-    <div className="option-select__apply">
-      <div className="option-select__apply-row">
-        <span className="option-select__apply-label">{t(lang, 'applyToDays')}</span>
-        <Stepper
-          value={count}
-          min={1}
-          max={Math.max(1, maxCount)}
-          onSet={(v) => setCount(Math.min(Math.max(1, maxCount), v))}
-          ariaDecrease={t(lang, 'stepDecrease')}
-          ariaIncrease={t(lang, 'stepIncrease')}
-        />
-      </div>
-      <button
-        type="button"
-        className="btn btn--outline option-select__apply-all"
-        onClick={() => {
-          hapticImpact('light')
-          onApply(count)
-        }}
-      >
-        {t(lang, 'applyToDaysAction', { n: count })}
-      </button>
+    <div className="apply-scope">
+      <span className="apply-scope__inner">
+        <span className="apply-scope__label">{t(lang, 'scopeLabel')}</span>
+        <div className="option-select__pills">
+          <motion.button
+            type="button"
+            className={`option-pill${scope === 'all' ? ' option-pill--active' : ''}`}
+            onClick={() => { hapticImpact('light'); onScopeChange('all') }}
+            whileTap={{ scale: 0.94 }}
+            transition={{ duration: 0.15 }}
+          >
+            {t(lang, 'scopeAllDays')}
+          </motion.button>
+          <motion.button
+            type="button"
+            className={`option-pill${scope === 'this' ? ' option-pill--active' : ''}`}
+            onClick={() => { hapticImpact('light'); onScopeChange('this') }}
+            whileTap={{ scale: 0.94 }}
+            transition={{ duration: 0.15 }}
+          >
+            {t(lang, 'scopeThisDay')}
+          </motion.button>
+        </div>
+      </span>
+      <span className="apply-scope__hint">
+        {scope === 'all' ? t(lang, 'scopeHintAll', { n: daysCount }) : t(lang, 'scopeHintThis')}
+      </span>
     </div>
   )
 }
@@ -169,8 +160,29 @@ const SHEET_VARIANTS = {
   },
 }
 
-function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, readOnly, dateLabel, beverage, onBeverageChange, onApplyBeverageToAll, salad, onSaladChange, onApplySaladToAll, portions, onPortionsChange, remainingDaysCount, onApplyToDays }: SetDetailModalProps) {
+function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, readOnly, dateLabel, beverage, onBeverageChange, onApplyBeverageToAll, salad, onSaladChange, onApplySaladToAll, portions, onPortionsChange, daysCount }: SetDetailModalProps) {
   const [isSaladPickerOpen, setSaladPickerOpen] = useState(false)
+  // Область применения изменений салата/напитка: «все дни» (по умолчанию) или «только этот день».
+  const scopeDays = daysCount ?? 0
+  const [scope, setScope] = useState<'all' | 'this'>('all')
+
+  // Сбрасываем область применения на «все дни» при каждом открытии модалки.
+  // Паттерн «adjust state during render» вместо setState в эффекте.
+  const [prevOpen, setPrevOpen] = useState(isOpen)
+  if (prevOpen !== isOpen) {
+    setPrevOpen(isOpen)
+    if (isOpen) setScope('all')
+  }
+
+  const handleBeverageChange = (next: Beverage) => {
+    if (scope === 'all' && scopeDays > 1) onApplyBeverageToAll(next)
+    else onBeverageChange(next)
+  }
+
+  const handleSaladChange = (next: Salad) => {
+    if (scope === 'all' && scopeDays > 1) onApplySaladToAll(next)
+    else onSaladChange(next)
+  }
 
   const fixedItems = set
     ? set.composition.filter(item => item.name !== 'Салат' && item.name !== 'Напиток')
@@ -280,48 +292,24 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, readOnly, dateL
                     <span>{t(lang, 'chooseSalad')}: {salad}</span>
                     <ChevronRight size={16} strokeWidth={2.5} />
                   </button>
-                  <button
-                    type="button"
-                    className="btn btn--outline option-select__apply-all"
-                    onClick={() => {
-                      hapticImpact('light')
-                      onApplySaladToAll(salad)
-                    }}
-                  >
-                    {t(lang, 'applySaladToAll')}
-                  </button>
-                  {onApplyToDays && (remainingDaysCount ?? 0) > 0 && (
-                    <ApplyToDaysControl
-                      key={`salad-${remainingDaysCount}`}
-                      lang={lang}
-                      maxCount={remainingDaysCount ?? 0}
-                      onApply={(count) => onApplyToDays('salad', count)}
-                    />
-                  )}
                 </div>
               )}
 
               {/* Выбор напитка */}
               {!readOnly && (
-                <>
-                  <OptionPillGroup
-                    icon={Wine}
-                    label={t(lang, 'beverage')}
-                    options={BEVERAGE_OPTIONS.map(opt => ({ value: opt.value, text: t(lang, opt.value === 'Вода' ? 'water' : 'compote'), icon: opt.icon }))}
-                    value={beverage}
-                    onChange={onBeverageChange}
-                    onApplyToAll={() => onApplyBeverageToAll(beverage)}
-                    applyAllLabel={t(lang, 'applyBeverageToAll')}
-                  />
-                  {onApplyToDays && (remainingDaysCount ?? 0) > 0 && (
-                    <ApplyToDaysControl
-                      key={`beverage-${remainingDaysCount}`}
-                      lang={lang}
-                      maxCount={remainingDaysCount ?? 0}
-                      onApply={(count) => onApplyToDays('beverage', count)}
-                    />
-                  )}
-                </>
+                <OptionPillGroup
+                  icon={Wine}
+                  label={t(lang, 'beverage')}
+                  options={BEVERAGE_OPTIONS.map(opt => ({ value: opt.value, text: t(lang, opt.value === 'Вода' ? 'water' : 'compote'), icon: opt.icon }))}
+                  value={beverage}
+                  onChange={handleBeverageChange}
+                />
+              )}
+
+              {/* Область применения салата/напитка: «все дни» / «только этот день».
+                  Показывается только при непустой настройке и когда есть несколько дней. */}
+              {!readOnly && scopeDays > 1 && (
+                <ApplyScopeToggle lang={lang} scope={scope} daysCount={scopeDays} onScopeChange={setScope} />
               )}
 
               {/* Порций на сотрудника */}
@@ -384,7 +372,7 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, readOnly, dateL
             lang={lang}
             salad={salad}
             onSelect={(next) => {
-              onSaladChange(next)
+              handleSaladChange(next)
               setSaladPickerOpen(false)
             }}
           />

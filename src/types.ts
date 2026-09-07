@@ -75,9 +75,6 @@ export interface SelectedDay {
 
 export type Lang = 'ru' | 'uz';
 
-/** Поле настройки дня, которое можно применить к остальным дням */
-export type ApplyField = 'salad' | 'beverage';
-
 export type Screen = 'catalog' | 'cart' | 'success';
 
 export const EMPLOYEE_MAX = 500;

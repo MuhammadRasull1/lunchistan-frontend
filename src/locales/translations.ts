@@ -58,10 +58,6 @@ const translations: Record<Lang, Record<string, string>> = {
     flatbread: 'Лепёшка',
     drink: 'Напиток',
     mainDishLocked: 'Основное блюдо нельзя исключить',
-    applyBeverageToAll: 'Применить выбранный напиток ко всем дням',
-    applySaladToAll: 'Применить выбранный салат ко всем дням',
-    applyToDays: 'Применить на дни',
-    applyToDaysAction: 'Применить к {n} дн.',
     incompleteSelectionHint: 'Выберите салат и напиток для каждого дня, чтобы продолжить',
     selectedDaysTitle: 'Выбранные дни',
     daySetNotChosen: 'Токен свободен',
@@ -232,6 +228,13 @@ const translations: Record<Lang, Record<string, string>> = {
     tgContactLabel: 'Аккаунт Telegram (определён автоматически)',
     tgContactLink: 'Написать',
 
+    // ── v3.x: область применения салата/напитка ───────────────
+    scopeLabel: 'Применить для',
+    scopeAllDays: 'Все дни',
+    scopeThisDay: 'Только этот день',
+    scopeHintAll: 'Салат и напиток будут применены ко всем {n} дням',
+    scopeHintThis: 'Изменения затронут только этот день',
+
     // ── v3: статусы заказа ──────────────────────────────────────
     orderStatusLabel: 'Статус',
     status_new: 'Новый',
@@ -335,10 +338,6 @@ const translations: Record<Lang, Record<string, string>> = {
     flatbread: 'Non',
     drink: 'Ichimlik',
     mainDishLocked: "Asosiy taomni chiqarib bo'lmaydi",
-    applyBeverageToAll: "Tanlangan ichimlikni barcha kunlarga qo'llash",
-    applySaladToAll: "Tanlangan salatni barcha kunlarga qo'llash",
-    applyToDays: "Kunlarga qo'llash",
-    applyToDaysAction: '{n} kunga qo\'llash',
     incompleteSelectionHint: "Davom etish uchun har bir kun uchun salat va ichimlik tanlang",
     selectedDaysTitle: 'Tanlangan kunlar',
     daySetNotChosen: 'Token bo\'sh',
@@ -508,6 +507,13 @@ const translations: Record<Lang, Record<string, string>> = {
     loginToTrackHint: "Buyurtma va uning holatini ko'rish uchun kabinetga kiring",
     tgContactLabel: 'Telegram akkaunti (avtomatik aniqlandi)',
     tgContactLink: 'Yozish',
+
+    // ── v3.x: salat/ichimlik qo'llash doirasi ──────────────────
+    scopeLabel: 'Qo\'llash doirasi',
+    scopeAllDays: 'Barcha kunlar',
+    scopeThisDay: 'Faqat shu kun',
+    scopeHintAll: 'Salat va ichimlik barcha {n} kunga qo\'llanadi',
+    scopeHintThis: 'O\'zgarish faqat shu kunga taalluqli',
 
     // ── v3: buyurtma holatlari ─────────────────────────────────
     orderStatusLabel: 'Holat',

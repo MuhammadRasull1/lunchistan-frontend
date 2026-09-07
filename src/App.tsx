@@ -12,7 +12,7 @@ import ManagerView from './components/ManagerView'
 import OwnerView from './components/OwnerView'
 import SupportLink from './components/SupportLink'
 import { MONTHLY_SETS, SET_PRICE, getSetForDate, getSetById } from './data/mockMenu'
-import type { CartState, Screen, PaymentMethod, Beverage, Salad, Lang, SelectedDay, ApplyField } from './types'
+import type { CartState, Screen, PaymentMethod, Beverage, Salad, Lang, SelectedDay } from './types'
 import { EMPLOYEE_MAX } from './types'
 import { t } from './locales/translations'
 import { showTelegramAlert } from './lib/telegram'
@@ -195,21 +195,6 @@ function App() {
       const next: CartState = {}
       for (const [date, item] of Object.entries(prev)) {
         next[date] = { ...item, salad }
-      }
-      return next
-    })
-  }
-
-  /** Применить поле настройки (салат/напиток) к первым N остальным выбранным дням (исключая текущий) */
-  const handleApplyToDays = (excludeDate: string, field: ApplyField, value: Salad | Beverage, count: number) => {
-    setCartState(prev => {
-      const targets = Object.keys(prev).filter(date => date !== excludeDate).sort().slice(0, Math.max(0, count))
-      if (targets.length === 0) return prev
-      const next: CartState = { ...prev }
-      for (const date of targets) {
-        next[date] = field === 'salad'
-          ? { ...next[date], salad: value as Salad }
-          : { ...next[date], beverage: value as Beverage }
       }
       return next
     })
@@ -399,7 +384,6 @@ function App() {
               onPortionsChange={handlePortionsChange}
               onSaladChange={handleSaladChange}
               onApplySaladToAll={handleApplySaladToAll}
-              onApplyToDays={handleApplyToDays}
               onSetChange={handleSetChange}
               onGoToCart={() => setScreen('cart')}
             />

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { X, Search, Check } from 'lucide-react'
-import type { Lang, SetCategory, LunchSet, CartItem, Beverage, Salad, ApplyField } from '../types'
+import type { Lang, SetCategory, LunchSet, CartItem, Beverage, Salad } from '../types'
 import { t } from '../locales/translations'
 import { MONTHLY_SETS } from '../data/mockMenu'
 import type { SetOfDay } from '../lib/api'
@@ -17,12 +17,11 @@ interface SetPickerProps {
   /** Текущая настройка дня (салат/напиток/порции) для предзаполнения детальной модалки;
       если не передан — клик по блюду выбирает его сразу (упрощённый режим) */
   item?: CartItem | null
-  /** Число остальных выбранных дней (для функции «применить к N дням») */
-  remainingDaysCount?: number
+  /** Общее число выбранных дней — для переключателя «Все дни / этот день» */
+  daysCount?: number
   onBeverageChange?: (beverage: Beverage) => void
   onSaladChange?: (salad: Salad) => void
   onPortionsChange?: (portions: number) => void
-  onApplyToDays?: (field: ApplyField, count: number) => void
   onPick: (setId: number) => void
   onClose: () => void
 }
@@ -48,7 +47,7 @@ const CATEGORY_LABEL_KEY: Record<SetCategory, string> = {
   soup: 'categorySoup',
 }
 
-export default function SetPicker({ isOpen, lang, current, dayLabel, item, remainingDaysCount, onBeverageChange, onSaladChange, onPortionsChange, onApplyToDays, onPick, onClose }: SetPickerProps) {
+export default function SetPicker({ isOpen, lang, current, dayLabel, item, daysCount, onBeverageChange, onSaladChange, onPortionsChange, onPick, onClose }: SetPickerProps) {
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<CategoryFilter>('all')
   const [pendingSet, setPendingSet] = useState<LunchSet | null>(null)
@@ -160,14 +159,13 @@ export default function SetPicker({ isOpen, lang, current, dayLabel, item, remai
           dateLabel={dayLabel}
           beverage={item?.beverage ?? 'Вода'}
           onBeverageChange={onBeverageChange ?? (() => {})}
-          onApplyBeverageToAll={() => onApplyToDays ? onApplyToDays('beverage', Math.max(1, remainingDaysCount ?? 0)) : undefined}
+          onApplyBeverageToAll={onBeverageChange ?? (() => {})}
           salad={item?.salad ?? DEFAULT_SALAD}
           onSaladChange={onSaladChange ?? (() => {})}
-          onApplySaladToAll={() => onApplyToDays ? onApplyToDays('salad', Math.max(1, remainingDaysCount ?? 0)) : undefined}
+          onApplySaladToAll={onSaladChange ?? (() => {})}
           portions={item?.portions ?? 1}
           onPortionsChange={onPortionsChange ?? (() => {})}
-          onApplyToDays={onApplyToDays}
-          remainingDaysCount={remainingDaysCount ?? 0}
+          daysCount={daysCount ?? 0}
         />
       )}
     </>
