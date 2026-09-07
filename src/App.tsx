@@ -310,112 +310,111 @@ function App() {
 
   return (
     <div className="app">
-      {tab === 'teams' && (
-        <header className="view__header">
-          <AppHeader activeTab={tab} onTabChange={handleTabChange} lang={lang} onLangChange={handleLangChange} />
-        </header>
-      )}
+      {!booted && <div className="view__body view__boot">…</div>}
 
-      {tab === 'teams' && !booted && <div className="view__body view__boot">…</div>}
-
-      {tab === 'teams' && booted && !user && (
+      {booted && !user && (
         <Onboarding lang={lang} onAuth={handleAuth} />
       )}
 
-      {tab === 'teams' && booted && user?.role === 'owner' && (
-        <OwnerView lang={lang} userName={user.name} onLogout={handleLogout} />
-      )}
+      {booted && user && (
+        <>
+          <header className="view__header">
+            <AppHeader activeTab={tab} onTabChange={handleTabChange} lang={lang} onLangChange={handleLangChange} />
+          </header>
 
-      {tab === 'teams' && booted && user?.role === 'employee' && (
-        <div className="view__enter">
-          <EmployeeView
-            lang={lang}
-            userName={user.name}
-            companyName={user.companyName ?? ''}
-            onLogout={handleLogout}
-          />
-        </div>
-      )}
+          {tab === 'teams' && user?.role === 'owner' && (
+            <OwnerView lang={lang} userName={user.name} onLogout={handleLogout} />
+          )}
 
-      {tab === 'teams' && booted && user?.role === 'admin' && (
-        <div className="view__enter">
-          <ManagerView
-            lang={lang}
-            userName={user.name}
-            companyName={user.companyName ?? ''}
-            teamCode={user.companyCode}
-            teamSize={user.companySize}
-            employeesCount={employeesCount}
-            onLogout={handleLogout}
-          />
-        </div>
-      )}
+          {tab === 'teams' && user?.role === 'employee' && (
+            <div className="view__enter">
+              <EmployeeView
+                lang={lang}
+                userName={user.name}
+                companyName={user.companyName ?? ''}
+                onLogout={handleLogout}
+              />
+            </div>
+          )}
 
-      {revealCompany && (
-        <div className="reveal-overlay">
-          <motion.div initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.5, ease: 'easeOut' }}>
-            <div className="reveal-brand">Lunchistan</div>
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.35, ease: 'easeOut' }}>
-            <div className="reveal-company">{revealCompany}</div>
-            <div className="reveal-tagline">{t(lang, 'obRevealTagline')}</div>
-          </motion.div>
-        </div>
-      )}
+          {tab === 'teams' && user?.role === 'admin' && (
+            <div className="view__enter">
+              <ManagerView
+                lang={lang}
+                userName={user.name}
+                companyName={user.companyName ?? ''}
+                teamCode={user.companyCode}
+                teamSize={user.companySize}
+                employeesCount={employeesCount}
+                onLogout={handleLogout}
+              />
+            </div>
+          )}
 
-      {tab === 'teams' && booted && <SupportLink lang={lang} />}
+          {revealCompany && (
+            <div className="reveal-overlay">
+              <motion.div initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.5, ease: 'easeOut' }}>
+                <div className="reveal-brand">Lunchistan</div>
+              </motion.div>
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.35, ease: 'easeOut' }}>
+                <div className="reveal-company">{revealCompany}</div>
+                <div className="reveal-tagline">{t(lang, 'obRevealTagline')}</div>
+              </motion.div>
+            </div>
+          )}
 
-      {tab === 'catalog' && screen === 'catalog' && (
-        <Catalog
-          days={orderDays}
-          allSetsCount={MONTHLY_SETS.length}
-          employeeCount={employeeCount}
-          totalMonthlyPrice={totalMonthlyPrice}
-          setPrice={SET_PRICE}
-          lang={lang}
-          activeTab={tab}
-          onTabChange={handleTabChange}
-          allDishesChosen={allDishesChosen}
-          onApplySelectedDates={handleApplySelectedDates}
-          onEmployeeCountChange={handleEmployeeCountChange}
-          onBeverageChange={handleBeverageChange}
-          onApplyBeverageToAll={handleApplyBeverageToAll}
-          onPortionsChange={handlePortionsChange}
-          onSaladChange={handleSaladChange}
-          onApplySaladToAll={handleApplySaladToAll}
-          onSetChange={handleSetChange}
-          onGoToCart={() => setScreen('cart')}
-          onLangChange={handleLangChange}
-        />
-      )}
+          {tab === 'teams' && <SupportLink lang={lang} />}
 
-      {tab === 'catalog' && screen === 'cart' && (
-        <Cart
-          days={orderDays}
-          totalMonthlyPrice={totalMonthlyPrice}
-          employeeCount={employeeCount}
-          totalItems={totalItems}
-          lang={lang}
-          isSubmitting={isSubmitting}
-          user={user}
-          onBack={() => setScreen('catalog')}
-          onPlaceOrder={handlePlaceOrder}
-          onRemoveItem={handleToggleDate}
-        />
-      )}
+          {tab === 'catalog' && screen === 'catalog' && (
+            <Catalog
+              days={orderDays}
+              allSetsCount={MONTHLY_SETS.length}
+              employeeCount={employeeCount}
+              totalMonthlyPrice={totalMonthlyPrice}
+              setPrice={SET_PRICE}
+              lang={lang}
+              allDishesChosen={allDishesChosen}
+              onApplySelectedDates={handleApplySelectedDates}
+              onEmployeeCountChange={handleEmployeeCountChange}
+              onBeverageChange={handleBeverageChange}
+              onApplyBeverageToAll={handleApplyBeverageToAll}
+              onPortionsChange={handlePortionsChange}
+              onSaladChange={handleSaladChange}
+              onApplySaladToAll={handleApplySaladToAll}
+              onSetChange={handleSetChange}
+              onGoToCart={() => setScreen('cart')}
+            />
+          )}
 
-      {tab === 'catalog' && screen === 'success' && (
-        <Success
-          lang={lang}
-          onNewOrder={handleNewOrder}
-          orderNumber={successInfo?.orderNumber}
-          status={successInfo?.status}
-          isLead={successInfo?.isLead}
-          paymentMethod={successInfo?.method}
-          totalMonthlyPrice={successInfo?.total}
-          employeeCount={successInfo?.employees}
-          activeDays={successInfo?.days}
-        />
+          {tab === 'catalog' && screen === 'cart' && (
+            <Cart
+              days={orderDays}
+              totalMonthlyPrice={totalMonthlyPrice}
+              employeeCount={employeeCount}
+              totalItems={totalItems}
+              lang={lang}
+              isSubmitting={isSubmitting}
+              user={user}
+              onBack={() => setScreen('catalog')}
+              onPlaceOrder={handlePlaceOrder}
+              onRemoveItem={handleToggleDate}
+            />
+          )}
+
+          {tab === 'catalog' && screen === 'success' && (
+            <Success
+              lang={lang}
+              onNewOrder={handleNewOrder}
+              orderNumber={successInfo?.orderNumber}
+              status={successInfo?.status}
+              isLead={successInfo?.isLead}
+              paymentMethod={successInfo?.method}
+              totalMonthlyPrice={successInfo?.total}
+              employeeCount={successInfo?.employees}
+              activeDays={successInfo?.days}
+            />
+          )}
+        </>
       )}
     </div>
   )

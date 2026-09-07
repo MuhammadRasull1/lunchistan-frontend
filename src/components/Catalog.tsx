@@ -4,8 +4,6 @@ import { CalendarDays } from 'lucide-react'
 import type { Lang, SetCategory, Beverage, Salad, SelectedDay, LunchSet } from '../types'
 import { formatPrice, EMPLOYEE_MAX } from '../types'
 import { t } from '../locales/translations'
-import AppHeader from './AppHeader'
-import type { AppTab } from './AppHeader'
 import SetCard from './SetCard'
 import SetDetailModal from './SetDetailModal'
 import SetPicker from './SetPicker'
@@ -27,8 +25,6 @@ interface CatalogProps {
   totalMonthlyPrice: number
   setPrice: number
   lang: Lang
-  activeTab: AppTab
-  onTabChange: (tab: AppTab) => void
   /** Все выбранные дни имеют выбранное блюдо (иначе оформить заказ нельзя) */
   allDishesChosen: boolean
   /** Применяет подтверждённый выбор из календарной модалки к основному state заказа */
@@ -42,7 +38,6 @@ interface CatalogProps {
   /** Клиент выбрал блюдо на день («потратил токен») */
   onSetChange: (date: string, setId: number) => void
   onGoToCart: () => void
-  onLangChange: (lang: Lang) => void
 }
 
 const CATEGORY_TABS: { value: CategoryFilter; labelKey: string }[] = [
@@ -62,8 +57,6 @@ function Catalog({
   totalMonthlyPrice,
   setPrice,
   lang,
-  activeTab,
-  onTabChange,
   allDishesChosen,
   onApplySelectedDates,
   onEmployeeCountChange,
@@ -74,7 +67,6 @@ function Catalog({
   onApplySaladToAll,
   onSetChange,
   onGoToCart,
-  onLangChange,
 }: CatalogProps) {
   // Количество дней определяется исключительно выбранными датами.
   const activeDays = days.length
@@ -181,7 +173,6 @@ function Catalog({
   return (
     <div className="catalog">
       <header className="catalog__header">
-        <AppHeader activeTab={activeTab} onTabChange={onTabChange} lang={lang} onLangChange={onLangChange} />
         <h1 className="catalog__heading">{t(lang, 'headerTitle')}</h1>
         <p className="catalog__subtitle">
           {t(lang, 'headerSubtitle', { n: allSetsCount })}
