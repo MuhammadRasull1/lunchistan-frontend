@@ -19,6 +19,13 @@ export interface TelegramHapticFeedback {
   notificationOccurred: (type: 'error' | 'success' | 'warning') => void
 }
 
+export interface TelegramUser {
+  id: number
+  username?: string
+  firstName: string
+  lastName?: string
+}
+
 export interface TelegramWebApp {
   ready: () => void
   expand: () => void
@@ -29,6 +36,11 @@ export interface TelegramWebApp {
   setBackgroundColor?: (color: string) => void
   openTelegramLink?: (url: string) => void
   openLink?: (url: string, options?: { try_instant_view?: boolean }) => void
+  initData?: string
+  initDataUnsafe?: {
+    user?: TelegramUser
+    [key: string]: unknown
+  }
   MainButton?: TelegramMainButton
   HapticFeedback?: TelegramHapticFeedback
 }
@@ -103,5 +115,22 @@ export function hapticImpact(style: 'light' | 'medium' | 'heavy' = 'light'): voi
     getTelegramWebApp()?.HapticFeedback?.impactOccurred(style)
   } catch {
     // Haptics недоступны в этом клиенте — безопасно игнорируем
+  }
+}
+
+/**
+ * Реальный пользователь Telegram из `initDataUnsafe.user`: числовой id и @username.
+ * Доступен только когда приложение открыто внутри Telegram WebApp (TMA);
+ * в обычном браузере (лендинг) возвращает null.
+ */
+export function getTelegramUser(): TelegramUser | null {
+  const tg = getTelegramWebApp()
+  const user = tg?.initDataUnsafe?.user
+  if (!user || typeof user.id !== 'number') return null
+  return {
+    id: user.id,
+    username: user.username,
+    firstName: user.firstName,
+    lastName: user.lastName,
   }
 }

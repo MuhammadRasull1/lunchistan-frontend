@@ -1115,6 +1115,38 @@ img {
   color: var(--brand);
 }
 
+/* Автоопределённый Telegram-контакт клиента из TMA */
+.payment__telegram {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  border: 1.5px solid var(--brand-ring);
+  border-radius: var(--radius-md);
+  background: var(--brand-soft);
+  font-size: 14px;
+  color: var(--text);
+}
+
+.payment__telegram-label {
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.payment__telegram-value {
+  font-weight: 700;
+  word-break: break-all;
+  text-align: right;
+}
+
+.payment__telegram-value a {
+  color: var(--brand);
+  text-decoration: none;
+  font-weight: 600;
+}
+
 /* ---------- Cart summary ---------- */
 .cart__summary {
   display: flex;
@@ -1447,6 +1479,34 @@ img {
   margin-top: 10px;
   padding: 10px 14px;
   font-size: 12px;
+}
+
+.option-select__apply {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.option-select__apply-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.option-select__apply-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.option-select__apply .option-select__apply-all {
+  margin-top: 6px;
+}
+
+.option-select__apply .counter__input {
+  width: 56px;
 }
 
 .option-pill {

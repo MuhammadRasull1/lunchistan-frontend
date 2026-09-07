@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Flame, Beef, Droplets, Wheat, Check, Wine, Droplet, Lock, Users, LeafyGreen, ChevronRight } from 'lucide-react'
-import type { LunchSet, Beverage, Salad, Lang } from '../types'
+import type { LunchSet, Beverage, Salad, Lang, ApplyField } from '../types'
 import { formatPrice } from '../types'
 import { t, localizeIngredient } from '../locales/translations'
 import Stepper from './Stepper'
@@ -28,6 +28,10 @@ interface SetDetailModalProps {
   onApplySaladToAll: (salad: Salad) => void
   portions: number
   onPortionsChange: (portions: number) => void
+  /** Число остальных выбранных дней — включает блок «применить к N дням» */
+  remainingDaysCount?: number
+  /** Применить поле (салат/напиток) текущего значения к N другим дням */
+  onApplyToDays?: (field: ApplyField, count: number) => void
 }
 
 /** Форматирование макроса */
@@ -114,6 +118,40 @@ function OptionPillGroup<T extends string>({ icon: SectionIcon, label, options, 
   )
 }
 
+/** Контрол «применить к N дням»: счётчик количества + кнопка применения */
+function ApplyToDaysControl({ lang, maxCount, onApply }: {
+  lang: Lang
+  maxCount: number
+  onApply: (count: number) => void
+}) {
+  const [count, setCount] = useState(Math.max(1, maxCount))
+  return (
+    <div className="option-select__apply">
+      <div className="option-select__apply-row">
+        <span className="option-select__apply-label">{t(lang, 'applyToDays')}</span>
+        <Stepper
+          value={count}
+          min={1}
+          max={Math.max(1, maxCount)}
+          onSet={(v) => setCount(Math.min(Math.max(1, maxCount), v))}
+          ariaDecrease={t(lang, 'stepDecrease')}
+          ariaIncrease={t(lang, 'stepIncrease')}
+        />
+      </div>
+      <button
+        type="button"
+        className="btn btn--outline option-select__apply-all"
+        onClick={() => {
+          hapticImpact('light')
+          onApply(count)
+        }}
+      >
+        {t(lang, 'applyToDaysAction', { n: count })}
+      </button>
+    </div>
+  )
+}
+
 const OVERLAY_VARIANTS = {
   hidden: { opacity: 0 },
   visible: { opacity: 1 },
@@ -131,7 +169,7 @@ const SHEET_VARIANTS = {
   },
 }
 
-function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, readOnly, dateLabel, beverage, onBeverageChange, onApplyBeverageToAll, salad, onSaladChange, onApplySaladToAll, portions, onPortionsChange }: SetDetailModalProps) {
+function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, readOnly, dateLabel, beverage, onBeverageChange, onApplyBeverageToAll, salad, onSaladChange, onApplySaladToAll, portions, onPortionsChange, remainingDaysCount, onApplyToDays }: SetDetailModalProps) {
   const [isSaladPickerOpen, setSaladPickerOpen] = useState(false)
 
   const fixedItems = set
@@ -252,20 +290,38 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, readOnly, dateL
                   >
                     {t(lang, 'applySaladToAll')}
                   </button>
+                  {onApplyToDays && (remainingDaysCount ?? 0) > 0 && (
+                    <ApplyToDaysControl
+                      key={`salad-${remainingDaysCount}`}
+                      lang={lang}
+                      maxCount={remainingDaysCount ?? 0}
+                      onApply={(count) => onApplyToDays('salad', count)}
+                    />
+                  )}
                 </div>
               )}
 
               {/* Выбор напитка */}
               {!readOnly && (
-                <OptionPillGroup
-                  icon={Wine}
-                  label={t(lang, 'beverage')}
-                  options={BEVERAGE_OPTIONS.map(opt => ({ value: opt.value, text: t(lang, opt.value === 'Вода' ? 'water' : 'compote'), icon: opt.icon }))}
-                  value={beverage}
-                  onChange={onBeverageChange}
-                  onApplyToAll={() => onApplyBeverageToAll(beverage)}
-                  applyAllLabel={t(lang, 'applyBeverageToAll')}
-                />
+                <>
+                  <OptionPillGroup
+                    icon={Wine}
+                    label={t(lang, 'beverage')}
+                    options={BEVERAGE_OPTIONS.map(opt => ({ value: opt.value, text: t(lang, opt.value === 'Вода' ? 'water' : 'compote'), icon: opt.icon }))}
+                    value={beverage}
+                    onChange={onBeverageChange}
+                    onApplyToAll={() => onApplyBeverageToAll(beverage)}
+                    applyAllLabel={t(lang, 'applyBeverageToAll')}
+                  />
+                  {onApplyToDays && (remainingDaysCount ?? 0) > 0 && (
+                    <ApplyToDaysControl
+                      key={`beverage-${remainingDaysCount}`}
+                      lang={lang}
+                      maxCount={remainingDaysCount ?? 0}
+                      onApply={(count) => onApplyToDays('beverage', count)}
+                    />
+                  )}
+                </>
               )}
 
               {/* Порций на сотрудника */}

@@ -60,6 +60,8 @@ const translations: Record<Lang, Record<string, string>> = {
     mainDishLocked: 'Основное блюдо нельзя исключить',
     applyBeverageToAll: 'Применить выбранный напиток ко всем дням',
     applySaladToAll: 'Применить выбранный салат ко всем дням',
+    applyToDays: 'Применить на дни',
+    applyToDaysAction: 'Применить к {n} дн.',
     incompleteSelectionHint: 'Выберите салат и напиток для каждого дня, чтобы продолжить',
     selectedDaysTitle: 'Выбранные дни',
     daySetNotChosen: 'Токен свободен',
@@ -227,6 +229,8 @@ const translations: Record<Lang, Record<string, string>> = {
     contactRequiredHint: 'Укажите имя и телефон — по ним с вами свяжутся',
     optionalField: 'необязательно',
     loginToTrackHint: 'Войдите в кабинет, чтобы видеть заказ и его статус',
+    tgContactLabel: 'Аккаунт Telegram (определён автоматически)',
+    tgContactLink: 'Написать',
 
     // ── v3: статусы заказа ──────────────────────────────────────
     orderStatusLabel: 'Статус',
@@ -333,6 +337,8 @@ const translations: Record<Lang, Record<string, string>> = {
     mainDishLocked: "Asosiy taomni chiqarib bo'lmaydi",
     applyBeverageToAll: "Tanlangan ichimlikni barcha kunlarga qo'llash",
     applySaladToAll: "Tanlangan salatni barcha kunlarga qo'llash",
+    applyToDays: "Kunlarga qo'llash",
+    applyToDaysAction: '{n} kunga qo\'llash',
     incompleteSelectionHint: "Davom etish uchun har bir kun uchun salat va ichimlik tanlang",
     selectedDaysTitle: 'Tanlangan kunlar',
     daySetNotChosen: 'Token bo\'sh',
@@ -500,6 +506,8 @@ const translations: Record<Lang, Record<string, string>> = {
     contactRequiredHint: "Ism va telefon kiriting — shu orqali bog'lanamiz",
     optionalField: 'ixtiyoriy',
     loginToTrackHint: "Buyurtma va uning holatini ko'rish uchun kabinetga kiring",
+    tgContactLabel: 'Telegram akkaunti (avtomatik aniqlandi)',
+    tgContactLink: 'Yozish',
 
     // ── v3: buyurtma holatlari ─────────────────────────────────
     orderStatusLabel: 'Holat',

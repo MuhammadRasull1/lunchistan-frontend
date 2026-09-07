@@ -4,7 +4,7 @@ import { X, UtensilsCrossed, Building2, CreditCard, Banknote } from 'lucide-reac
 import type { SelectedDay, PaymentMethod, Lang } from '../types'
 import { formatPrice } from '../types'
 import { t } from '../locales/translations'
-import { getTelegramWebApp, hapticImpact } from '../lib/telegram'
+import { getTelegramWebApp, getTelegramUser, hapticImpact } from '../lib/telegram'
 import { formatDayLabel } from '../lib/calendar'
 import type { AuthUser, OrderContact } from '../lib/api'
 
@@ -42,7 +42,11 @@ function Cart({
   onRemoveItem,
 }: CartProps) {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('corporate')
-  const [contactName, setContactName] = useState(user?.name ?? '')
+
+  // Реальный аккаунт Telegram из TMA — защита от «шутников»: контакт подтягивается
+  // автоматически и заменить его вручную нельзя. На лендинге (обычный браузер) = null.
+  const tgUser = getTelegramUser()
+  const [contactName, setContactName] = useState(user?.name ?? tgUser?.firstName ?? '')
   const [contactPhone, setContactPhone] = useState(user?.phone ?? '')
   const [companyName, setCompanyName] = useState(user?.companyName ?? '')
   const [address, setAddress] = useState('')
@@ -54,9 +58,17 @@ function Cart({
     companyName: companyName.trim() || undefined,
     address: address.trim() || undefined,
     comment: comment.trim() || undefined,
+    // Telegram-контакт из TMA — реальная личность, блокируется от ручного ввода.
+    tgUserId: tgUser?.id,
+    tgUsername: tgUser?.username,
   }
-  // Гость обязан оставить имя и телефон; вошедшая компания — нет (данные из аккаунта).
-  const contactOk = Boolean(user) || (contactName.trim().length > 1 && contactPhone.trim().length >= 5)
+  // Обязательный контакт перед отправкой: реальный Telegram (TMA) ИЛИ имя+телефон.
+  // Вошедшая компания без TMA тоже обязана оставить контакт (кроме owner — свои данные).
+  const tgKnown = Boolean(tgUser?.id)
+  const contactOk =
+    tgKnown ||
+    (user?.role === 'owner' && Boolean(user.name)) ||
+    (contactName.trim().length > 1 && contactPhone.trim().length >= 5)
 
   const activeLines: CartLine[] = days.map(({ date, set, item }) => {
     const portions = item?.portions ?? 1
@@ -100,6 +112,8 @@ function Cart({
       companyName: companyName.trim() || undefined,
       address: address.trim() || undefined,
       comment: comment.trim() || undefined,
+      tgUserId: tgUser?.id,
+      tgUsername: tgUser?.username,
     })
     mainButton.setText(
       isSubmitting ? t(lang, 'submitting') : t(lang, 'pay', { price: formatPrice(totalMonthlyPrice, lang) })
@@ -122,7 +136,7 @@ function Cart({
       mainButton.hide()
     }
   }, [lang, activeLines.length, canCheckout, totalMonthlyPrice, paymentMethod, isSubmitting,
-      contactName, contactPhone, companyName, address, comment])
+      contactName, contactPhone, companyName, address, comment, tgUser])
 
   return (
     <motion.div
@@ -230,6 +244,14 @@ function Cart({
             transition={{ delay: 0.2, duration: 0.4 }}
           >
             <h3 className="payment__title">{t(lang, 'contactSection')}</h3>
+            {tgKnown && (
+              <div className="payment__telegram" role="status">
+                <span className="payment__telegram-label">{t(lang, 'tgContactLabel')}</span>
+                <span className="payment__telegram-value">
+                  @{tgUser!.username ?? String(tgUser!.id)} · <a href={`https://t.me/${tgUser!.username ?? tgUser!.id}`} target="_blank" rel="noopener noreferrer">{t(lang, 'tgContactLink')}</a>
+                </span>
+              </div>
+            )}
             <div className="auth-card" style={{ gap: 12 }}>
               <div className="auth-field">
                 <label>{t(lang, 'contactName')}</label>
@@ -251,8 +273,8 @@ function Cart({
                 <label>{t(lang, 'contactComment')} <span className="auth-hint">— {t(lang, 'optionalField')}</span></label>
                 <input value={comment} onChange={(e) => setComment(e.target.value)} />
               </div>
-              {!user && <span className="auth-hint">{t(lang, 'contactRequiredHint')}</span>}
-              {!user && <span className="auth-hint">{t(lang, 'loginToTrackHint')}</span>}
+              {!tgKnown && <span className="auth-hint">{t(lang, 'contactRequiredHint')}</span>}
+              {!tgKnown && !user && <span className="auth-hint">{t(lang, 'loginToTrackHint')}</span>}
             </div>
           </motion.section>
 
@@ -301,7 +323,7 @@ function Cart({
               animate={{ opacity: 1 }}
               transition={{ delay: 0.35 }}
             >
-              {t(lang, allDishesChosen ? 'incompleteSelectionHint' : 'chooseDishForEveryDay')}
+              {t(lang, !allDishesChosen ? 'chooseDishForEveryDay' : contactOk ? 'incompleteSelectionHint' : 'contactRequiredHint')}
             </motion.p>
           )}
 

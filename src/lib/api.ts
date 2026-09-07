@@ -185,6 +185,10 @@ export interface OrderContact {
   companyName?: string
   address?: string
   comment?: string
+  /** Реальный Telegram ID клиента из TMA (управляется кодом, не пользователем) */
+  tgUserId?: number
+  /** Реальный @username клиента из TMA (управляется кодом, не пользователем) */
+  tgUsername?: string
 }
 
 export interface OrderPayload extends OrderContact {
@@ -225,6 +229,8 @@ export interface OrderView {
   companyName: string | null
   contactName: string | null
   contactPhone: string | null
+  tgUserId: number | null
+  tgUsername: string | null
   address: string | null
   comment: string | null
   paymentMethod: string | null

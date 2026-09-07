@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { CalendarDays } from 'lucide-react'
-import type { Lang, SetCategory, Beverage, Salad, SelectedDay, LunchSet } from '../types'
+import type { Lang, SetCategory, Beverage, Salad, SelectedDay, LunchSet, ApplyField } from '../types'
 import { formatPrice, EMPLOYEE_MAX } from '../types'
 import { t } from '../locales/translations'
 import SetCard from './SetCard'
@@ -35,6 +35,8 @@ interface CatalogProps {
   onPortionsChange: (date: string, portions: number) => void
   onSaladChange: (date: string, salad: Salad) => void
   onApplySaladToAll: (salad: Salad) => void
+  /** Применить поле настройки к N остальным выбранным дням (исключая дату) */
+  onApplyToDays: (excludeDate: string, field: ApplyField, value: Salad | Beverage, count: number) => void
   /** Клиент выбрал блюдо на день («потратил токен») */
   onSetChange: (date: string, setId: number) => void
   onGoToCart: () => void
@@ -65,6 +67,7 @@ function Catalog({
   onPortionsChange,
   onSaladChange,
   onApplySaladToAll,
+  onApplyToDays,
   onSetChange,
   onGoToCart,
 }: CatalogProps) {
@@ -433,6 +436,11 @@ function Catalog({
           if (selectedDate) onSaladChange(selectedDate, salad)
         }}
         onApplySaladToAll={onApplySaladToAll}
+        onApplyToDays={selectedDate ? (field, count) => {
+          const cur = field === 'salad' ? selectedDay?.item.salad ?? DEFAULT_SALAD : selectedDay?.item.beverage ?? 'Вода'
+          onApplyToDays(selectedDate, field, cur, count)
+        } : undefined}
+        remainingDaysCount={selectedDate ? days.filter(d => d.date !== selectedDate).length : 0}
       />
 
       {/* Предпросмотр сета из полного каталога (read-only) */}
@@ -461,6 +469,17 @@ function Catalog({
         current={pickForDay?.chosen
           ? { setId: Number(pickForDay.set.id), setName: pickForDay.set.name, setPrice: pickForDay.set.price }
           : null}
+        item={pickForDay?.item ?? null}
+        remainingDaysCount={pickForDate ? days.filter(d => d.date !== pickForDate).length : 0}
+        onBeverageChange={(beverage) => { if (pickForDate) onBeverageChange(pickForDate, beverage) }}
+        onSaladChange={(salad) => { if (pickForDate) onSaladChange(pickForDate, salad) }}
+        onPortionsChange={(portions) => { if (pickForDate) onPortionsChange(pickForDate, portions) }}
+        onApplyToDays={(field, count) => {
+          if (pickForDate) {
+            const value = field === 'salad' ? pickForDay?.item.salad ?? DEFAULT_SALAD : pickForDay?.item.beverage ?? 'Вода'
+            onApplyToDays(pickForDate, field, value, count)
+          }
+        }}
         onPick={(setId) => {
           if (pickForDate) onSetChange(pickForDate, setId)
         }}
