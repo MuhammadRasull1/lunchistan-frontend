@@ -25,6 +25,15 @@ export interface TelegramCloudStorage {
   removeItem: (key: string, callback?: (error: string | null) => void) => void
 }
 
+/** Геолокация Telegram (TMA 8.0+). getLocation возвращает Promise или результат синхронно. */
+export interface TelegramLocationManager {
+  isInited: boolean
+  getLocation: (opts?: { with_age?: boolean }) =>
+    | Promise<{ latitude?: number; longitude?: number; lat?: number; lon?: number }>
+    | { latitude?: number; longitude?: number; lat?: number; lon?: number }
+    | void
+}
+
 export interface TelegramUser {
   id: number
   username?: string
@@ -50,6 +59,7 @@ export interface TelegramWebApp {
   MainButton?: TelegramMainButton
   HapticFeedback?: TelegramHapticFeedback
   CloudStorage?: TelegramCloudStorage
+  locationManager?: TelegramLocationManager
 }
 
 declare global {
@@ -185,4 +195,43 @@ export function cloudRemoveItem(key: string): Promise<void> {
       resolve()
     }
   })
+}
+
+/** Координаты через Telegram locationManager (TMA 8.0+). null — API недоступен/отказ. */
+export async function getTelegramLocation(): Promise<{ lat: number; lon: number } | null> {
+  const lm = getTelegramWebApp()?.locationManager
+  if (!lm?.getLocation) return null
+  try {
+    const res = await Promise.resolve(lm.getLocation({ with_age: true }))
+    if (!res) return null
+    const lat = res.latitude ?? res.lat
+    const lon = res.longitude ?? res.lon
+    if (typeof lat !== 'number' || typeof lon !== 'number') return null
+    return { lat, lon }
+  } catch {
+    return null
+  }
+}
+
+/** Координаты через браузерную геолокацию (promise + таймаут). null — недоступно/отказ. */
+export function getBrowserLocation(timeoutMs = 8000): Promise<{ lat: number; lon: number } | null> {
+  if (typeof navigator === 'undefined' || !navigator.geolocation) return Promise.resolve(null)
+  return new Promise(resolve => {
+    const timer = setTimeout(() => resolve(null), timeoutMs)
+    navigator.geolocation.getCurrentPosition(
+      pos => { clearTimeout(timer); resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }) },
+      () => { clearTimeout(timer); resolve(null) },
+      { enableHighAccuracy: true, timeout: timeoutMs, maximumAge: 60000 },
+    )
+  })
+}
+
+/**
+ * Лучшие доступные координаты: Telegram locationManager → браузерная геолокация.
+ * Набор приоритетов снизу вверх — TMA даёт точные данные без системного окна, браузер — запасной путь.
+ */
+export async function getBestLocation(): Promise<{ lat: number; lon: number } | null> {
+  const tg = await getTelegramLocation()
+  if (tg) return tg
+  return getBrowserLocation()
 }

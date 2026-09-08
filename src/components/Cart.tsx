@@ -1,12 +1,17 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { X, UtensilsCrossed, Building2, CreditCard, Banknote } from 'lucide-react'
+import { X, UtensilsCrossed, Building2, CreditCard, Banknote, MapPin } from 'lucide-react'
 import type { SelectedDay, PaymentMethod, Lang } from '../types'
 import { formatPrice } from '../types'
 import { t } from '../locales/translations'
 import { getTelegramWebApp, getTelegramUser, hapticImpact } from '../lib/telegram'
 import { formatDayLabel } from '../lib/calendar'
-import type { AuthUser, OrderContact } from '../lib/api'
+import type { AuthUser, OrderContact, DeliveryQuote, CompanyAddress } from '../lib/api'
+import { fetchCompanyAddress, fetchDeliveryQuote } from '../lib/api'
+import type { AddressPick } from './AddressPicker'
+
+// Leaflet и карта тяжёлые — грузим только когда открылся пикер адреса.
+const AddressPicker = lazy(() => import('./AddressPicker'))
 
 interface CartLine {
   date: string
@@ -49,14 +54,47 @@ function Cart({
   const [contactName, setContactName] = useState(user?.name ?? tgUser?.firstName ?? '')
   const [contactPhone, setContactPhone] = useState(user?.phone ?? '')
   const [companyName, setCompanyName] = useState(user?.companyName ?? '')
-  const [address, setAddress] = useState('')
   const [comment, setComment] = useState('')
+
+  // ── Адрес доставки на карте ────────────────────────────────────
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [addressPick, setAddressPick] = useState<AddressPick | null>(null)
+  const [savedCompanyAddress, setSavedCompanyAddress] = useState<CompanyAddress | null>(null)
+  const [deliveryQuote, setDeliveryQuote] = useState<DeliveryQuote | null>(null)
+
+  // Адрес компании (по умолчанию доставка на завод/офис) — подсказка в пикере.
+  useEffect(() => {
+    if (!user?.companyId && !savedCompanyAddress) return
+    let cancelled = false
+    fetchCompanyAddress()
+      .then(addr => { if (!cancelled && addr) setSavedCompanyAddress(addr) })
+      .catch(() => {})
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.companyId])
+
+  // Тариф доставки для выбранной точки — сумма в чекауте.
+  useEffect(() => {
+    if (!addressPick) return
+    let cancelled = false
+    fetchDeliveryQuote(addressPick.lat, addressPick.lon, totalMonthlyPrice)
+      .then(q => { if (!cancelled) setDeliveryQuote(q) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [addressPick, totalMonthlyPrice])
+
+  // Пока адрес не выбран — доставки нет (в т.ч. очистка при выборе нового адреса).
+  const delivery = addressPick ? deliveryQuote : null
+  const grandTotal = totalMonthlyPrice + (delivery?.fee ?? 0)
 
   const contact: OrderContact = {
     contactName: contactName.trim() || undefined,
     contactPhone: contactPhone.trim() || undefined,
     companyName: companyName.trim() || undefined,
-    address: address.trim() || undefined,
+    address: addressPick?.label || undefined,
+    destLat: addressPick?.lat,
+    destLon: addressPick?.lon,
+    destDetail: addressPick?.destDetail || undefined,
     comment: comment.trim() || undefined,
     // Telegram-контакт из TMA — реальная личность, блокируется от ручного ввода.
     tgUserId: tgUser?.id,
@@ -110,13 +148,16 @@ function Cart({
       contactName: contactName.trim() || undefined,
       contactPhone: contactPhone.trim() || undefined,
       companyName: companyName.trim() || undefined,
-      address: address.trim() || undefined,
+      address: addressPick?.label || undefined,
+      destLat: addressPick?.lat,
+      destLon: addressPick?.lon,
+      destDetail: addressPick?.destDetail || undefined,
       comment: comment.trim() || undefined,
       tgUserId: tgUser?.id,
       tgUsername: tgUser?.username,
     })
     mainButton.setText(
-      isSubmitting ? t(lang, 'submitting') : t(lang, 'pay', { price: formatPrice(totalMonthlyPrice, lang) })
+      isSubmitting ? t(lang, 'submitting') : t(lang, 'pay', { price: formatPrice(grandTotal, lang) })
     )
     mainButton.onClick(handleClick)
 
@@ -135,8 +176,8 @@ function Cart({
       mainButton.offClick(handleClick)
       mainButton.hide()
     }
-  }, [lang, activeLines.length, canCheckout, totalMonthlyPrice, paymentMethod, isSubmitting,
-      contactName, contactPhone, companyName, address, comment, tgUser])
+  }, [lang, activeLines.length, canCheckout, grandTotal, paymentMethod, isSubmitting,
+      contactName, contactPhone, companyName, addressPick, comment, tgUser])
 
   return (
     <motion.div
@@ -266,8 +307,42 @@ function Cart({
                 <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} autoComplete="organization" />
               </div>
               <div className="auth-field">
-                <label>{t(lang, 'contactAddress')} <span className="auth-hint">— {t(lang, 'optionalField')}</span></label>
-                <input value={address} onChange={(e) => setAddress(e.target.value)} />
+                <label>{t(lang, 'deliveryAddress')} <span className="auth-hint">— {t(lang, 'optionalField')}</span></label>
+                {addressPick ? (
+                  <div className="cart__address-picked">
+                    <div className="cart__address-line">
+                      <MapPin size={15} strokeWidth={2} />
+                      <span>
+                        {addressPick.label}
+                        {addressPick.destDetail ? ` — ${addressPick.destDetail}` : ''}
+                      </span>
+                    </div>
+                    {delivery && (
+                      <div className="cart__address-fee">
+                        {delivery.fee === 0
+                          ? `${t(lang, 'deliveryFee')}: 0`
+                          : `${t(lang, 'deliveryFee')}: ${formatPrice(delivery.fee, lang)}`}
+                        {delivery.zone ? ` · ${delivery.zone}` : ''}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      className="cart__address-change"
+                      onClick={() => setPickerOpen(true)}
+                    >
+                      {t(lang, 'changeAddress')}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="cart__address-pick"
+                    onClick={() => setPickerOpen(true)}
+                  >
+                    <MapPin size={16} strokeWidth={2} />
+                    {t(lang, 'selectAddressOnMap')}
+                  </button>
+                )}
               </div>
               <div className="auth-field">
                 <label>{t(lang, 'contactComment')} <span className="auth-hint">— {t(lang, 'optionalField')}</span></label>
@@ -312,8 +387,22 @@ function Cart({
             animate={{ opacity: 1 }}
             transition={{ delay: 0.35, duration: 0.4 }}
           >
-            <span>{t(lang, 'totalToPay')}</span>
-            <span className="cart__summary-total">{formatPrice(totalMonthlyPrice, lang)}</span>
+            <div className="cart__summary-rows">
+              <span>{t(lang, 'totalToPay')}</span>
+              <span className="cart__summary-total">{formatPrice(totalMonthlyPrice, lang)}</span>
+            </div>
+            {delivery != null && delivery.fee > 0 && (
+              <div className="cart__summary-rows">
+                <span>{t(lang, 'deliveryFee')}</span>
+                <span>{formatPrice(delivery.fee, lang)}</span>
+              </div>
+            )}
+            {delivery != null && (
+              <div className="cart__summary-rows cart__summary-rows--grand">
+                <span>{t(lang, 'totalWithDelivery')}</span>
+                <span className="cart__summary-total">{formatPrice(grandTotal, lang)}</span>
+              </div>
+            )}
           </motion.div>
 
           {!canCheckout && (
@@ -344,11 +433,25 @@ function Cart({
                 {t(lang, 'submitting')}
               </>
             ) : (
-              t(lang, 'pay', { price: formatPrice(totalMonthlyPrice, lang) })
+              t(lang, 'pay', { price: formatPrice(grandTotal, lang) })
             )}
           </motion.button>
         </>
       )}
+
+      <Suspense fallback={null}>
+        <AddressPicker
+          isOpen={pickerOpen}
+          lang={lang}
+          totalAmount={totalMonthlyPrice}
+          initial={savedCompanyAddress}
+          onClose={() => setPickerOpen(false)}
+          onSelect={pick => {
+            setDeliveryQuote(null)
+            setAddressPick(pick)
+          }}
+        />
+      </Suspense>
     </motion.div>
   )
 }

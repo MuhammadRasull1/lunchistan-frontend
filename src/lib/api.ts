@@ -205,6 +205,11 @@ export interface OrderContact {
   companyName?: string
   address?: string
   comment?: string
+  /** Координаты точки доставки (долгота/широта) — если адрес выбран на карте */
+  destLon?: number
+  destLat?: number
+  /** Уточнение «до двери»: подъезд, этаж, домофон, ориентир */
+  destDetail?: string
   /** Реальный Telegram ID клиента из TMA (управляется кодом, не пользователем) */
   tgUserId?: number
   /** Реальный @username клиента из TMA (управляется кодом, не пользователем) */
@@ -236,6 +241,48 @@ export interface OrderResult {
  */
 export async function submitOrder(payload: OrderPayload): Promise<OrderResult> {
   const { data } = await http.post<OrderResult>('/api/orders', payload, { timeout: 15000 })
+  return data
+}
+
+// ── Доставка и адрес компании ─────────────────────────────────────
+export interface DeliveryQuote {
+  fee: number
+  /** Название зоны («Центр»/«Город»/…) или null, если точка вне зон */
+  zone: string | null
+  inZone: boolean
+  distanceKm: number
+  freeDelivery: boolean
+  /** Итоговая сумма с доставкой, если запрос шёл с totalAmount */
+  totalWithDelivery: number | null
+}
+
+/** Расчёт стоимости доставки в точку (lat/lon). Бэкенд — источник истины. */
+export async function fetchDeliveryQuote(
+  lat: number,
+  lon: number,
+  totalAmount?: number,
+): Promise<DeliveryQuote> {
+  const { data } = await http.post<DeliveryQuote>('/api/delivery/quote', { lat, lon, totalAmount })
+  return data
+}
+
+export interface CompanyAddress {
+  lat: number
+  lon: number
+  label: string
+}
+
+export async function fetchCompanyAddress(): Promise<CompanyAddress | null> {
+  const { data } = await http.get<{ address: CompanyAddress | null }>('/api/my/address')
+  return data.address
+}
+
+export async function saveCompanyAddress(addr: {
+  lat: number
+  lon: number
+  label: string
+}): Promise<{ ok: boolean }> {
+  const { data } = await http.put<{ ok: boolean }>('/api/my/address', addr)
   return data
 }
 
