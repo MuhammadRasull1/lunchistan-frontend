@@ -6,6 +6,7 @@ import { fetchMyDays, putMyDays, putMyChoice } from '../lib/api'
 import type { MyDay } from '../lib/api'
 import CalendarModal from './CalendarModal'
 import SetPicker from './SetPicker'
+import Reveal from './Reveal'
 import { addMonths, startOfMonth } from '../lib/calendar'
 
 interface EmployeeViewProps {
@@ -104,32 +105,34 @@ export default function EmployeeView({ lang, userName, companyName, onLogout }: 
 
       <div className="days-list">
         {days.length === 0 && !loading && <p className="view__section-desc">{t(lang, 'myDaysEmpty')}</p>}
-        {days.map(day => {
+        {days.map((day, i) => {
           const isLocked = day.locked
           return (
-            <div key={day.date} className={`day-row${isLocked ? ' day-row--locked' : ''}`}>
-              <div className="day-row__date">{dayLabel(day.date, lang)}</div>
-              <div className="day-row__dish">
-                {day.choice ? (
-                  <>
-                    <span className="day-row__name">{day.choice.setName}</span>
-                    <span className="day-row__hint">
-                      {day.choice.setPrice.toLocaleString('ru-RU')} {lang === 'uz' ? "so'm" : 'сум'}
+            <Reveal key={day.date} delay={Math.min(i * 0.05, 0.3)} y={12}>
+              <div className={`day-row${isLocked ? ' day-row--locked' : ''}`}>
+                <div className="day-row__date">{dayLabel(day.date, lang)}</div>
+                <div className="day-row__dish">
+                  {day.choice ? (
+                    <>
+                      <span className="day-row__name">{day.choice.setName}</span>
+                      <span className="day-row__hint">
+                        {day.choice.setPrice.toLocaleString('ru-RU')} {lang === 'uz' ? "so'm" : 'сум'}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="day-row__hint">{t(lang, 'defaultSetNote', { name: day.defaultSet.setName })}</span>
+                  )}
+                  {isLocked && (
+                    <span className="day-row__lock">
+                      <Lock size={13} /> {t(lang, 'dayLockedBadge')}
                     </span>
-                  </>
-                ) : (
-                  <span className="day-row__hint">{t(lang, 'defaultSetNote', { name: day.defaultSet.setName })}</span>
-                )}
-                {isLocked && (
-                  <span className="day-row__lock">
-                    <Lock size={13} /> {t(lang, 'dayLockedBadge')}
-                  </span>
-                )}
+                  )}
+                </div>
+                <button className="btn btn--outline day-row__pick" disabled={isLocked} onClick={() => setPickFor(day)}>
+                  {day.choice ? t(lang, 'changeSet') : t(lang, 'chooseSet')}
+                </button>
               </div>
-              <button className="btn btn--outline day-row__pick" disabled={isLocked} onClick={() => setPickFor(day)}>
-                {day.choice ? t(lang, 'changeSet') : t(lang, 'chooseSet')}
-              </button>
-            </div>
+            </Reveal>
           )
         })}
       </div>

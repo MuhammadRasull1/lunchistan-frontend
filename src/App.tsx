@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import './App.css'
 import Catalog from './components/Catalog'
 import Cart from './components/Cart'
@@ -328,35 +328,6 @@ function App() {
             <AppHeader activeTab={tab} onTabChange={handleTabChange} lang={lang} onLangChange={handleLangChange} />
           </header>
 
-          {tab === 'teams' && user?.role === 'owner' && (
-            <OwnerView lang={lang} userName={user.name} onLogout={handleLogout} />
-          )}
-
-          {tab === 'teams' && user?.role === 'employee' && (
-            <div className="view__enter">
-              <EmployeeView
-                lang={lang}
-                userName={user.name}
-                companyName={user.companyName ?? ''}
-                onLogout={handleLogout}
-              />
-            </div>
-          )}
-
-          {tab === 'teams' && user?.role === 'admin' && (
-            <div className="view__enter">
-              <ManagerView
-                lang={lang}
-                userName={user.name}
-                companyName={user.companyName ?? ''}
-                teamCode={user.companyCode}
-                teamSize={user.companySize}
-                employeesCount={employeesCount}
-                onLogout={handleLogout}
-              />
-            </div>
-          )}
-
           {revealCompany && (
             <div className="reveal-overlay">
               <motion.div initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.5, ease: 'easeOut' }}>
@@ -371,55 +342,135 @@ function App() {
 
           {tab === 'teams' && <SupportLink lang={lang} />}
 
-          {tab === 'catalog' && screen === 'catalog' && (
-            <Catalog
-              days={orderDays}
-              allSetsCount={MONTHLY_SETS.length}
-              employeeCount={employeeCount}
-              totalMonthlyPrice={totalMonthlyPrice}
-              setPrice={SET_PRICE}
-              lang={lang}
-              allDishesChosen={allDishesChosen}
-              onApplySelectedDates={handleApplySelectedDates}
-              onEmployeeCountChange={handleEmployeeCountChange}
-              onBeverageChange={handleBeverageChange}
-              onApplyBeverageToAll={handleApplyBeverageToAll}
-              onPortionsChange={handlePortionsChange}
-              onSaladChange={handleSaladChange}
-              onApplySaladToAll={handleApplySaladToAll}
-              onSetChange={handleSetChange}
-              onGoToCart={() => setScreen('cart')}
-            />
-          )}
+          {/* Экранные переходы: плавное появление при смене вкладки/экрана */}
+          <AnimatePresence mode="wait" initial={false}>
+            {tab === 'catalog' && screen === 'catalog' && (
+              <motion.div
+                key="scr-catalog"
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                <Catalog
+                  days={orderDays}
+                  allSetsCount={MONTHLY_SETS.length}
+                  employeeCount={employeeCount}
+                  totalMonthlyPrice={totalMonthlyPrice}
+                  setPrice={SET_PRICE}
+                  lang={lang}
+                  allDishesChosen={allDishesChosen}
+                  onApplySelectedDates={handleApplySelectedDates}
+                  onEmployeeCountChange={handleEmployeeCountChange}
+                  onBeverageChange={handleBeverageChange}
+                  onApplyBeverageToAll={handleApplyBeverageToAll}
+                  onPortionsChange={handlePortionsChange}
+                  onSaladChange={handleSaladChange}
+                  onApplySaladToAll={handleApplySaladToAll}
+                  onSetChange={handleSetChange}
+                  onGoToCart={() => setScreen('cart')}
+                />
+              </motion.div>
+            )}
 
-          {tab === 'catalog' && screen === 'cart' && (
-            <Cart
-              days={orderDays}
-              totalMonthlyPrice={totalMonthlyPrice}
-              employeeCount={employeeCount}
-              totalItems={totalItems}
-              lang={lang}
-              isSubmitting={isSubmitting}
-              user={user}
-              onBack={() => setScreen('catalog')}
-              onPlaceOrder={handlePlaceOrder}
-              onRemoveItem={handleToggleDate}
-            />
-          )}
+            {tab === 'catalog' && screen === 'cart' && (
+              <motion.div
+                key="scr-cart"
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                <Cart
+                  days={orderDays}
+                  totalMonthlyPrice={totalMonthlyPrice}
+                  employeeCount={employeeCount}
+                  totalItems={totalItems}
+                  lang={lang}
+                  isSubmitting={isSubmitting}
+                  user={user}
+                  onBack={() => setScreen('catalog')}
+                  onPlaceOrder={handlePlaceOrder}
+                  onRemoveItem={handleToggleDate}
+                />
+              </motion.div>
+            )}
 
-          {tab === 'catalog' && screen === 'success' && (
-            <Success
-              lang={lang}
-              onNewOrder={handleNewOrder}
-              orderNumber={successInfo?.orderNumber}
-              status={successInfo?.status}
-              isLead={successInfo?.isLead}
-              paymentMethod={successInfo?.method}
-              totalMonthlyPrice={successInfo?.total}
-              employeeCount={successInfo?.employees}
-              activeDays={successInfo?.days}
-            />
-          )}
+            {tab === 'catalog' && screen === 'success' && (
+              <motion.div
+                key="scr-success"
+                initial={{ opacity: 0, scale: 0.96, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.97 }}
+                transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                <Success
+                  lang={lang}
+                  onNewOrder={handleNewOrder}
+                  orderNumber={successInfo?.orderNumber}
+                  status={successInfo?.status}
+                  isLead={successInfo?.isLead}
+                  paymentMethod={successInfo?.method}
+                  totalMonthlyPrice={successInfo?.total}
+                  employeeCount={successInfo?.employees}
+                  activeDays={successInfo?.days}
+                />
+              </motion.div>
+            )}
+
+            {tab === 'teams' && user?.role === 'owner' && (
+              <motion.div
+                key="scr-owner"
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                <OwnerView lang={lang} userName={user.name} onLogout={handleLogout} />
+              </motion.div>
+            )}
+
+            {tab === 'teams' && user?.role === 'employee' && (
+              <motion.div
+                key="scr-employee"
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                <div className="view__enter">
+                  <EmployeeView
+                    lang={lang}
+                    userName={user.name}
+                    companyName={user.companyName ?? ''}
+                    onLogout={handleLogout}
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {tab === 'teams' && user?.role === 'admin' && (
+              <motion.div
+                key="scr-admin"
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                <div className="view__enter">
+                  <ManagerView
+                    lang={lang}
+                    userName={user.name}
+                    companyName={user.companyName ?? ''}
+                    teamCode={user.companyCode}
+                    teamSize={user.companySize}
+                    employeesCount={employeesCount}
+                    onLogout={handleLogout}
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </>
       )}
     </div>

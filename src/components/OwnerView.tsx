@@ -7,6 +7,7 @@ import { fetchOwnerSummary, fetchOwnerOrders, fetchOwnerKitchen } from '../lib/a
 import type { OwnerSummary, OrderView, KitchenDay } from '../lib/api'
 import { statusLabel, statusColor, formatMoney, dateChip } from '../lib/orderStatus'
 import OrderDetailSheet from './OrderDetailSheet'
+import Reveal from './Reveal'
 
 interface Props {
   lang: Lang
@@ -109,11 +110,13 @@ export default function OwnerView({ lang, userName, onLogout }: Props) {
           <h3 className="view__section-title" style={{ marginTop: 28 }}>{t(lang, 'ordersByStatus')}</h3>
           <div className="manager-dates">
             {statuses.length === 0 && <p className="view__section-desc">{t(lang, 'myOrdersEmpty')}</p>}
-            {statuses.map(([s, n]) => (
-              <span key={s} className="manager-dates__chip">
-                <span className="status-dot" style={{ background: statusColor(s) }} />
-                {statusLabel(lang, s)} · {n}
-              </span>
+            {statuses.map(([s, n], i) => (
+              <Reveal key={s} y={10} delay={Math.min(i * 0.04, 0.2)}>
+                <span className="manager-dates__chip">
+                  <span className="status-dot" style={{ background: statusColor(s) }} />
+                  {statusLabel(lang, s)} · {n}
+                </span>
+              </Reveal>
             ))}
           </div>
           <button className="btn btn--outline" style={{ marginTop: 12 }} onClick={openAllOrders}>
@@ -126,18 +129,20 @@ export default function OwnerView({ lang, userName, onLogout }: Props) {
             <p className="view__section-desc">{t(lang, 'leadsNoneNew')}</p>
           ) : (
             <div className="days-list">
-              {summary.leads.recent.map((l) => (
-                <div key={l.id} className="day-row">
-                  <div className="day-row__dish">
-                    <span className="day-row__name">{l.companyName || l.contactName || l.number}</span>
-                    <span className="day-row__hint">{l.contactName || '—'} · {l.number}</span>
+              {summary.leads.recent.map((l, i) => (
+                <Reveal key={l.id} y={10} delay={Math.min(i * 0.05, 0.25)}>
+                  <div className="day-row">
+                    <div className="day-row__dish">
+                      <span className="day-row__name">{l.companyName || l.contactName || l.number}</span>
+                      <span className="day-row__hint">{l.contactName || '—'} · {l.number}</span>
+                    </div>
+                    {l.contactPhone && (
+                      <a className="btn btn--outline day-row__pick" href={`tel:${l.contactPhone}`}>
+                        <Phone size={14} /> {t(lang, 'callLead')}
+                      </a>
+                    )}
                   </div>
-                  {l.contactPhone && (
-                    <a className="btn btn--outline day-row__pick" href={`tel:${l.contactPhone}`}>
-                      <Phone size={14} /> {t(lang, 'callLead')}
-                    </a>
-                  )}
-                </div>
+                </Reveal>
               ))}
             </div>
           )}
@@ -148,18 +153,20 @@ export default function OwnerView({ lang, userName, onLogout }: Props) {
             <p className="view__section-desc">{t(lang, 'kitchenEmpty')}</p>
           ) : (
             <div className="days-list">
-              {summary.byDate.map((d) => (
-                <button key={d.date} className="day-row day-row--btn" onClick={() => setOpenDate(d.date)}>
-                  <div className="day-row__date">{dateChip(d.date, lang)}</div>
-                  <div className="day-row__dish">
-                    <span className="day-row__name">{d.portions} {t(lang, 'portionsShort')}</span>
-                    <span className="day-row__hint">
-                      {d.bySet.slice(0, 3).map((s) => `${s.setName} ×${s.portions}`).join(', ')}
-                      {d.bySet.length > 3 ? '…' : ''}
-                    </span>
-                  </div>
-                  <ChevronRight size={16} className="day-row__pick" />
-                </button>
+              {summary.byDate.map((d, i) => (
+                <Reveal key={d.date} y={10} delay={Math.min(i * 0.05, 0.3)}>
+                  <button className="day-row day-row--btn" onClick={() => setOpenDate(d.date)}>
+                    <div className="day-row__date">{dateChip(d.date, lang)}</div>
+                    <div className="day-row__dish">
+                      <span className="day-row__name">{d.portions} {t(lang, 'portionsShort')}</span>
+                      <span className="day-row__hint">
+                        {d.bySet.slice(0, 3).map((s) => `${s.setName} ×${s.portions}`).join(', ')}
+                        {d.bySet.length > 3 ? '…' : ''}
+                      </span>
+                    </div>
+                    <ChevronRight size={16} className="day-row__pick" />
+                  </button>
+                </Reveal>
               ))}
             </div>
           )}

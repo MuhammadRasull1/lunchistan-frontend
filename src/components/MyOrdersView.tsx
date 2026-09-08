@@ -6,6 +6,7 @@ import { fetchMyOrders } from '../lib/api'
 import type { OrderView } from '../lib/api'
 import { statusLabel, statusColor, formatMoney, dateChip } from '../lib/orderStatus'
 import OrderDetailSheet from './OrderDetailSheet'
+import Reveal from './Reveal'
 
 interface Props {
   lang: Lang
@@ -43,19 +44,21 @@ export default function MyOrdersView({ lang }: Props) {
       {orders !== null && orders.length === 0 && <p className="view__section-desc">{t(lang, 'myOrdersEmpty')}</p>}
 
       <div className="days-list">
-        {(orders ?? []).map((o) => (
-          <button key={o.id} className="day-row day-row--btn" onClick={() => setOpenId(o.id)}>
-            <div className="day-row__dish">
-              <span className="day-row__name">{o.number}</span>
-              <span className="day-row__hint">
-                {o.lines.length ? `${dateChip(o.lines[0].date, lang)}${o.lines.length > 1 ? ` +${o.lines.length - 1}` : ''}` : ''}
-                {' · '}{formatMoney(o.totalAmount, lang)}
+        {(orders ?? []).map((o, i) => (
+          <Reveal key={o.id} delay={Math.min(i * 0.05, 0.3)} y={12}>
+            <button className="day-row day-row--btn" onClick={() => setOpenId(o.id)}>
+              <div className="day-row__dish">
+                <span className="day-row__name">{o.number}</span>
+                <span className="day-row__hint">
+                  {o.lines.length ? `${dateChip(o.lines[0].date, lang)}${o.lines.length > 1 ? ` +${o.lines.length - 1}` : ''}` : ''}
+                  {' · '}{formatMoney(o.totalAmount, lang)}
+                </span>
+              </div>
+              <span className="status-badge" style={{ background: statusColor(o.status) }}>
+                {statusLabel(lang, o.status)}
               </span>
-            </div>
-            <span className="status-badge" style={{ background: statusColor(o.status) }}>
-              {statusLabel(lang, o.status)}
-            </span>
-          </button>
+            </button>
+          </Reveal>
         ))}
       </div>
 

@@ -5,6 +5,7 @@ import { t, WEEKDAYS_SHORT } from '../locales/translations'
 import { fetchManagerDates, fetchDayReport, confirmDay } from '../lib/api'
 import type { DayReport, ManagerDate } from '../lib/api'
 import MyOrdersView from './MyOrdersView'
+import Reveal from './Reveal'
 
 interface ManagerViewProps {
   lang: Lang
@@ -150,56 +151,58 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
       </div>
 
       {report && (
-        <div className="manager-report">
-          <div className="manager-report__head">
-            <h2 className="view__section-title">{dayLabel(report.date, lang)}</h2>
-            <div className="manager-report__stats">
-              <span className="stat-tile">
-                <b>{report.scheduled}</b>
-                {t(lang, 'scheduled').toLowerCase()}
-              </span>
-              <span className="stat-tile">
-                <b>{report.unpicked}</b>
-                {t(lang, 'waiting').toLowerCase()}
-              </span>
-              <span className="stat-tile stat-tile--sum">
-                <b>{report.totalSum.toLocaleString('ru-RU')}</b>
-                {t(lang, 'totalSum').toLowerCase()}
-              </span>
+        <Reveal key={report.date} y={14}>
+          <div className="manager-report">
+            <div className="manager-report__head">
+              <h2 className="view__section-title">{dayLabel(report.date, lang)}</h2>
+              <div className="manager-report__stats">
+                <span className="stat-tile">
+                  <b>{report.scheduled}</b>
+                  {t(lang, 'scheduled').toLowerCase()}
+                </span>
+                <span className="stat-tile">
+                  <b>{report.unpicked}</b>
+                  {t(lang, 'waiting').toLowerCase()}
+                </span>
+                <span className="stat-tile stat-tile--sum">
+                  <b>{report.totalSum.toLocaleString('ru-RU')}</b>
+                  {t(lang, 'totalSum').toLowerCase()}
+                </span>
+              </div>
+            </div>
+
+            {report.perSet.length === 0 && <p className="view__section-desc">{t(lang, 'reportEmpty')}</p>}
+            <div className="report-lines">
+              {report.perSet.map(s => (
+                <div key={s.setId} className="report-line">
+                  <div className="report-line__info">
+                    <span className="report-line__name">{s.setName}</span>
+                    <span className="report-line__meta">
+                      {s.setPrice.toLocaleString('ru-RU')} {lang === 'uz' ? "so'm" : 'сум'}
+                      {s.defaults > 0 && ` · ${t(lang, 'waiting').toLowerCase()}: ${s.defaults}`}
+                    </span>
+                  </div>
+                  <div className="report-line__count">{s.count} ×</div>
+                </div>
+              ))}
+            </div>
+
+            {message && <div className="auth-error auth-error--ok">{message}</div>}
+
+            <div className="manager-report__actions">
+              {report.confirmed ? (
+                <div className="manager-report__confirmed">
+                  <CheckCircle2 size={18} /> {t(lang, 'dayConfirmed')}
+                </div>
+              ) : (
+                <button className="btn btn--primary btn--lg" onClick={onConfirm} disabled={confirming || report.scheduled === 0}>
+                  {confirming && <span className="btn__spinner" />}
+                  {t(lang, 'confirmDay')}
+                </button>
+              )}
             </div>
           </div>
-
-          {report.perSet.length === 0 && <p className="view__section-desc">{t(lang, 'reportEmpty')}</p>}
-          <div className="report-lines">
-            {report.perSet.map(s => (
-              <div key={s.setId} className="report-line">
-                <div className="report-line__info">
-                  <span className="report-line__name">{s.setName}</span>
-                  <span className="report-line__meta">
-                    {s.setPrice.toLocaleString('ru-RU')} {lang === 'uz' ? "so'm" : 'сум'}
-                    {s.defaults > 0 && ` · ${t(lang, 'waiting').toLowerCase()}: ${s.defaults}`}
-                  </span>
-                </div>
-                <div className="report-line__count">{s.count} ×</div>
-              </div>
-            ))}
-          </div>
-
-          {message && <div className="auth-error auth-error--ok">{message}</div>}
-
-          <div className="manager-report__actions">
-            {report.confirmed ? (
-              <div className="manager-report__confirmed">
-                <CheckCircle2 size={18} /> {t(lang, 'dayConfirmed')}
-              </div>
-            ) : (
-              <button className="btn btn--primary btn--lg" onClick={onConfirm} disabled={confirming || report.scheduled === 0}>
-                {confirming && <span className="btn__spinner" />}
-                {t(lang, 'confirmDay')}
-              </button>
-            )}
-          </div>
-        </div>
+        </Reveal>
       )}
       </>}
     </main>
