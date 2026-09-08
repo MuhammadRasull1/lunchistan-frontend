@@ -18,6 +18,7 @@ import { t } from './locales/translations'
 import { showTelegramAlert } from './lib/telegram'
 import { loadSavedOrder, saveOrder, clearSavedOrder } from './lib/orderStorage'
 import { submitOrder, getToken, setToken, fetchMe, restoreTokenFromCloud } from './lib/api'
+import { restoreGeoConsentFromCloud } from './lib/geoConsent'
 import type { AuthResponse, AuthUser, OrderContact } from './lib/api'
 import { DEFAULT_SALAD } from './components/saladOptions'
 import { isPastDate, isValidDateString } from './lib/calendar'
@@ -81,6 +82,8 @@ function App() {
       // localStorage TMA мог быть очищен при закрытии — подтягиваем токен из
       // CloudStorage Telegram (персистентное хранилище, привязано к аккаунту).
       const token = getToken() ?? (await restoreTokenFromCloud())
+      // Согласие на геопозицию тоже живёт в CloudStorage — восстанавливаем молча.
+      await restoreGeoConsentFromCloud()
       if (!token) {
         setBooted(true)
         return

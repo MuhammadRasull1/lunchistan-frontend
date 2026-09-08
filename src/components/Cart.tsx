@@ -8,6 +8,7 @@ import { getTelegramWebApp, getTelegramUser, hapticImpact } from '../lib/telegra
 import { formatDayLabel } from '../lib/calendar'
 import type { AuthUser, OrderContact, DeliveryQuote, CompanyAddress } from '../lib/api'
 import { fetchCompanyAddress, fetchDeliveryQuote } from '../lib/api'
+import { getGeoConsent } from '../lib/geoConsent'
 import type { AddressPick } from './AddressPicker'
 
 // Leaflet и карта тяжёлые — грузим только когда открылся пикер адреса.
@@ -61,6 +62,8 @@ function Cart({
   const [addressPick, setAddressPick] = useState<AddressPick | null>(null)
   const [savedCompanyAddress, setSavedCompanyAddress] = useState<CompanyAddress | null>(null)
   const [deliveryQuote, setDeliveryQuote] = useState<DeliveryQuote | null>(null)
+  // Согласие на геопозицию пользователя — даётся при входе, хранится локально.
+  const [geoConsent] = useState(() => getGeoConsent())
 
   // Адрес компании (по умолчанию доставка на завод/офис) — подсказка в пикере.
   useEffect(() => {
@@ -445,6 +448,7 @@ function Cart({
           lang={lang}
           totalAmount={totalMonthlyPrice}
           initial={savedCompanyAddress}
+          geoAllowed={geoConsent}
           onClose={() => setPickerOpen(false)}
           onSelect={pick => {
             setDeliveryQuote(null)

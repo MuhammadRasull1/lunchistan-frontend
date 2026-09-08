@@ -6,6 +6,7 @@ import { t } from '../locales/translations'
 import { login, registerTeam, joinTeam, apiErrorMessage } from '../lib/api'
 import type { AuthResponse } from '../lib/api'
 import { isValidName } from '../lib/nameValidator'
+import { getGeoConsent, setGeoConsent } from '../lib/geoConsent'
 
 interface OnboardingProps {
   lang: Lang
@@ -67,14 +68,25 @@ export default function Onboarding({ lang, onAuth }: OnboardingProps) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [touched, setTouched] = useState(false)
+  // Согласие на геопозицию — обязательное условие входа (хранится локально+CloudStorage).
+  const [geoConsent, setGeoConsentState] = useState(() => getGeoConsent())
   const nextRef = useRef<HTMLInputElement>(null)
 
   const nameValid = isValidName(name)
   const passwordValid = password.length >= 4
   const trimmedCode = companyCode.trim()
 
+  const toggleGeoConsent = (checked: boolean) => {
+    setGeoConsentState(checked)
+    setGeoConsent(checked)
+  }
+
   const submit = async () => {
     if (busy) return
+    if (!geoConsent) {
+      setError(t(lang, 'geoConsentRequired'))
+      return
+    }
     if (mode === 'create' && !companyName.trim()) {
       setError(t(lang, 'obFieldError'))
       return
@@ -335,7 +347,23 @@ export default function Onboarding({ lang, onAuth }: OnboardingProps) {
 
                   {error && <div className="auth-error">{error}</div>}
 
-                  <button className="btn btn--primary btn--lg ob-next" type="submit" disabled={busy}>
+                  <label className={`ob-consent${geoConsent ? ' ob-consent--checked' : ''}`}>
+                    <input
+                      type="checkbox"
+                      className="ob-consent__input"
+                      checked={geoConsent}
+                      onChange={e => toggleGeoConsent(e.target.checked)}
+                    />
+                    <span className="ob-consent__box" aria-hidden="true">
+                      {geoConsent && <Check size={14} strokeWidth={3} />}
+                    </span>
+                    <span className="ob-consent__text">
+                      {t(lang, 'geoConsentLabel')}
+                      <span className="ob-consent__hint">{t(lang, 'geoConsentHint')}</span>
+                    </span>
+                  </label>
+
+                  <button className="btn btn--primary btn--lg ob-next" type="submit" disabled={busy || !geoConsent}>
                     {busy && <span className="btn__spinner" />}
                     {mode === 'login'
                       ? t(lang, 'obSubmitLogin')

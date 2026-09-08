@@ -241,6 +241,13 @@ const translations: Record<Lang, Record<string, string>> = {
     deliveryFee: 'Доставка',
     totalWithDelivery: 'Итого с доставкой',
     noDeliveryZone: 'Доставка за пределы зон — уточните у менеджера',
+
+    // ── v4: согласие на геопозицию при входе ─────────────────────
+    geoConsentLabel: 'Я соглашаюсь, что моя геопозиция будет использоваться для заказов и доставки',
+    geoConsentHint: 'Нужно для кнопки «Моё местоположение». Без согласия адрес можно указать поиском на карте',
+    geoConsentRequired: 'Подтвердите согласие на использование геопозиции',
+    geoAllowedHint: 'Геопозиция доступна: вы дали согласие при входе',
+    geoNotAllowedHint: 'Геопозиция включится, если дать согласие при входе — пока адрес можно задать поиском или меткой',
     loginToTrackHint: 'Войдите в кабинет, чтобы видеть заказ и его статус',
     tgContactLabel: 'Аккаунт Telegram (определён автоматически)',
     tgContactLink: 'Написать',
@@ -538,6 +545,13 @@ const translations: Record<Lang, Record<string, string>> = {
     deliveryFee: 'Yetkazib berish',
     totalWithDelivery: "Yetkazib berish bilan jami",
     noDeliveryZone: "Hududlardan tashqari yetkazib berish — menejer bilan aniqlashtiring",
+
+    // ── v4: kirishda geolokatsiyaga rozilik ──────────────────────
+    geoConsentLabel: "Buyurtmalar va yetkazib berish uchun mening geolokatsiyamdan foydalanishga roziman",
+    geoConsentHint: "'Mening joylashuvim' tugmasi uchun kerak. Roziliksiz manzilni xaritadagi qidiruv orqali belgilash mumkin",
+    geoConsentRequired: "Geolokatsiyadan foydalanishga rozilikni tasdiqlang",
+    geoAllowedHint: "Geolokatsiya mavjud: kirishda rozilik berdingiz",
+    geoNotAllowedHint: "Geolokatsiya kirishda rozilik berilsa ishlaydi — hozircha manzilni qidiruv yoki belgi bilan ko'rsating",
     loginToTrackHint: "Buyurtma va uning holatini ko'rish uchun kabinetga kiring",
     tgContactLabel: 'Telegram akkaunti (avtomatik aniqlandi)',
     tgContactLink: 'Yozish',

@@ -2587,6 +2587,71 @@ img {
   text-align: left;
 }
 
+/* Согласие на геопозицию — обязательное при входе (v4) */
+.ob-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--divider);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.ob-consent:hover {
+  border-color: var(--brand-ring);
+}
+
+.ob-consent--checked {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
+
+.ob-consent__input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.ob-consent__box {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border-radius: 6px;
+  border: 2px solid var(--text-muted);
+  background: var(--bg);
+  color: #fff;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.ob-consent--checked .ob-consent__box {
+  border-color: var(--brand);
+  background: var(--brand);
+}
+
+.ob-consent__text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--text);
+}
+
+.ob-consent__hint {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
 /* ---------- Появление названия компании после входа ---------- */
 .reveal-overlay {
   position: fixed;
@@ -3414,6 +3479,15 @@ img {
 
 .address-picker__locate svg {
   color: var(--brand);
+}
+
+.address-picker__locate--off {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+.address-picker__locate--off svg {
+  color: var(--text-muted);
 }
 
 .address-picker__locate:disabled {

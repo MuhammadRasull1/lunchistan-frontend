@@ -22,6 +22,8 @@ interface AddressPickerProps {
   lang: Lang
   totalAmount: number
   initial?: CompanyAddress | null
+  /** Согласие пользователя на использование геопозиции (даётся при входе) */
+  geoAllowed: boolean
   onClose: () => void
   onSelect: (pick: AddressPick) => void
 }
@@ -35,7 +37,7 @@ const PIN_ICON = L.divIcon({
   iconAnchor: [17, 42],
 })
 
-function AddressPicker({ isOpen, lang, totalAmount, initial, onClose, onSelect }: AddressPickerProps) {
+function AddressPicker({ isOpen, lang, totalAmount, initial, geoAllowed, onClose, onSelect }: AddressPickerProps) {
   const mapRef = useRef<L.Map | null>(null)
   const markerRef = useRef<L.Marker | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -265,15 +267,18 @@ function AddressPicker({ isOpen, lang, totalAmount, initial, onClose, onSelect }
             <div className="address-picker__map" ref={containerRef} />
             <button
               type="button"
-              className="address-picker__locate"
+              className={`address-picker__locate${geoAllowed ? '' : ' address-picker__locate--off'}`}
               onClick={handleLocate}
-              disabled={locating}
+              disabled={locating || !geoAllowed}
+              title={geoAllowed ? t(lang, 'myLocation') : t(lang, 'geoNotAllowedHint')}
             >
               <Navigation size={16} strokeWidth={2} />
               {locating ? <Loader2 size={16} className="address-picker__spin" /> : t(lang, 'myLocation')}
             </button>
             {locError && <p className="address-picker__loc-error">{t(lang, 'locError')}</p>}
-            <p className="address-picker__hint">{t(lang, 'dropPinHint')}</p>
+            <p className="address-picker__hint">
+              {geoAllowed ? t(lang, 'dropPinHint') : t(lang, 'geoNotAllowedHint')}
+            </p>
 
             {/* Выбранный адрес + до двери + тариф */}
             <div className="address-picker__body">
