@@ -3509,6 +3509,27 @@ img {
   font-size: 13px;
 }
 
+.address-picker__loc-info {
+  position: absolute;
+  top: 160px;
+  right: 16px;
+  z-index: 800;
+  margin: 0;
+  padding: 7px 12px;
+  background: #fff;
+  border: 1px solid var(--brand-ring);
+  border-radius: var(--radius-md);
+  color: var(--brand-dark);
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: var(--shadow-raise);
+}
+
+.address-picker__loc-info--low {
+  color: #b45309;
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
 .address-picker__hint {
   margin: 8px 0 0;
   text-align: center;

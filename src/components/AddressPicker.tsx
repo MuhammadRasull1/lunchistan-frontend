@@ -57,6 +57,9 @@ function AddressPicker({ isOpen, lang, totalAmount, initial, geoAllowed, onClose
   const [quote, setQuote] = useState<DeliveryQuote | null>(null)
   const [locating, setLocating] = useState(false)
   const [locError, setLocError] = useState(false)
+  // Точность последней гео-точки (м). Показывается кружком на карте; сбрасывается при ручном выборе.
+  const [locAccuracy, setLocAccuracy] = useState<number | null>(null)
+  const circleRef = useRef<L.Circle | null>(null)
 
   // ── Инициализация карты ──────────────────────────────────────────
   const initMap = useCallback(() => {
@@ -79,11 +82,13 @@ function AddressPicker({ isOpen, lang, totalAmount, initial, geoAllowed, onClose
     marker.on('dragend', () => {
       const ll = marker.getLatLng()
       setPosition({ lat: ll.lat, lon: ll.lng })
+      setLocAccuracy(null)
     })
     map.on('click', (e: L.LeafletMouseEvent) => {
       marker.setLatLng(e.latlng)
       map.panTo(e.latlng)
       setPosition({ lat: e.latlng.lat, lon: e.latlng.lng })
+      setLocAccuracy(null)
     })
     map.on('moveend', () => setQuery(''))
 
@@ -168,6 +173,7 @@ function AddressPicker({ isOpen, lang, totalAmount, initial, geoAllowed, onClose
     hapticImpact('medium')
     setPosition({ lat, lon })
     setLabel(labelFromFeature(f))
+    setLocAccuracy(null)
     setResults([])
     setQuery('')
   }
@@ -175,15 +181,42 @@ function AddressPicker({ isOpen, lang, totalAmount, initial, geoAllowed, onClose
   const handleLocate = async () => {
     setLocating(true)
     setLocError(false)
-    const loc = await getBestLocation()
+    const fix = await getBestLocation().catch(() => null)
     setLocating(false)
-    if (loc) {
-      setPosition(loc)
+    if (fix) {
+      setPosition({ lat: fix.lat, lon: fix.lon })
+      setLocAccuracy(fix.accuracy)
     } else {
       hapticImpact('heavy')
       setLocError(true)
     }
   }
+
+  // Круг достоверности последней гео-точки: показывает, где реально находится устройство.
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || locAccuracy == null || !Number.isFinite(locAccuracy)) return
+    if (circleRef.current) {
+      circleRef.current.setLatLng([position.lat, position.lon])
+      circleRef.current.setRadius(locAccuracy)
+    } else {
+      circleRef.current = L.circle([position.lat, position.lon], {
+        radius: locAccuracy,
+        color: '#f97316',
+        weight: 1.5,
+        opacity: 0.8,
+        fillColor: '#f97316',
+        fillOpacity: 0.12,
+        interactive: false,
+      }).addTo(map)
+    }
+    return () => {
+      if (circleRef.current) {
+        map.removeLayer(circleRef.current)
+        circleRef.current = null
+      }
+    }
+  }, [locAccuracy, position.lat, position.lon, isOpen])
 
   const handleConfirm = () => {
     if (position.lat == null || position.lon == null) return
@@ -276,6 +309,13 @@ function AddressPicker({ isOpen, lang, totalAmount, initial, geoAllowed, onClose
               {locating ? <Loader2 size={16} className="address-picker__spin" /> : t(lang, 'myLocation')}
             </button>
             {locError && <p className="address-picker__loc-error">{t(lang, 'locError')}</p>}
+            {locAccuracy != null && (
+              <p className={`address-picker__loc-info${locAccuracy > 3000 ? ' address-picker__loc-info--low' : ''}`}>
+                {locAccuracy <= 3000
+                  ? t(lang, 'locAccuracyLabel', { m: formatAccuracy(locAccuracy) })
+                  : t(lang, 'locAccuracyLow')}
+              </p>
+            )}
             <p className="address-picker__hint">
               {geoAllowed ? t(lang, 'dropPinHint') : t(lang, 'geoNotAllowedHint')}
             </p>
@@ -329,6 +369,12 @@ function AddressPicker({ isOpen, lang, totalAmount, initial, geoAllowed, onClose
       )}
     </AnimatePresence>
   )
+}
+
+/** Человекочитаемая точность гео-точки: «50 м» / «1.2 км». */
+function formatAccuracy(meters: number): string {
+  if (meters < 1000) return `${Math.max(1, Math.round(meters))} м`
+  return `${(meters / 1000).toFixed(1).replace('.', ',')} км`
 }
 
 export default AddressPicker
