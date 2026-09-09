@@ -55,6 +55,8 @@ function AddressPicker({ isOpen, lang, totalAmount, initial, geoAllowed, onClose
   const [results, setResults] = useState<PhotonFeature[]>([])
   const [highlight, setHighlight] = useState(-1)
   const [quote, setQuote] = useState<DeliveryQuote | null>(null)
+  const [quoteLoading, setQuoteLoading] = useState(false)
+  const [quoteError, setQuoteError] = useState(false)
   const [locating, setLocating] = useState(false)
   const [locError, setLocError] = useState(false)
   // Точность последней гео-точки (м). Показывается кружком на карте; сбрасывается при ручном выборе.
@@ -121,23 +123,39 @@ function AddressPicker({ isOpen, lang, totalAmount, initial, geoAllowed, onClose
   }, [position])
 
   // ── Reverse-геокод + тариф на каждую смену координат ────────────
+  // reverseGeocode сам гасит ошибки, но fetchDeliveryQuote — обычный axios-запрос:
+  // необработанный reject в Promise.all раньше ронял весь колбэк без единого
+  // сообщения — quote просто оставался null молча (см. ОШИБКИ.md).
+  const [quoteRetryTick, setQuoteRetryTick] = useState(0)
   useEffect(() => {
     if (!isOpen) return
     let cancelled = false
+    // Осознанно синхронно: индикатор загрузки должен появиться сразу, не после
+    // резолва промиса — иначе кнопка "Подтвердить адрес" на миг доступна со старым тарифом.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setQuoteLoading(true)
+    setQuoteError(false)
     const timer = setTimeout(async () => {
-      const q = await Promise.all([
-        reverseGeocode(position.lat, position.lon),
-        fetchDeliveryQuote(position.lat, position.lon, totalAmount),
-      ])
-      if (cancelled) return
-      if (q[0]) setLabel(q[0])
-      setQuote(q[1])
+      try {
+        const [geocoded, deliveryQuote] = await Promise.all([
+          reverseGeocode(position.lat, position.lon),
+          fetchDeliveryQuote(position.lat, position.lon, totalAmount),
+        ])
+        if (cancelled) return
+        if (geocoded) setLabel(geocoded)
+        setQuote(deliveryQuote)
+        setQuoteLoading(false)
+      } catch {
+        if (cancelled) return
+        setQuoteError(true)
+        setQuoteLoading(false)
+      }
     }, 400)
     return () => {
       cancelled = true
       clearTimeout(timer)
     }
-  }, [isOpen, position.lat, position.lon, totalAmount])
+  }, [isOpen, position.lat, position.lon, totalAmount, quoteRetryTick])
 
   // ── Поиск Photon (c дебаунсом) ─────────────────────────────────────
   useEffect(() => {
@@ -338,7 +356,18 @@ function AddressPicker({ isOpen, lang, totalAmount, initial, geoAllowed, onClose
                 />
               </div>
 
-              {quote && (
+              {quoteLoading && (
+                <div className="address-picker__fee">{t(lang, 'deliveryQuoteLoading')}</div>
+              )}
+              {quoteError && (
+                <div className="address-picker__fee cart__address-fee--error">
+                  {t(lang, 'deliveryQuoteError')}{' '}
+                  <button type="button" className="cart__address-change" onClick={() => setQuoteRetryTick(n => n + 1)}>
+                    {t(lang, 'retry')}
+                  </button>
+                </div>
+              )}
+              {quote && !quoteLoading && !quoteError && (
                 <div className="address-picker__fee">
                   <span className={quote.freeDelivery ? '' : 'address-picker__fee-value'}>
                     {quote.fee === 0
@@ -358,6 +387,7 @@ function AddressPicker({ isOpen, lang, totalAmount, initial, geoAllowed, onClose
                 type="button"
                 className="btn btn--primary btn--lg"
                 onClick={handleConfirm}
+                disabled={quoteLoading || quoteError}
                 whileTap={{ scale: 0.98 }}
               >
                 <MapPin size={16} strokeWidth={2} />

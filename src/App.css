@@ -3174,6 +3174,37 @@ img {
   margin-top: 10px;
 }
 
+.cancel-confirm {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: rgba(217, 56, 56, 0.06);
+  border: 1px solid rgba(217, 56, 56, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cancel-confirm__text {
+  font-size: 13px;
+  color: var(--text);
+  margin: 0;
+}
+
+.cancel-confirm__note {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm, 8px);
+  border: 1px solid var(--border, #ddd);
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.cancel-confirm__actions {
+  display: flex;
+  gap: 8px;
+}
+
 /* Кнопка-строка (день/заказ, кликабельная) — сброс стилей button */
 .day-row--btn {
   width: 100%;
@@ -3268,6 +3299,10 @@ img {
 .cart__address-fee {
   font-size: 13px;
   color: var(--text-muted);
+}
+
+.cart__address-fee--error {
+  color: var(--destructive);
 }
 
 .cart__address-change {

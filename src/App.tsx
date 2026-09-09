@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import './App.css'
 import Catalog from './components/Catalog'
@@ -34,6 +34,23 @@ function loadInitialLang(): Lang {
   }
 }
 
+/**
+ * Если promise не решился за ms — резолвим fallback'ом сами. Telegram
+ * CloudStorage иногда не вызывает колбэк (баги клиента/сеть) — без этого
+ * boot() зависал НАВСЕГДА и приложение не открывалось (см. ОШИБКИ.md).
+ */
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return new Promise(resolve => {
+    const timer = setTimeout(() => resolve(fallback), ms)
+    promise.then(v => { clearTimeout(timer); resolve(v) }, () => { clearTimeout(timer); resolve(fallback) })
+  })
+}
+
+function makeIdempotencyKey(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID()
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
+
 function makeDefaultDay(): CartState[string] {
   // setId: null — блюдо на день ещё не выбрано («токен» не потрачен).
   return { active: true, portions: 1, beverage: 'Вода', salad: DEFAULT_SALAD, setId: null }
@@ -50,8 +67,12 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [successInfo, setSuccessInfo] = useState<{
     method: PaymentMethod; total: number; employees: number; days: number
-    orderNumber?: string; status?: string; isLead?: boolean
+    orderNumber?: string; status?: string; isLead?: boolean; deliveryFee?: number
   } | null>(null)
+  // Ключ идемпотентности заказа: стабилен, пока не поменялся состав заказа (двойной
+  // клик/ретрай с тем же ключом не создаст на бэкенде второй заказ), и сбрасывается
+  // при любом изменении состава — иначе новый заказ получил бы ответ от старого.
+  const idempotencyKeyRef = useRef<string | null>(null)
   // auth-состояние раздела «Команды»
   const [user, setUser] = useState<AuthUser | null>(null)
   const [employeesCount, setEmployeesCount] = useState(0)
@@ -75,15 +96,24 @@ function App() {
     saveOrder({ employeeCount, cartState })
   }, [employeeCount, cartState])
 
+  // Состав заказа поменялся — старый ключ идемпотентности больше не описывает
+  // этот заказ, нельзя его переиспользовать (иначе бэкенд отдаст старый заказ
+  // вместо создания нового).
+  useEffect(() => {
+    idempotencyKeyRef.current = null
+  }, [cartState, employeeCount])
+
   // Восстановление сессии раздела «Команды»
   useEffect(() => {
     let cancelled = false
     const boot = async () => {
       // localStorage TMA мог быть очищен при закрытии — подтягиваем токен из
       // CloudStorage Telegram (персистентное хранилище, привязано к аккаунту).
-      const token = getToken() ?? (await restoreTokenFromCloud())
+      // Таймаут 3с: колбэк CloudStorage иногда не вызывается вовсе (баг клиента/
+      // сети) — без таймаута boot() зависал навсегда и приложение не открывалось.
+      const token = getToken() ?? (await withTimeout(restoreTokenFromCloud(), 3000, null))
       // Согласие на геопозицию тоже живёт в CloudStorage — восстанавливаем молча.
-      await restoreGeoConsentFromCloud()
+      await withTimeout(restoreGeoConsentFromCloud(), 3000, false)
       if (!token) {
         setBooted(true)
         return
@@ -260,6 +290,7 @@ function App() {
           lineTotal: (set?.price ?? SET_PRICE) * totalPortions,
         }
       })
+      if (!idempotencyKeyRef.current) idempotencyKeyRef.current = makeIdempotencyKey()
       const payload = {
         employeeCount,
         workDaysCount: lines.length,
@@ -268,13 +299,17 @@ function App() {
         lines,
         totalMonthlyPrice,
         paymentMethod: method,
+        idempotencyKey: idempotencyKeyRef.current,
         ...contact,
       }
       const result = await submitOrder(payload)
-      // Фиксируем данные для экрана Success ДО сброса заказа.
+      // Фиксируем данные для экрана Success ДО сброса заказа. Сумму берём из ответа
+      // сервера (totalWithDelivery), а не из локального totalMonthlyPrice — иначе
+      // на экране успеха доставка молча пропадала из итога (см. ОШИБКИ.md).
       setSuccessInfo({
-        method, total: totalMonthlyPrice, employees: employeeCount, days: lines.length,
+        method, total: result.totalWithDelivery, employees: employeeCount, days: lines.length,
         orderNumber: result.orderNumber, status: result.status, isLead: result.isLead,
+        deliveryFee: result.deliveryFee,
       })
       // Очищаем заказ после успешной отправки — уже оплаченный заказ не должен
       // восстанавливаться автоприсейвом и не может быть оплачен повторно.
@@ -309,7 +344,10 @@ function App() {
 
   const handleTabChange = (next: AppTab) => {
     setTab(next)
-    if (next === 'catalog' && screen !== 'catalog' && screen !== 'cart' && screen !== 'success') {
+    // Screen — это ровно 'catalog' | 'cart' | 'success' (см. types.ts), поэтому старое
+    // условие "screen не catalog/cart/success" не срабатывало никогда — переключение
+    // на вкладку «Каталог» не возвращало на сам каталог из корзины/успеха.
+    if (next === 'catalog' && screen !== 'catalog') {
       setScreen('catalog')
     }
   }
@@ -412,6 +450,7 @@ function App() {
                   isLead={successInfo?.isLead}
                   paymentMethod={successInfo?.method}
                   totalMonthlyPrice={successInfo?.total}
+                  deliveryFee={successInfo?.deliveryFee}
                   employeeCount={successInfo?.employees}
                   activeDays={successInfo?.days}
                 />

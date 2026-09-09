@@ -22,6 +22,10 @@ export default function OrderDetailSheet({ lang, orderId, owner, preset, onClose
   const [fetched, setFetched] = useState<OrderView | null>(null)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
+  // Отмена — необратимое по смыслу действие (клиент/кухня могли уже быть в курсе
+  // заказа), поэтому один случайный тап не должен её выполнять — сперва подтверждение.
+  const [confirmingCancel, setConfirmingCancel] = useState(false)
+  const [cancelNote, setCancelNote] = useState('')
 
   useEffect(() => {
     if (orderId == null || !owner) return
@@ -34,20 +38,30 @@ export default function OrderDetailSheet({ lang, orderId, owner, preset, onClose
 
   const order: OrderView | null = owner ? (fetched ?? preset ?? null) : (preset ?? null)
 
-  const change = async (status: OrderStatus) => {
+  const change = async (status: OrderStatus, note?: string) => {
     if (!order || busy) return
     setBusy(true)
     setMsg(null)
     try {
-      const updated = await setOrderStatus(order.id, status)
+      const updated = await setOrderStatus(order.id, status, note)
       setFetched({ ...order, ...updated })
       setMsg(t(lang, 'statusChanged'))
       onChanged?.(updated)
+      setConfirmingCancel(false)
+      setCancelNote('')
     } catch {
       setMsg(t(lang, 'authError'))
     } finally {
       setBusy(false)
     }
+  }
+
+  const handleStatusClick = (s: OrderStatus) => {
+    if (s === 'cancelled') {
+      setConfirmingCancel(true)
+      return
+    }
+    change(s)
   }
 
   return (
@@ -145,14 +159,46 @@ export default function OrderDetailSheet({ lang, orderId, owner, preset, onClose
                         {nextStatuses(order.status).map((s) => (
                           <button
                             key={s}
-                            className="btn btn--outline"
+                            className={`btn btn--outline${s === 'cancelled' ? ' btn--outline-danger' : ''}`}
                             disabled={busy}
-                            onClick={() => change(s)}
+                            onClick={() => handleStatusClick(s)}
                           >
                             {statusLabel(lang, s)}
                           </button>
                         ))}
                       </div>
+
+                      {confirmingCancel && (
+                        <div className="cancel-confirm">
+                          <p className="cancel-confirm__text">
+                            {t(lang, 'cancelConfirmText', { number: order.number })}
+                          </p>
+                          <input
+                            className="cancel-confirm__note"
+                            value={cancelNote}
+                            onChange={(e) => setCancelNote(e.target.value)}
+                            placeholder={t(lang, 'cancelNotePlaceholder')}
+                          />
+                          <div className="cancel-confirm__actions">
+                            <button
+                              type="button"
+                              className="btn btn--outline"
+                              disabled={busy}
+                              onClick={() => { setConfirmingCancel(false); setCancelNote('') }}
+                            >
+                              {t(lang, 'cancelConfirmNo')}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn--outline btn--outline-danger"
+                              disabled={busy}
+                              onClick={() => change('cancelled', cancelNote.trim() || undefined)}
+                            >
+                              {t(lang, 'cancelConfirmYes')}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </>
                   )}
                 </>

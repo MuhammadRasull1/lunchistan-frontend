@@ -7,7 +7,9 @@ const LAT_ROW_3 = 'zxcvbnm'
 const ROWS = [CYR_ROW_1, CYR_ROW_2, CYR_ROW_3, LAT_ROW_1, LAT_ROW_2, LAT_ROW_3]
 const VOWELS = 'аеёиоуыэюяaeiouy'
 
-const ALLOWED = /^[a-zA-Zа-яА-ЯёЁ\s'’-]+$/
+// + узбекская кириллица (Ў/ў Қ/қ Ғ/ғ Ҳ/ҳ) и апостроф-модификатор (ʻ/ʼ, как в
+// "Gʻayrat"/"Oʻktam") — без них реальные узбекские имена не проходили валидацию.
+const ALLOWED = /^[a-zA-Zа-яА-ЯёЁЎўҚқҒғҲҳʻʼ\s'’-]+$/
 
 function isAdjacentInRow(a: string, b: string): boolean {
   for (const row of ROWS) {
@@ -36,7 +38,7 @@ export function isValidName(raw: string): boolean {
   if (name.length < 2 || name.length > 50) return false
   if (name.split(/\s+/).some(part => part.length === 1)) return false
   if (!ALLOWED.test(name)) return false
-  const letters = name.replace(/[^a-zA-Zа-яА-ЯёЁ]/g, '')
+  const letters = name.replace(/[^a-zA-Zа-яА-ЯёЁЎўҚқҒғҲҳ]/g, '')
   if (letters.length < 2) return false
   const lower = letters.toLowerCase()
   if (![...lower].some(ch => VOWELS.includes(ch))) return false

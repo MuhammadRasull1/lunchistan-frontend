@@ -168,6 +168,17 @@ export function getTelegramUser(): TelegramUser | null {
   }
 }
 
+/**
+ * Подписанная строка initData целиком (не initDataUnsafe!) — единственное, что
+ * бэкенд может реально проверить (HMAC по боту), в отличие от initDataUnsafe.user,
+ * который клиент теоретически может подделать перед отправкой запроса.
+ * Используется как заголовок x-telegram-init-data (см. lib/api.ts).
+ */
+export function getTelegramInitData(): string | null {
+  const raw = getTelegramWebApp()?.initData
+  return typeof raw === 'string' && raw.length > 0 ? raw : null
+}
+
 // ── CloudStorage: персистентное хранилище Telegram ─────────────────
 // local/WebView localStorage в Telegram стирается при закрытии, а CloudStorage
 // живёт у Telegram и привязан к аккаунту пользователя. Используем его как

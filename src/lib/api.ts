@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { cloudSetItem, cloudGetItem, cloudRemoveItem } from './telegram'
+import { cloudSetItem, cloudGetItem, cloudRemoveItem, getTelegramInitData } from './telegram'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'https://lunchistan-backend.onrender.com'
 
@@ -46,6 +46,10 @@ const http = axios.create({ baseURL: API_BASE_URL, timeout: 15000 })
 http.interceptors.request.use(config => {
   const token = getToken()
   if (token) config.headers.Authorization = `Bearer ${token}`
+  // Подписанная initData — бэкенд проверяет HMAC и берёт из неё настоящий
+  // Telegram id/username, а не из тела запроса (см. auth.js verifyTelegramInitData).
+  const initData = getTelegramInitData()
+  if (initData) config.headers['x-telegram-init-data'] = initData
   return config
 })
 
@@ -176,6 +180,12 @@ export async function confirmDay(date: string): Promise<DayReport> {
   return data
 }
 
+/** Повторная отправка чека кухне в Telegram для уже подтверждённого дня (если не дошло с первого раза). */
+export async function resendDayReport(date: string): Promise<{ success: boolean; telegramSent: boolean }> {
+  const { data } = await http.post<{ success: boolean; telegramSent: boolean }>(`/api/manager/report/${date}/resend`)
+  return data
+}
+
 // ── Ошибки ─────────────────────────────────────────────────────────
 export function apiErrorMessage(err: unknown): string | null {
   if (axios.isAxiosError(err)) {
@@ -224,6 +234,8 @@ export interface OrderPayload extends OrderContact {
   lines: OrderLine[]
   totalMonthlyPrice: number
   paymentMethod: string
+  /** Ключ для защиты от задвоения заказа при двойном клике/ретрае сети (см. App.tsx). */
+  idempotencyKey?: string
 }
 
 export interface OrderResult {
@@ -233,6 +245,10 @@ export interface OrderResult {
   status: string
   isLead: boolean
   telegramSent: boolean
+  /** Итоговая доставка/сумма — считает сервер, это единственный источник правды для экрана успеха. */
+  deliveryFee: number
+  deliveryZone: string | null
+  totalWithDelivery: number
 }
 
 /**

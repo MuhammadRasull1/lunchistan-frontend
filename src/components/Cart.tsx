@@ -62,6 +62,8 @@ function Cart({
   const [addressPick, setAddressPick] = useState<AddressPick | null>(null)
   const [savedCompanyAddress, setSavedCompanyAddress] = useState<CompanyAddress | null>(null)
   const [deliveryQuote, setDeliveryQuote] = useState<DeliveryQuote | null>(null)
+  const [deliveryQuoteLoading, setDeliveryQuoteLoading] = useState(false)
+  const [deliveryQuoteError, setDeliveryQuoteError] = useState(false)
   // Согласие на геопозицию пользователя — даётся при входе, хранится локально.
   const [geoConsent] = useState(() => getGeoConsent())
 
@@ -76,19 +78,30 @@ function Cart({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.companyId])
 
-  // Тариф доставки для выбранной точки — сумма в чекауте.
+  // Тариф доставки для выбранной точки — сумма в чекауте. Ошибку сети НЕ прячем:
+  // раньше при сбое строка доставки просто исчезала, неотличимо от «доставка
+  // бесплатна», и можно было оплатить заказ, не подозревая, что тариф не посчитан.
+  const [quoteRetryTick, setQuoteRetryTick] = useState(0)
   useEffect(() => {
     if (!addressPick) return
     let cancelled = false
+    // Осознанно синхронно: индикатор загрузки должен появиться сразу, не после
+    // резолва промиса — иначе окно "делает вид что доставка бесплатна" не закрывается.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDeliveryQuoteLoading(true)
+    setDeliveryQuoteError(false)
     fetchDeliveryQuote(addressPick.lat, addressPick.lon, totalMonthlyPrice)
-      .then(q => { if (!cancelled) setDeliveryQuote(q) })
-      .catch(() => {})
+      .then(q => { if (!cancelled) { setDeliveryQuote(q); setDeliveryQuoteLoading(false) } })
+      .catch(() => { if (!cancelled) { setDeliveryQuoteError(true); setDeliveryQuoteLoading(false) } })
     return () => { cancelled = true }
-  }, [addressPick, totalMonthlyPrice])
+  }, [addressPick, totalMonthlyPrice, quoteRetryTick])
 
   // Пока адрес не выбран — доставки нет (в т.ч. очистка при выборе нового адреса).
   const delivery = addressPick ? deliveryQuote : null
   const grandTotal = totalMonthlyPrice + (delivery?.fee ?? 0)
+  // Если адрес выбран, но тариф ещё грузится/не удался — оформление заблокировано:
+  // иначе можно было заплатить «бесплатную» доставку, которая на деле не посчиталась.
+  const deliveryReady = !addressPick || (!deliveryQuoteLoading && !deliveryQuoteError)
 
   const contact: OrderContact = {
     contactName: contactName.trim() || undefined,
@@ -124,7 +137,7 @@ function Cart({
 
   const activeDays = activeLines.length
   const allDishesChosen = activeLines.length > 0 && activeLines.every(({ item }) => item?.setId != null)
-  const canCheckout = allDishesChosen && contactOk && activeLines.every(({ item }) => {
+  const canCheckout = allDishesChosen && contactOk && deliveryReady && activeLines.every(({ item }) => {
     return !!item?.salad && !!item?.beverage
   })
 
@@ -320,7 +333,18 @@ function Cart({
                         {addressPick.destDetail ? ` — ${addressPick.destDetail}` : ''}
                       </span>
                     </div>
-                    {delivery && (
+                    {deliveryQuoteLoading && (
+                      <div className="cart__address-fee">{t(lang, 'deliveryQuoteLoading')}</div>
+                    )}
+                    {deliveryQuoteError && (
+                      <div className="cart__address-fee cart__address-fee--error">
+                        {t(lang, 'deliveryQuoteError')}{' '}
+                        <button type="button" className="cart__address-change" onClick={() => setQuoteRetryTick(n => n + 1)}>
+                          {t(lang, 'retry')}
+                        </button>
+                      </div>
+                    )}
+                    {delivery && !deliveryQuoteLoading && !deliveryQuoteError && (
                       <div className="cart__address-fee">
                         {delivery.fee === 0
                           ? `${t(lang, 'deliveryFee')}: 0`
@@ -415,7 +439,13 @@ function Cart({
               animate={{ opacity: 1 }}
               transition={{ delay: 0.35 }}
             >
-              {t(lang, !allDishesChosen ? 'chooseDishForEveryDay' : contactOk ? 'incompleteSelectionHint' : 'contactRequiredHint')}
+              {t(lang, !allDishesChosen
+                ? 'chooseDishForEveryDay'
+                : !contactOk
+                  ? 'contactRequiredHint'
+                  : !deliveryReady
+                    ? (deliveryQuoteError ? 'deliveryQuoteError' : 'deliveryQuoteLoading')
+                    : 'incompleteSelectionHint')}
             </motion.p>
           )}
 

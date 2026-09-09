@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { CheckCircle2, Lock, Users, Copy } from 'lucide-react'
 import type { Lang } from '../types'
 import { t, WEEKDAYS_SHORT } from '../locales/translations'
-import { fetchManagerDates, fetchDayReport, confirmDay } from '../lib/api'
+import { fetchManagerDates, fetchDayReport, confirmDay, resendDayReport } from '../lib/api'
 import type { DayReport, ManagerDate } from '../lib/api'
 import MyOrdersView from './MyOrdersView'
 import Reveal from './Reveal'
@@ -29,6 +29,10 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
   const [report, setReport] = useState<DayReport | null>(null)
   const [loadingDates, setLoadingDates] = useState(true)
   const [confirming, setConfirming] = useState(false)
+  // Подтверждение дня отправляет чек в Telegram и блокирует день для правок сотрудниками —
+  // необратимо по смыслу, поэтому один тап не должен запускать это сразу.
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [resending, setResending] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [sub, setSub] = useState<'orders' | 'team'>('orders')
@@ -74,10 +78,25 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
       const refreshed = await fetchManagerDates()
       setDates(refreshed)
       setMessage(t(lang, 'confirmSuccess'))
+      setShowConfirmDialog(false)
     } catch {
       setMessage(t(lang, 'authError'))
     } finally {
       setConfirming(false)
+    }
+  }
+
+  const onResend = async () => {
+    if (!activeDate || resending) return
+    setResending(true)
+    setMessage(null)
+    try {
+      const r = await resendDayReport(activeDate)
+      setMessage(t(lang, r.telegramSent ? 'resendSuccess' : 'resendFailed'))
+    } catch {
+      setMessage(t(lang, 'authError'))
+    } finally {
+      setResending(false)
     }
   }
 
@@ -193,10 +212,25 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
               {report.confirmed ? (
                 <div className="manager-report__confirmed">
                   <CheckCircle2 size={18} /> {t(lang, 'dayConfirmed')}
+                  <button className="auth-toggle with-ml" disabled={resending} onClick={onResend}>
+                    {resending ? t(lang, 'submitting') : t(lang, 'resendReceipt')}
+                  </button>
+                </div>
+              ) : showConfirmDialog ? (
+                <div className="cancel-confirm">
+                  <p className="cancel-confirm__text">{t(lang, 'confirmDayDialogText')}</p>
+                  <div className="cancel-confirm__actions">
+                    <button className="btn btn--outline" disabled={confirming} onClick={() => setShowConfirmDialog(false)}>
+                      {t(lang, 'cancelConfirmNo')}
+                    </button>
+                    <button className="btn btn--primary" disabled={confirming} onClick={onConfirm}>
+                      {confirming && <span className="btn__spinner" />}
+                      {t(lang, 'confirmDay')}
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <button className="btn btn--primary btn--lg" onClick={onConfirm} disabled={confirming || report.scheduled === 0}>
-                  {confirming && <span className="btn__spinner" />}
+                <button className="btn btn--primary btn--lg" onClick={() => setShowConfirmDialog(true)} disabled={confirming || report.scheduled === 0}>
                   {t(lang, 'confirmDay')}
                 </button>
               )}

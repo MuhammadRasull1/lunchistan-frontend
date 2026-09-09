@@ -213,6 +213,10 @@ const translations: Record<Lang, Record<string, string>> = {
     dayConfirmed: 'День подтверждён',
     reportEmpty: 'На этот день никто не запланирован',
     confirmSuccess: 'Заказ на день подтверждён. Чек отправлен в Telegram.',
+    confirmDayDialogText: 'Подтвердить заказ на этот день? После этого день заблокируется для правок сотрудниками, а чек уйдёт в Telegram.',
+    resendReceipt: 'Отправить чек ещё раз',
+    resendSuccess: 'Чек отправлен в Telegram.',
+    resendFailed: 'Не удалось отправить — попробуйте ещё раз позже.',
     totalSum: 'Итого',
 
     // ── v3: контакты в чекауте ──────────────────────────────────
@@ -241,6 +245,9 @@ const translations: Record<Lang, Record<string, string>> = {
     deliveryFee: 'Доставка',
     totalWithDelivery: 'Итого с доставкой',
     noDeliveryZone: 'Доставка за пределы зон — уточните у менеджера',
+    deliveryQuoteLoading: 'Считаем стоимость доставки…',
+    deliveryQuoteError: 'Не удалось посчитать доставку. Проверьте связь и попробуйте ещё раз.',
+    retry: 'Повторить',
 
     // ── v4: согласие на геопозицию при входе ─────────────────────
     geoConsentLabel: 'Я соглашаюсь, что моя геопозиция будет использоваться для заказов и доставки',
@@ -303,6 +310,10 @@ const translations: Record<Lang, Record<string, string>> = {
     orderDetail: 'Заказ',
     changeStatus: 'Сменить статус',
     statusChanged: 'Статус обновлён',
+    cancelConfirmText: 'Точно отменить заказ №{number}? Клиент и кухня могут уже быть в курсе — автоматическое уведомление об отмене не отправляется.',
+    cancelNotePlaceholder: 'Причина отмены (необязательно)',
+    cancelConfirmNo: 'Не отменять',
+    cancelConfirmYes: 'Да, отменить',
     teamsPlanned: 'Команды · запланировано',
     allOrders: 'Все заказы',
   },
@@ -519,6 +530,10 @@ const translations: Record<Lang, Record<string, string>> = {
     dayConfirmed: 'Kun tasdiqlangan',
     reportEmpty: "Bu kunga hech kim rejalashtirilmagan",
     confirmSuccess: "Kun buyurtmasi tasdiqlandi. Chek Telegram-ga yuborildi.",
+    confirmDayDialogText: "Shu kunning buyurtmasini tasdiqlaysizmi? Shundan so'ng kun xodimlar uchun tahrirlash uchun bloklanadi, chek Telegram-ga yuboriladi.",
+    resendReceipt: "Chekni qayta yuborish",
+    resendSuccess: "Chek Telegram-ga yuborildi.",
+    resendFailed: "Yuborib bo'lmadi — birozdan keyin qayta urinib ko'ring.",
     totalSum: 'Jami',
 
     // ── v3: yetkazib berish kontaktlari ────────────────────────
@@ -547,6 +562,9 @@ const translations: Record<Lang, Record<string, string>> = {
     deliveryFee: 'Yetkazib berish',
     totalWithDelivery: "Yetkazib berish bilan jami",
     noDeliveryZone: "Hududlardan tashqari yetkazib berish — menejer bilan aniqlashtiring",
+    deliveryQuoteLoading: 'Yetkazib berish narxi hisoblanmoqda…',
+    deliveryQuoteError: "Yetkazib berishni hisoblab bo'lmadi. Aloqani tekshirib, qayta urinib ko'ring.",
+    retry: "Qayta urinish",
 
     // ── v4: kirishda geolokatsiyaga rozilik ──────────────────────
     geoConsentLabel: "Buyurtmalar va yetkazib berish uchun mening geolokatsiyamdan foydalanishga roziman",
@@ -609,6 +627,10 @@ const translations: Record<Lang, Record<string, string>> = {
     orderDetail: 'Buyurtma',
     changeStatus: "Holatni o'zgartirish",
     statusChanged: 'Holat yangilandi',
+    cancelConfirmText: "Rostdan ham №{number} buyurtmani bekor qilasizmi? Mijoz va oshxona allaqachon xabardor bo'lishi mumkin — bekor qilish haqida avtomatik xabar yuborilmaydi.",
+    cancelNotePlaceholder: "Bekor qilish sababi (ixtiyoriy)",
+    cancelConfirmNo: 'Bekor qilmaslik',
+    cancelConfirmYes: "Ha, bekor qilish",
     teamsPlanned: 'Jamoalar · rejalashtirilgan',
     allOrders: 'Barcha buyurtmalar',
   },

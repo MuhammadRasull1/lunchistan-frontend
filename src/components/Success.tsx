@@ -15,6 +15,8 @@ interface SuccessProps {
   isLead?: boolean
   paymentMethod?: PaymentMethod
   totalMonthlyPrice?: number
+  /** Стоимость доставки, уже учтённая в totalMonthlyPrice (сумма от сервера) */
+  deliveryFee?: number
   employeeCount?: number
   activeDays?: number
 }
@@ -27,7 +29,7 @@ const METHOD_LABEL_KEYS: Record<PaymentMethod, string> = {
 
 function Success({
   lang, onNewOrder, orderNumber, status, isLead,
-  paymentMethod, totalMonthlyPrice, employeeCount, activeDays,
+  paymentMethod, totalMonthlyPrice, deliveryFee, employeeCount, activeDays,
 }: SuccessProps) {
   const showSummary = paymentMethod !== undefined && totalMonthlyPrice !== undefined
 
@@ -72,6 +74,12 @@ function Success({
               <div className="success__summary-row">
                 <span>{t(lang, 'selectedDays')}</span>
                 <span>{activeDays} {t(lang, 'days')} · {employeeCount} {t(lang, 'employeesPlural')}</span>
+              </div>
+            )}
+            {!!deliveryFee && (
+              <div className="success__summary-row">
+                <span>{t(lang, 'deliveryFee')}</span>
+                <span>{formatPrice(deliveryFee, lang)}</span>
               </div>
             )}
             <div className="success__summary-row success__summary-row--total">
