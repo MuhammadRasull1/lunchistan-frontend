@@ -11,17 +11,22 @@ import EmployeeView from './components/EmployeeView'
 import ManagerView from './components/ManagerView'
 import OwnerView from './components/OwnerView'
 import SupportLink from './components/SupportLink'
-import { MONTHLY_SETS, SET_PRICE, getSetForDate, getSetById } from './data/mockMenu'
-import type { CartState, Screen, PaymentMethod, Beverage, Salad, Lang, SelectedDay } from './types'
+import { getSetForDate, getSetById } from './lib/menu'
+import type { CartState, Screen, PaymentMethod, Beverage, Salad, Lang, LunchSet, SelectedDay } from './types'
 import { EMPLOYEE_MAX } from './types'
 import { t } from './locales/translations'
 import { showTelegramAlert } from './lib/telegram'
 import { loadSavedOrder, saveOrder, clearSavedOrder } from './lib/orderStorage'
-import { submitOrder, getToken, setToken, fetchMe, restoreTokenFromCloud } from './lib/api'
+import { submitOrder, getToken, setToken, fetchMe, fetchMenu, restoreTokenFromCloud } from './lib/api'
 import { restoreGeoConsentFromCloud } from './lib/geoConsent'
 import type { AuthResponse, AuthUser, OrderContact } from './lib/api'
-import { DEFAULT_SALAD } from './components/saladOptions'
+import { getDefaultSalad } from './components/saladOptions'
 import { isPastDate, isValidDateString } from './lib/calendar'
+
+// До 11.09.2026 меню было захардкожено в data/mockMenu.ts с единой ценой на все блюда.
+// Теперь у каждого блюда своя цена из БД — это лишь запасное значение на случай,
+// когда set ещё не определён (меню не загрузилось / идёт загрузка).
+const FALLBACK_PRICE = 55000
 
 const LANG_STORAGE_KEY = 'lunchistan_lang'
 
@@ -51,9 +56,9 @@ function makeIdempotencyKey(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`
 }
 
-function makeDefaultDay(): CartState[string] {
+function makeDefaultDay(menu: LunchSet[]): CartState[string] {
   // setId: null — блюдо на день ещё не выбрано («токен» не потрачен).
-  return { active: true, portions: 1, beverage: 'Вода', salad: DEFAULT_SALAD, setId: null }
+  return { active: true, portions: 1, beverage: 'Вода', salad: getDefaultSalad(menu), setId: null }
 }
 
 // Читаем и валидируем сохранённую конфигурацию один раз при загрузке модуля.
@@ -77,6 +82,8 @@ function App() {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [employeesCount, setEmployeesCount] = useState(0)
   const [booted, setBooted] = useState(false)
+  const [menu, setMenu] = useState<LunchSet[]>([])
+  const [menuError, setMenuError] = useState(false)
   // Анимация появления названия компании сразу после входа
   const [revealCompany, setRevealCompany] = useState<string | null>(null)
   // Единая модель: cartState ключуется по дате YYYY-MM-DD; наличие ключа = день выбран.
@@ -136,6 +143,22 @@ function App() {
     }
   }, [])
 
+  // Меню — с бэкенда (см. lib/api.ts fetchMenu, до 11.09.2026 было захардкожено
+  // в data/mockMenu.ts). Независимо от boot() выше: логин не должен ждать меню,
+  // оно нужно только внутри уже авторизованного приложения (Catalog/EmployeeView).
+  // Ошибка — не тонет молча (тот же принцип, что и для тарифа доставки, см. ОШИБКИ.md):
+  // без меню каталог и «Команды» бесполезны, поэтому вместо пустого списка — retry.
+  const [menuReloadKey, setMenuReloadKey] = useState(0)
+  useEffect(() => {
+    let cancelled = false
+    fetchMenu()
+      .then(sets => { if (!cancelled) setMenu(sets) })
+      .catch(() => { if (!cancelled) setMenuError(true) })
+    return () => {
+      cancelled = true
+    }
+  }, [menuReloadKey])
+
   const handleAuth = (result: AuthResponse) => {
     setToken(result.token)
     setUser(result.user)
@@ -157,14 +180,17 @@ function App() {
 
   // Единственный источник истины по количеству дней — выбранные даты.
   const selectedDates = Object.keys(cartState).sort()
-  const orderDays: SelectedDay[] = selectedDates.map(date => {
+  // Пока меню не загрузилось, getSetForDate/getSetById не могут вернуть сет —
+  // Catalog всё равно не рендерится раньше booted+menu (см. ниже), это просто
+  // держит типы честными (SelectedDay.set обязателен) без "as LunchSet".
+  const orderDays: SelectedDay[] = menu.length === 0 ? [] : selectedDates.map(date => {
     const item = cartState[date]
     // Сет дня = выбор клиента (item.setId). Ротация getSetForDate — только
     // визуальный плейсхолдер, пока блюдо не выбрано.
-    const chosenSet = getSetById(item?.setId)
+    const chosenSet = getSetById(menu, item?.setId)
     return {
       date,
-      set: chosenSet ?? getSetForDate(date),
+      set: chosenSet ?? getSetForDate(menu, date) ?? menu[0],
       chosen: chosenSet !== undefined,
       item,
     }
@@ -172,7 +198,7 @@ function App() {
   // Все дни с выбранным блюдом? (иначе заказ оформить нельзя)
   const allDishesChosen = orderDays.length > 0 && orderDays.every(d => d.chosen)
   const totalPortionsFromActive = selectedDates.reduce((sum, date) => sum + (cartState[date]?.portions ?? 1), 0)
-  const totalMonthlyPrice = totalPortionsFromActive * employeeCount * SET_PRICE
+  const totalMonthlyPrice = totalPortionsFromActive * employeeCount * FALLBACK_PRICE
   const totalItems = totalPortionsFromActive * employeeCount
   /** Включить/выключить день: при отключении настройки дня (салат/напиток/порции) удаляются из state */
   const handleToggleDate = (date: string) => {
@@ -184,7 +210,7 @@ function App() {
       }
       // Защитный слой: прошедшие даты нельзя включить (удаление всегда разрешено).
       if (isPastDate(date)) return prev
-      return { ...prev, [date]: makeDefaultDay() }
+      return { ...prev, [date]: makeDefaultDay(menu) }
     })
   }
 
@@ -253,7 +279,7 @@ function App() {
       for (const date of dates) {
         // Защитный слой: прошедшие даты не применяются.
         if (isPastDate(date)) continue
-        next[date] = prev[date] ?? makeDefaultDay()
+        next[date] = prev[date] ?? makeDefaultDay(menu)
       }
       return next
     })
@@ -283,11 +309,11 @@ function App() {
           setId: Number(set.id),
           setName: set?.name,
           mainDish,
-          salad: item?.salad ?? DEFAULT_SALAD,
+          salad: item?.salad ?? getDefaultSalad(menu),
           beverage: item?.beverage ?? 'Вода',
           portions,
-          unitPrice: set?.price ?? SET_PRICE,
-          lineTotal: (set?.price ?? SET_PRICE) * totalPortions,
+          unitPrice: set?.price ?? FALLBACK_PRICE,
+          lineTotal: (set?.price ?? FALLBACK_PRICE) * totalPortions,
         }
       })
       if (!idempotencyKeyRef.current) idempotencyKeyRef.current = makeIdempotencyKey()
@@ -366,6 +392,19 @@ function App() {
             <AppHeader activeTab={tab} onTabChange={handleTabChange} lang={lang} onLangChange={handleLangChange} />
           </header>
 
+          {menuError && (
+            <div className="view__body view__boot">
+              <p>{t(lang, 'menuLoadError')}</p>
+              <button type="button" onClick={() => { setMenuError(false); setMenuReloadKey(k => k + 1) }}>
+                {t(lang, 'menuLoadRetry')}
+              </button>
+            </div>
+          )}
+
+          {!menuError && menu.length === 0 && (
+            <div className="view__body view__boot">…</div>
+          )}
+
           {revealCompany && (
             <div className="reveal-overlay">
               <motion.div initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.5, ease: 'easeOut' }}>
@@ -378,6 +417,8 @@ function App() {
             </div>
           )}
 
+          {!menuError && menu.length > 0 && (
+          <>
           {tab === 'teams' && <SupportLink lang={lang} />}
 
           {/* Экранные переходы: плавное появление при смене вкладки/экрана */}
@@ -392,10 +433,11 @@ function App() {
               >
                 <Catalog
                   days={orderDays}
-                  allSetsCount={MONTHLY_SETS.length}
+                  menu={menu}
+                  allSetsCount={menu.length}
                   employeeCount={employeeCount}
                   totalMonthlyPrice={totalMonthlyPrice}
-                  setPrice={SET_PRICE}
+                  setPrice={FALLBACK_PRICE}
                   lang={lang}
                   allDishesChosen={allDishesChosen}
                   onApplySelectedDates={handleApplySelectedDates}
@@ -480,6 +522,7 @@ function App() {
                 <div className="view__enter">
                   <EmployeeView
                     lang={lang}
+                    menu={menu}
                     userName={user.name}
                     companyName={user.companyName ?? ''}
                     onLogout={handleLogout}
@@ -510,6 +553,8 @@ function App() {
               </motion.div>
             )}
           </AnimatePresence>
+          </>
+          )}
         </>
       )}
     </div>

@@ -2,14 +2,15 @@ import { useMemo, useState } from 'react'
 import { X, Search, Check } from 'lucide-react'
 import type { Lang, SetCategory, LunchSet, CartItem, Beverage, Salad } from '../types'
 import { t } from '../locales/translations'
-import { MONTHLY_SETS } from '../data/mockMenu'
 import type { SetOfDay } from '../lib/api'
 import SetCard from './SetCard'
 import SetDetailModal from './SetDetailModal'
-import { DEFAULT_SALAD } from './saladOptions'
+import { getDefaultSalad, getSaladOptions } from './saladOptions'
 
 interface SetPickerProps {
   isOpen: boolean
+  /** Текущее меню (с бэкенда) — до 11.09.2026 бралось из захардкоженного mockMenu.ts */
+  menu: LunchSet[]
   lang: Lang
   current: SetOfDay | null
   /** Подпись дня, для которого выбирается блюдо (например «11.09 · Пт») */
@@ -47,21 +48,24 @@ const CATEGORY_LABEL_KEY: Record<SetCategory, string> = {
   soup: 'categorySoup',
 }
 
-export default function SetPicker({ isOpen, lang, current, dayLabel, item, daysCount, onBeverageChange, onSaladChange, onPortionsChange, onPick, onClose }: SetPickerProps) {
+export default function SetPicker({ isOpen, menu, lang, current, dayLabel, item, daysCount, onBeverageChange, onSaladChange, onPortionsChange, onPick, onClose }: SetPickerProps) {
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<CategoryFilter>('all')
   const [pendingSet, setPendingSet] = useState<LunchSet | null>(null)
   // Богатый режим (карточка с настройкой салата/напитка/порций) — только когда передан item дня.
   const rich = item != null
 
+  const defaultSalad = useMemo(() => getDefaultSalad(menu), [menu])
+  const saladOptions = useMemo(() => getSaladOptions(menu), [menu])
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return MONTHLY_SETS.filter(set => {
+    return menu.filter(set => {
       if (category !== 'all' && set.category !== category) return false
       if (q && !set.name.toLowerCase().includes(q)) return false
       return true
     })
-  }, [query, category])
+  }, [menu, query, category])
 
   if (!isOpen) return null
 
@@ -75,7 +79,7 @@ export default function SetPicker({ isOpen, lang, current, dayLabel, item, daysC
               {t(lang, 'setPickTitle')}
               {dayLabel ? <span className="set-picker__day"> · {dayLabel}</span> : null}
             </h2>
-            <span className="set-picker__count">{t(lang, 'availableSets', { n: MONTHLY_SETS.length })}</span>
+            <span className="set-picker__count">{t(lang, 'availableSets', { n: menu.length })}</span>
             <button className="modal-sheet__close" onClick={onClose} aria-label={t(lang, 'closeModal')}>
               <X size={20} />
             </button>
@@ -160,9 +164,10 @@ export default function SetPicker({ isOpen, lang, current, dayLabel, item, daysC
           beverage={item?.beverage ?? 'Вода'}
           onBeverageChange={onBeverageChange ?? (() => {})}
           onApplyBeverageToAll={onBeverageChange ?? (() => {})}
-          salad={item?.salad ?? DEFAULT_SALAD}
+          salad={item?.salad ?? defaultSalad}
           onSaladChange={onSaladChange ?? (() => {})}
           onApplySaladToAll={onSaladChange ?? (() => {})}
+          saladOptions={saladOptions}
           portions={item?.portions ?? 1}
           onPortionsChange={onPortionsChange ?? (() => {})}
           daysCount={daysCount ?? 0}

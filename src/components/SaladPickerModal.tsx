@@ -3,7 +3,7 @@ import { X } from 'lucide-react'
 import type { Lang } from '../types'
 import { t } from '../locales/translations'
 import { hapticImpact } from '../lib/telegram'
-import { SALAD_OPTIONS } from './saladOptions'
+import type { SaladOption } from './saladOptions'
 
 interface SaladPickerModalProps {
   isOpen: boolean
@@ -11,6 +11,8 @@ interface SaladPickerModalProps {
   lang: Lang
   salad: string
   onSelect: (salad: string) => void
+  /** Салаты текущего меню (с бэкенда) — раньше бралось из статичной константы SALAD_OPTIONS */
+  saladOptions: SaladOption[]
 }
 
 const OVERLAY_VARIANTS = {
@@ -30,7 +32,7 @@ const SHEET_VARIANTS = {
   },
 }
 
-function SaladPickerModal({ isOpen, onClose, lang, salad, onSelect }: SaladPickerModalProps) {
+function SaladPickerModal({ isOpen, onClose, lang, salad, onSelect, saladOptions }: SaladPickerModalProps) {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -79,7 +81,7 @@ function SaladPickerModal({ isOpen, onClose, lang, salad, onSelect }: SaladPicke
               </div>
 
               <div className="salad-modal__grid">
-                {SALAD_OPTIONS.map(opt => {
+                {saladOptions.map(opt => {
                   const active = salad === opt.value
                   return (
                     <motion.button

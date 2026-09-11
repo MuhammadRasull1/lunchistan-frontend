@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { CalendarDays, Lock } from 'lucide-react'
-import type { Lang } from '../types'
+import type { Lang, LunchSet } from '../types'
 import { t, WEEKDAYS_SHORT } from '../locales/translations'
 import { fetchMyDays, putMyDays, putMyChoice } from '../lib/api'
 import type { MyDay } from '../lib/api'
@@ -14,6 +14,8 @@ interface EmployeeViewProps {
   userName: string
   companyName: string
   onLogout: () => void
+  /** Текущее меню (с бэкенда) — до 11.09.2026 бралось из захардкоженного mockMenu.ts */
+  menu: LunchSet[]
 }
 
 function dayLabel(date: string, lang: Lang): string {
@@ -22,7 +24,7 @@ function dayLabel(date: string, lang: Lang): string {
   return `${String(d).padStart(2, '0')}.${String(m).padStart(2, '0')} · ${wd}`
 }
 
-export default function EmployeeView({ lang, userName, companyName, onLogout }: EmployeeViewProps) {
+export default function EmployeeView({ lang, userName, companyName, onLogout, menu }: EmployeeViewProps) {
   const [days, setDays] = useState<MyDay[]>([])
   const [loading, setLoading] = useState(true)
   const [calendarOpen, setCalendarOpen] = useState(false)
@@ -149,6 +151,7 @@ export default function EmployeeView({ lang, userName, companyName, onLogout }: 
 
       <SetPicker
         isOpen={pickFor !== null}
+        menu={menu}
         lang={lang}
         dayLabel={pickFor ? dayLabel(pickFor.date, lang) : undefined}
         current={pickFor?.choice ?? null}

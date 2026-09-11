@@ -12,15 +12,16 @@ import Stepper from './Stepper'
 import CalendarModal from './CalendarModal'
 import Reveal from './Reveal'
 import { getTelegramWebApp, hapticImpact } from '../lib/telegram'
-import { DEFAULT_SALAD } from './saladOptions'
+import { getDefaultSalad, getSaladOptions } from './saladOptions'
 import { startOfMonth, addMonths, formatDayLabel } from '../lib/calendar'
-import { MONTHLY_SETS } from '../data/mockMenu'
 
 type CategoryFilter = SetCategory | 'all'
 
 interface CatalogProps {
   /** Все выбранные дни (сортированные) с привязанными сетами и настройками */
   days: SelectedDay[]
+  /** Текущее меню (с бэкенда) — до 11.09.2026 бралось из захардкоженного mockMenu.ts */
+  menu: LunchSet[]
   allSetsCount: number
   employeeCount: number
   totalMonthlyPrice: number
@@ -53,6 +54,7 @@ const CATEGORY_TABS: { value: CategoryFilter; labelKey: string }[] = [
 
 function Catalog({
   days,
+  menu,
   allSetsCount,
   employeeCount,
   totalMonthlyPrice,
@@ -81,10 +83,13 @@ function Catalog({
   // кастомная кнопка в нижней панели в этом случае не дублируется.
   const hasMainButton = !!getTelegramWebApp()?.MainButton
 
+  const defaultSalad = useMemo(() => getDefaultSalad(menu), [menu])
+  const saladOptions = useMemo(() => getSaladOptions(menu), [menu])
+
   // Дни с кастомизацией (нестандартные порции, напиток или салат)
   const customizedDays = days.filter(d => {
     const item = d.item
-    return item.portions !== 1 || item.beverage !== 'Вода' || item.salad !== DEFAULT_SALAD
+    return item.portions !== 1 || item.beverage !== 'Вода' || item.salad !== defaultSalad
   }).length
 
   // Состояние модалки детализации сета (по дате дня)
@@ -113,8 +118,8 @@ function Catalog({
   const pickForDay = pickForDate ? days.find(d => d.date === pickForDate) ?? null : null
 
   const filteredSets = activeCategory === 'all'
-    ? MONTHLY_SETS
-    : MONTHLY_SETS.filter(set => set.category === activeCategory)
+    ? menu
+    : menu.filter(set => set.category === activeCategory)
 
   const selectedDay = selectedDate ? days.find(d => d.date === selectedDate) ?? null : null
 
@@ -431,11 +436,12 @@ function Catalog({
         onPortionsChange={(portions) => {
           if (selectedDate) onPortionsChange(selectedDate, portions)
         }}
-        salad={selectedDay?.item.salad ?? DEFAULT_SALAD}
+        salad={selectedDay?.item.salad ?? defaultSalad}
         onSaladChange={(salad) => {
           if (selectedDate) onSaladChange(selectedDate, salad)
         }}
         onApplySaladToAll={onApplySaladToAll}
+        saladOptions={saladOptions}
         daysCount={selectedDate ? days.filter(d => d.date !== selectedDate).length + 1 : 0}
       />
 
@@ -452,15 +458,17 @@ function Catalog({
         onApplyBeverageToAll={() => {}}
         portions={1}
         onPortionsChange={() => {}}
-        salad={DEFAULT_SALAD}
+        salad={defaultSalad}
         onSaladChange={() => {}}
         onApplySaladToAll={() => {}}
+        saladOptions={saladOptions}
         daysCount={0}
       />
 
       {/* Пикер выбора блюда на день («трата токена») */}
       <SetPicker
         isOpen={pickForDate !== null}
+        menu={menu}
         lang={lang}
         dayLabel={pickForDate ? formatDayLabel(pickForDate, lang) : undefined}
         current={pickForDay?.chosen

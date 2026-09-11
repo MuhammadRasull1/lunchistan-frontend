@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { cloudSetItem, cloudGetItem, cloudRemoveItem, getTelegramInitData } from './telegram'
+import type { LunchSet, WeekDay } from '../types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'https://lunchistan-backend.onrender.com'
 
@@ -146,6 +147,44 @@ export async function login(params: { name: string; password: string; companyCod
 export async function fetchMe(): Promise<MeResponse> {
   const { data } = await http.get<MeResponse>('/api/me')
   return data
+}
+
+interface RawMenuSet {
+  id: number
+  name: string
+  category: LunchSet['category']
+  price: number
+  description: string
+  image_url: string | null
+  calories: number | null
+  proteins: number | null
+  fats: number | null
+  carbs: number | null
+  composition: LunchSet['composition']
+}
+
+const WEEK_DAYS: WeekDay[] = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт']
+
+// 11.09.2026: до этого меню было захардкожено в data/mockMenu.ts и не поддерживало
+// правки без деплоя. dayNumber/weekDay — не поля БД, а позиция в списке (как раньше
+// в mockMenu.ts: index+1 / WEEK_DAYS[index%5]), поэтому вычисляем их здесь же.
+export async function fetchMenu(): Promise<LunchSet[]> {
+  const { data } = await http.get<RawMenuSet[]>('/api/menu')
+  return data.map((s, index) => ({
+    id: s.id,
+    dayNumber: index + 1,
+    weekDay: WEEK_DAYS[index % 5],
+    category: s.category,
+    name: s.name,
+    description: s.description,
+    price: s.price,
+    imageUrl: s.image_url ?? undefined,
+    calories: s.calories ?? undefined,
+    proteins: s.proteins ?? undefined,
+    fats: s.fats ?? undefined,
+    carbs: s.carbs ?? undefined,
+    composition: s.composition ?? [],
+  }))
 }
 
 // ── Сотрудник: мои дни и выбор блюд ────────────────────────────────

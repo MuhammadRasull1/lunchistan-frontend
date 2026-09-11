@@ -7,6 +7,7 @@ import { t, localizeIngredient } from '../locales/translations'
 import Stepper from './Stepper'
 import { hapticImpact } from '../lib/telegram'
 import SaladPickerModal from './SaladPickerModal'
+import type { SaladOption } from './saladOptions'
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'
 
@@ -26,6 +27,8 @@ interface SetDetailModalProps {
   salad: Salad
   onSaladChange: (salad: Salad) => void
   onApplySaladToAll: (salad: Salad) => void
+  /** Салаты текущего меню — для встроенного SaladPickerModal */
+  saladOptions: SaladOption[]
   portions: number
   onPortionsChange: (portions: number) => void
   /** Общее число выбранных дней — для отображения переключателя «Все дни / этот день» */
@@ -160,7 +163,7 @@ const SHEET_VARIANTS = {
   },
 }
 
-function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, readOnly, dateLabel, beverage, onBeverageChange, onApplyBeverageToAll, salad, onSaladChange, onApplySaladToAll, portions, onPortionsChange, daysCount }: SetDetailModalProps) {
+function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, readOnly, dateLabel, beverage, onBeverageChange, onApplyBeverageToAll, salad, onSaladChange, onApplySaladToAll, saladOptions, portions, onPortionsChange, daysCount }: SetDetailModalProps) {
   const [isSaladPickerOpen, setSaladPickerOpen] = useState(false)
   // Область применения изменений салата/напитка: «все дни» (по умолчанию) или «только этот день».
   const scopeDays = daysCount ?? 0
@@ -371,6 +374,7 @@ function SetDetailModal({ set, isOpen, onClose, onConfirm, lang, readOnly, dateL
             onClose={() => setSaladPickerOpen(false)}
             lang={lang}
             salad={salad}
+            saladOptions={saladOptions}
             onSelect={(next) => {
               handleSaladChange(next)
               setSaladPickerOpen(false)

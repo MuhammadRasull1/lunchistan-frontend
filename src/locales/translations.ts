@@ -115,6 +115,8 @@ const translations: Record<Lang, Record<string, string>> = {
     cardLabel: 'Перевод на карту (P2P)',
     cashLabel: 'Наличными курьеру',
     orderError: 'Не удалось оформить заказ. Попробуйте ещё раз.',
+    menuLoadError: 'Не удалось загрузить меню. Проверьте связь и попробуйте ещё раз.',
+    menuLoadRetry: 'Повторить',
 
     // Language
     langRu: 'RU',
@@ -432,6 +434,8 @@ const translations: Record<Lang, Record<string, string>> = {
     cardLabel: "Kartaga o'tkazma",
     cashLabel: "Naqd pul",
     orderError: "Buyurtmani rasmiylashtirib bo'lmadi. Qaytadan urinib ko'ring.",
+    menuLoadError: "Menyu yuklanmadi. Aloqani tekshirib, qayta urinib ko'ring.",
+    menuLoadRetry: "Qayta urinish",
 
     // Language
     langRu: 'RU',
