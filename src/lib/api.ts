@@ -187,6 +187,48 @@ export async function fetchMenu(): Promise<LunchSet[]> {
   }))
 }
 
+// ── Владелец: управление меню (11.09.2026 — раньше меню правилось только
+// деплоем кода, теперь дядя/брат сами добавляют/меняют/скрывают блюда) ─────
+export interface OwnerMenuItem extends RawMenuSet {
+  is_active: boolean
+}
+
+export interface MenuItemInput {
+  name: string
+  category: LunchSet['category']
+  price: number
+  description?: string
+  image_url?: string | null
+  calories?: number | null
+  proteins?: number | null
+  fats?: number | null
+  carbs?: number | null
+}
+
+/** Всё меню, включая скрытые блюда (is_active=false) — только владельцу. */
+export async function fetchOwnerMenu(): Promise<OwnerMenuItem[]> {
+  const { data } = await http.get<OwnerMenuItem[]>('/api/owner/menu')
+  return data
+}
+
+export async function createMenuItem(input: MenuItemInput): Promise<OwnerMenuItem> {
+  const { data } = await http.post<OwnerMenuItem>('/api/owner/menu', input)
+  return data
+}
+
+export async function updateMenuItem(
+  id: number,
+  input: Partial<MenuItemInput> & { is_active?: boolean },
+): Promise<OwnerMenuItem> {
+  const { data } = await http.put<OwnerMenuItem>(`/api/owner/menu/${id}`, input)
+  return data
+}
+
+/** Мягкое удаление (is_active=false) — блюдо пропадает из каталога, не из истории заказов. */
+export async function deleteMenuItem(id: number): Promise<void> {
+  await http.delete(`/api/owner/menu/${id}`)
+}
+
 // ── Сотрудник: мои дни и выбор блюд ────────────────────────────────
 export async function fetchMyDays(): Promise<MyDay[]> {
   const { data } = await http.get<MyDaysResponse>('/api/my/days')

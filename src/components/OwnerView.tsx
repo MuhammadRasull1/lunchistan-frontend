@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { RefreshCw, Phone, ChevronRight, X } from 'lucide-react'
-import type { Lang } from '../types'
+import { RefreshCw, Phone, ChevronRight, X, Plus, Pencil, EyeOff, Eye } from 'lucide-react'
+import type { Lang, SetCategory } from '../types'
 import { t } from '../locales/translations'
-import { fetchOwnerSummary, fetchOwnerOrders, fetchOwnerKitchen } from '../lib/api'
-import type { OwnerSummary, OrderView, KitchenDay } from '../lib/api'
+import {
+  fetchOwnerSummary, fetchOwnerOrders, fetchOwnerKitchen,
+  fetchOwnerMenu, createMenuItem, updateMenuItem,
+} from '../lib/api'
+import type { OwnerSummary, OrderView, KitchenDay, OwnerMenuItem, MenuItemInput } from '../lib/api'
 import { statusLabel, statusColor, formatMoney, dateChip } from '../lib/orderStatus'
 import OrderDetailSheet from './OrderDetailSheet'
 import Reveal from './Reveal'
@@ -36,6 +39,7 @@ export default function OwnerView({ lang, userName, onLogout }: Props) {
   const [orderId, setOrderId] = useState<number | null>(null)
   const [allOrders, setAllOrders] = useState<OrderView[] | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -66,9 +70,14 @@ export default function OwnerView({ lang, userName, onLogout }: Props) {
             {userName} · <button className="auth-toggle with-ml" onClick={onLogout}>{t(lang, 'logout')}</button>
           </p>
         </div>
-        <button className="btn btn--outline" onClick={refresh} disabled={loading}>
-          <RefreshCw size={15} /> {t(lang, 'refresh')}
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn--outline" onClick={() => setMenuOpen(true)}>
+            {t(lang, 'menuManage')}
+          </button>
+          <button className="btn btn--outline" onClick={refresh} disabled={loading}>
+            <RefreshCw size={15} /> {t(lang, 'refresh')}
+          </button>
+        </div>
       </div>
 
       <div className="tabs" style={{ marginTop: 8 }}>
@@ -193,7 +202,220 @@ export default function OwnerView({ lang, userName, onLogout }: Props) {
       )}
 
       <OrderDetailSheet lang={lang} orderId={orderId} owner onClose={() => setOrderId(null)} onChanged={() => setReloadKey((k) => k + 1)} />
+
+      {/* Управление меню — до 11.09.2026 меню можно было поменять только деплоем кода */}
+      {menuOpen && <MenuManagerSheet lang={lang} onClose={() => setMenuOpen(false)} />}
     </main>
+  )
+}
+
+const CATEGORY_OPTIONS: { value: SetCategory; labelKey: string }[] = [
+  { value: 'hot', labelKey: 'categoryHot' },
+  { value: 'salad', labelKey: 'categorySalad' },
+  { value: 'side', labelKey: 'categorySide' },
+  { value: 'fastfood', labelKey: 'categoryFastfood' },
+  { value: 'appetizer', labelKey: 'categoryAppetizer' },
+  { value: 'soup', labelKey: 'categorySoup' },
+]
+
+function categoryLabel(lang: Lang, category: SetCategory): string {
+  return t(lang, CATEGORY_OPTIONS.find((c) => c.value === category)?.labelKey ?? 'categoryHot')
+}
+
+// ── Управление меню: список блюд, скрыть/вернуть, добавить/изменить ─────
+function MenuManagerSheet({ lang, onClose }: { lang: Lang; onClose: () => void }) {
+  const [items, setItems] = useState<OwnerMenuItem[] | null>(null)
+  const [error, setError] = useState(false)
+  const [editItem, setEditItem] = useState<OwnerMenuItem | 'new' | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
+
+  useEffect(() => {
+    let cancelled = false
+    fetchOwnerMenu()
+      .then((data) => { if (!cancelled) { setItems(data); setError(false) } })
+      .catch(() => { if (!cancelled) setError(true) })
+    return () => { cancelled = true }
+  }, [reloadKey])
+
+  const toggleActive = async (item: OwnerMenuItem) => {
+    // Оптимистично — список может быть длинным, не ждём ответа сервера, чтобы переключить.
+    setItems((prev) => prev?.map((i) => (i.id === item.id ? { ...i, is_active: !i.is_active } : i)) ?? prev)
+    try {
+      await updateMenuItem(item.id, { is_active: !item.is_active })
+    } catch {
+      // Откат при ошибке сети — иначе список молча разойдётся с реальным состоянием на сервере.
+      setItems((prev) => prev?.map((i) => (i.id === item.id ? { ...i, is_active: item.is_active } : i)) ?? prev)
+    }
+  }
+
+  return (
+    <AnimatePresence>
+      <motion.div key="mm-overlay" className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} />
+      <motion.div key="mm-sheet" className="modal-sheet" initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 300, damping: 32 }}>
+        <div className="modal-sheet__handle" />
+        <button type="button" className="modal-sheet__close" onClick={onClose} aria-label={t(lang, 'close')}>
+          <X size={20} strokeWidth={2.5} />
+        </button>
+        <div className="modal-sheet__scroll">
+          <h2 className="calendar-modal__title">{t(lang, 'menuManageTitle')}</h2>
+
+          <button className="btn btn--outline" style={{ marginTop: 12, marginBottom: 16 }} onClick={() => setEditItem('new')}>
+            <Plus size={15} /> {t(lang, 'menuAddDish')}
+          </button>
+
+          {error && <div className="auth-error">{t(lang, 'menuLoadError')}</div>}
+          {!error && items === null && <p className="view__section-desc">{t(lang, 'loadingLabel')}</p>}
+          {items !== null && items.length === 0 && <p className="view__section-desc">{t(lang, 'menuEmpty')}</p>}
+
+          <div className="days-list">
+            {items?.map((item) => (
+              <div key={item.id} className="day-row" style={{ opacity: item.is_active ? 1 : 0.55 }}>
+                <div className="day-row__dish">
+                  <span className="day-row__name">
+                    {item.name}
+                    {!item.is_active && <span className="status-badge" style={{ marginLeft: 8, background: 'var(--text-muted, #999)' }}>{t(lang, 'menuHiddenBadge')}</span>}
+                  </span>
+                  <span className="day-row__hint">{categoryLabel(lang, item.category)} · {formatMoney(item.price, lang)}</span>
+                </div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button className="btn btn--outline" style={{ padding: '6px 10px' }} onClick={() => setEditItem(item)} aria-label={t(lang, 'menuEditDish')}>
+                    <Pencil size={14} />
+                  </button>
+                  <button className="btn btn--outline" style={{ padding: '6px 10px' }} onClick={() => toggleActive(item)} aria-label={item.is_active ? t(lang, 'menuHide') : t(lang, 'menuRestore')}>
+                    {item.is_active ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </motion.div>
+
+      {editItem && (
+        <DishFormSheet
+          lang={lang}
+          item={editItem === 'new' ? null : editItem}
+          onClose={() => setEditItem(null)}
+          onSaved={() => { setEditItem(null); setReloadKey((k) => k + 1) }}
+        />
+      )}
+    </AnimatePresence>
+  )
+}
+
+// ── Форма блюда: общая для создания и редактирования ─────────────
+function DishFormSheet({
+  lang, item, onClose, onSaved,
+}: { lang: Lang; item: OwnerMenuItem | null; onClose: () => void; onSaved: () => void }) {
+  const [name, setName] = useState(item?.name ?? '')
+  const [category, setCategory] = useState<SetCategory>(item?.category ?? 'hot')
+  const [price, setPrice] = useState(item ? String(item.price) : '')
+  const [description, setDescription] = useState(item?.description ?? '')
+  const [imageUrl, setImageUrl] = useState(item?.image_url ?? '')
+  const [calories, setCalories] = useState(item?.calories != null ? String(item.calories) : '')
+  const [proteins, setProteins] = useState(item?.proteins != null ? String(item.proteins) : '')
+  const [fats, setFats] = useState(item?.fats != null ? String(item.fats) : '')
+  const [carbs, setCarbs] = useState(item?.carbs != null ? String(item.carbs) : '')
+  const [error, setError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  const toIntOrNull = (v: string): number | null => {
+    const n = Number(v.trim())
+    return v.trim() !== '' && Number.isFinite(n) ? Math.round(n) : null
+  }
+
+  const handleSave = async () => {
+    if (!name.trim()) { setError(t(lang, 'menuNameRequired')); return }
+    const priceNum = Math.round(Number(price))
+    if (!Number.isFinite(priceNum) || priceNum <= 0) { setError(t(lang, 'menuPriceRequired')); return }
+
+    setSaving(true)
+    setError(null)
+    const input: MenuItemInput = {
+      name: name.trim(),
+      category,
+      price: priceNum,
+      description: description.trim(),
+      image_url: imageUrl.trim() || null,
+      calories: toIntOrNull(calories),
+      proteins: toIntOrNull(proteins),
+      fats: toIntOrNull(fats),
+      carbs: toIntOrNull(carbs),
+    }
+    try {
+      if (item) await updateMenuItem(item.id, input)
+      else await createMenuItem(input)
+      onSaved()
+    } catch {
+      setError(t(lang, 'menuSaveError'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <>
+      <motion.div key="df-overlay" className="modal-overlay modal-overlay--nested" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} />
+      <motion.div key="df-sheet" className="modal-sheet" initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 300, damping: 32 }}>
+        <div className="modal-sheet__handle" />
+        <button type="button" className="modal-sheet__close" onClick={onClose} aria-label={t(lang, 'close')}>
+          <X size={20} strokeWidth={2.5} />
+        </button>
+        <div className="modal-sheet__scroll">
+          <h2 className="calendar-modal__title">{item ? t(lang, 'menuEditDish') : t(lang, 'menuNewDish')}</h2>
+
+          {error && <div className="auth-error">{error}</div>}
+
+          <div className="auth-card" style={{ gap: 12, marginTop: 12 }}>
+            <div className="auth-field">
+              <label>{t(lang, 'menuFieldName')}</label>
+              <input value={name} onChange={(e) => setName(e.target.value)} maxLength={120} />
+            </div>
+            <div className="auth-field">
+              <label>{t(lang, 'menuFieldCategory')}</label>
+              <select value={category} onChange={(e) => setCategory(e.target.value as SetCategory)}>
+                {CATEGORY_OPTIONS.map((c) => (
+                  <option key={c.value} value={c.value}>{t(lang, c.labelKey)}</option>
+                ))}
+              </select>
+            </div>
+            <div className="auth-field">
+              <label>{t(lang, 'menuFieldPrice')}</label>
+              <input value={price} onChange={(e) => setPrice(e.target.value)} inputMode="numeric" />
+            </div>
+            <div className="auth-field">
+              <label>{t(lang, 'menuFieldDescription')}</label>
+              <input value={description} onChange={(e) => setDescription(e.target.value)} maxLength={300} />
+            </div>
+            <div className="auth-field">
+              <label>{t(lang, 'menuFieldImageUrl')}</label>
+              <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} inputMode="url" placeholder="https://…" />
+            </div>
+            <div className="auth-field">
+              <label>{t(lang, 'menuFieldCalories')}</label>
+              <input value={calories} onChange={(e) => setCalories(e.target.value)} inputMode="numeric" />
+            </div>
+            <div className="auth-field">
+              <label>{t(lang, 'menuFieldProteins')}</label>
+              <input value={proteins} onChange={(e) => setProteins(e.target.value)} inputMode="numeric" />
+            </div>
+            <div className="auth-field">
+              <label>{t(lang, 'menuFieldFats')}</label>
+              <input value={fats} onChange={(e) => setFats(e.target.value)} inputMode="numeric" />
+            </div>
+            <div className="auth-field">
+              <label>{t(lang, 'menuFieldCarbs')}</label>
+              <input value={carbs} onChange={(e) => setCarbs(e.target.value)} inputMode="numeric" />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
+            <button className="btn btn--outline" onClick={onClose} disabled={saving}>{t(lang, 'menuCancel')}</button>
+            <button className="btn btn--primary" onClick={handleSave} disabled={saving}>{t(lang, 'menuSave')}</button>
+          </div>
+        </div>
+      </motion.div>
+    </>
   )
 }
 
