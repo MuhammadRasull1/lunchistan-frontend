@@ -142,6 +142,13 @@ const translations: Record<Lang, Record<string, string>> = {
     menuNameRequired: 'Укажите название',
     menuPriceRequired: 'Укажите цену больше нуля',
     menuEmpty: 'Блюд пока нет',
+    cardNumberLabel: 'Номер карты для перевода',
+    cardHolderLabel: 'Получатель',
+    cardNumberPending: 'Номер карты уточняется — менеджер пришлёт его после заказа',
+    settingsManage: 'Настройки',
+    settingsTitle: 'Настройки оплаты',
+    settingsSaved: 'Сохранено',
+    settingsSaveError: 'Не удалось сохранить настройки',
 
     // Language
     langRu: 'RU',
@@ -486,6 +493,13 @@ const translations: Record<Lang, Record<string, string>> = {
     menuNameRequired: 'Nomini kiriting',
     menuPriceRequired: "Noldan katta narx kiriting",
     menuEmpty: "Hozircha taom yo'q",
+    cardNumberLabel: "O'tkazma uchun karta raqami",
+    cardHolderLabel: 'Qabul qiluvchi',
+    cardNumberPending: "Karta raqami aniqlanmoqda — menejer buyurtmadan keyin yuboradi",
+    settingsManage: 'Sozlamalar',
+    settingsTitle: "To'lov sozlamalari",
+    settingsSaved: 'Saqlandi',
+    settingsSaveError: "Sozlamalarni saqlab bo'lmadi",
 
     // Language
     langRu: 'RU',

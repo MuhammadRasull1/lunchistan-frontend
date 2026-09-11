@@ -6,8 +6,9 @@ import { t } from '../locales/translations'
 import {
   fetchOwnerSummary, fetchOwnerOrders, fetchOwnerKitchen,
   fetchOwnerMenu, createMenuItem, updateMenuItem,
+  fetchSettings, updateSettings,
 } from '../lib/api'
-import type { OwnerSummary, OrderView, KitchenDay, OwnerMenuItem, MenuItemInput } from '../lib/api'
+import type { OwnerSummary, OrderView, KitchenDay, OwnerMenuItem, MenuItemInput, BusinessSettings } from '../lib/api'
 import { statusLabel, statusColor, formatMoney, dateChip } from '../lib/orderStatus'
 import OrderDetailSheet from './OrderDetailSheet'
 import Reveal from './Reveal'
@@ -40,6 +41,7 @@ export default function OwnerView({ lang, userName, onLogout }: Props) {
   const [allOrders, setAllOrders] = useState<OrderView[] | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -73,6 +75,9 @@ export default function OwnerView({ lang, userName, onLogout }: Props) {
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn btn--outline" onClick={() => setMenuOpen(true)}>
             {t(lang, 'menuManage')}
+          </button>
+          <button className="btn btn--outline" onClick={() => setSettingsOpen(true)}>
+            {t(lang, 'settingsManage')}
           </button>
           <button className="btn btn--outline" onClick={refresh} disabled={loading}>
             <RefreshCw size={15} /> {t(lang, 'refresh')}
@@ -205,7 +210,77 @@ export default function OwnerView({ lang, userName, onLogout }: Props) {
 
       {/* Управление меню — до 11.09.2026 меню можно было поменять только деплоем кода */}
       {menuOpen && <MenuManagerSheet lang={lang} onClose={() => setMenuOpen(false)} />}
+
+      {/* Настройки оплаты — номер карты для ручного перевода (не эквайринг) */}
+      {settingsOpen && <SettingsSheet lang={lang} onClose={() => setSettingsOpen(false)} />}
     </main>
+  )
+}
+
+// ── Настройки: номер карты для оплаты (дядя решил 11.09.2026 — просто
+// показывать номер, клиент переводит сам, без приёма платежей в приложении) ──
+function SettingsSheet({ lang, onClose }: { lang: Lang; onClose: () => void }) {
+  const [settings, setSettings] = useState<BusinessSettings | null>(null)
+  const [cardNumber, setCardNumber] = useState('')
+  const [cardHolder, setCardHolder] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [status, setStatus] = useState<'idle' | 'saved' | 'error'>('idle')
+
+  useEffect(() => {
+    fetchSettings().then((s) => {
+      setSettings(s)
+      setCardNumber(s.paymentCardNumber ?? '')
+      setCardHolder(s.paymentCardHolder ?? '')
+    })
+  }, [])
+
+  const handleSave = async () => {
+    setSaving(true)
+    setStatus('idle')
+    try {
+      await updateSettings({ paymentCardNumber: cardNumber.trim(), paymentCardHolder: cardHolder.trim() })
+      setStatus('saved')
+    } catch {
+      setStatus('error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <AnimatePresence>
+      <motion.div key="st-overlay" className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} />
+      <motion.div key="st-sheet" className="modal-sheet" initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 300, damping: 32 }}>
+        <div className="modal-sheet__handle" />
+        <button type="button" className="modal-sheet__close" onClick={onClose} aria-label={t(lang, 'close')}>
+          <X size={20} strokeWidth={2.5} />
+        </button>
+        <div className="modal-sheet__scroll">
+          <h2 className="calendar-modal__title">{t(lang, 'settingsTitle')}</h2>
+
+          {status === 'saved' && <div className="auth-error" style={{ background: 'var(--success-bg, #e8f7ee)', color: 'var(--success, #22a058)' }}>{t(lang, 'settingsSaved')}</div>}
+          {status === 'error' && <div className="auth-error">{t(lang, 'settingsSaveError')}</div>}
+          {!settings && <p className="view__section-desc">{t(lang, 'loadingLabel')}</p>}
+
+          {settings && (
+            <div className="auth-card" style={{ gap: 12, marginTop: 12 }}>
+              <div className="auth-field">
+                <label>{t(lang, 'cardNumberLabel')}</label>
+                <input value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} placeholder="8600 1234 5678 9012" />
+              </div>
+              <div className="auth-field">
+                <label>{t(lang, 'cardHolderLabel')}</label>
+                <input value={cardHolder} onChange={(e) => setCardHolder(e.target.value)} placeholder="IVAN IVANOV" />
+              </div>
+            </div>
+          )}
+
+          <button className="btn btn--primary" style={{ marginTop: 20 }} onClick={handleSave} disabled={saving || !settings}>
+            {t(lang, 'menuSave')}
+          </button>
+        </div>
+      </motion.div>
+    </AnimatePresence>
   )
 }
 

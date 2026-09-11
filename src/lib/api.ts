@@ -471,3 +471,20 @@ export async function setOrderStatus(id: number, status: OrderStatus, note?: str
 export async function changePassword(oldPassword: string, newPassword: string): Promise<void> {
   await http.post('/api/auth/password', { oldPassword, newPassword })
 }
+
+// ── Настройки бизнеса (11.09.2026) — номер карты для оплаты "card": дядя решил
+// показывать номер клиенту, а не подключать полноценный приём платежей. ─────
+export interface BusinessSettings {
+  paymentCardNumber: string | null
+  paymentCardHolder: string | null
+}
+
+/** Публичная ручка — номер карты нужен клиенту на checkout ещё до входа во владельца. */
+export async function fetchSettings(): Promise<BusinessSettings> {
+  const { data } = await http.get<BusinessSettings>('/api/settings')
+  return data
+}
+
+export async function updateSettings(input: Partial<BusinessSettings>): Promise<void> {
+  await http.put('/api/owner/settings', input)
+}

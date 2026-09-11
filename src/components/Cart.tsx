@@ -6,8 +6,8 @@ import { formatPrice } from '../types'
 import { t } from '../locales/translations'
 import { getTelegramWebApp, getTelegramUser, hapticImpact } from '../lib/telegram'
 import { formatDayLabel } from '../lib/calendar'
-import type { AuthUser, OrderContact, DeliveryQuote, CompanyAddress } from '../lib/api'
-import { fetchCompanyAddress, fetchDeliveryQuote } from '../lib/api'
+import type { AuthUser, OrderContact, DeliveryQuote, CompanyAddress, BusinessSettings } from '../lib/api'
+import { fetchCompanyAddress, fetchDeliveryQuote, fetchSettings } from '../lib/api'
 import { getGeoConsent } from '../lib/geoConsent'
 import type { AddressPick } from './AddressPicker'
 
@@ -48,6 +48,13 @@ function Cart({
   onRemoveItem,
 }: CartProps) {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('corporate')
+  // Номер карты для перевода — дядя решил 11.09.2026: просто показать номер, без
+  // приёма платежей в приложении. Грузим лениво: не нужен, пока не выбрали "card".
+  const [cardSettings, setCardSettings] = useState<BusinessSettings | null>(null)
+  useEffect(() => {
+    if (paymentMethod !== 'card' || cardSettings) return
+    fetchSettings().then(setCardSettings).catch(() => {})
+  }, [paymentMethod, cardSettings])
 
   // Реальный аккаунт Telegram из TMA — защита от «шутников»: контакт подтягивается
   // автоматически и заменить его вручную нельзя. На лендинге (обычный браузер) = null.
@@ -405,6 +412,22 @@ function Cart({
                 </motion.button>
               ))}
             </div>
+
+            {paymentMethod === 'card' && (
+              <div className="payment__telegram" role="status" style={{ marginTop: 12 }}>
+                {cardSettings?.paymentCardNumber ? (
+                  <>
+                    <span className="payment__telegram-label">{t(lang, 'cardNumberLabel')}</span>
+                    <span className="payment__telegram-value">
+                      {cardSettings.paymentCardNumber}
+                      {cardSettings.paymentCardHolder ? ` · ${t(lang, 'cardHolderLabel')}: ${cardSettings.paymentCardHolder}` : ''}
+                    </span>
+                  </>
+                ) : (
+                  <span className="payment__telegram-value">{t(lang, 'cardNumberPending')}</span>
+                )}
+              </div>
+            )}
           </motion.section>
 
           {/* Итог */}
