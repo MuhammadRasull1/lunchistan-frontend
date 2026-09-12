@@ -268,6 +268,11 @@ export async function resendDayReport(date: string): Promise<{ success: boolean;
 }
 
 // ── Ошибки ─────────────────────────────────────────────────────────
+/** Вход не смог различить тёзок — бэкенд просит код команды (см. /api/auth/login). */
+export function needsCompanyCode(err: unknown): boolean {
+  return axios.isAxiosError(err) && err.response?.data?.needCompanyCode === true
+}
+
 export function apiErrorMessage(err: unknown): string | null {
   if (axios.isAxiosError(err)) {
     const msg: string | undefined = err.response?.data?.error

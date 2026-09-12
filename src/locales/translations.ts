@@ -8,7 +8,6 @@ const translations: Record<Lang, Record<string, string>> = {
     headerSubtitle: 'Сбалансированные комплексные обеды для вашей команды — полное меню на 2 месяца ({n} сетов)',
 
     // Calculator
-    calculatorTitle: 'Калькулятор стоимости',
     calendarTitle: 'Календарь рабочих дней',
     calendarSubtitle: 'Отметьте даты доставки обедов в этом месяце',
     preset22: '2/2',
@@ -18,7 +17,6 @@ const translations: Record<Lang, Record<string, string>> = {
     calendarPrevMonth: 'Предыдущий месяц',
     calendarNextMonth: 'Следующий месяц',
     noDatesSelected: 'Выберите даты в календаре, чтобы собрать меню',
-    workingDays: 'Рабочих дней в месяце',
     employees: 'Количество сотрудников',
     selectAll: 'Выбрать все {n} дней',
     deselectAll: 'Сбросить все',
@@ -55,8 +53,6 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // Ingredients
     salad: 'Салат',
-    flatbread: 'Лепёшка',
-    drink: 'Напиток',
     mainDishLocked: 'Основное блюдо нельзя исключить',
     incompleteSelectionHint: 'Выберите салат и напиток для каждого дня, чтобы продолжить',
     selectedDaysTitle: 'Выбранные дни',
@@ -67,9 +63,6 @@ const translations: Record<Lang, Record<string, string>> = {
     tokensAllSpent: 'Блюда выбраны на все дни ✓',
     chooseSalad: 'Выбрать салат',
     saladModalTitle: 'Выбор салата',
-    comingSoon: 'Скоро',
-
-    // Detail modal
     close: 'Закрыть',
     beverage: 'Напиток',
     water: 'Вода',
@@ -110,7 +103,6 @@ const translations: Record<Lang, Record<string, string>> = {
     stickyBarLabel: '{active} дн. · {employees} чел. · {portions} порц.',
 
     // Order alert
-    orderAlert: 'Предзаказ на {employees} сотрудников оформлен.\nСпособ оплаты: {method}\nОбщая сумма: {price}',
     corporateLabel: 'Перечислением (Для юрлиц)',
     cardLabel: 'Перевод на карту (P2P)',
     cashLabel: 'Наличными курьеру',
@@ -151,33 +143,14 @@ const translations: Record<Lang, Record<string, string>> = {
     settingsSaveError: 'Не удалось сохранить настройки',
 
     // Language
-    langRu: 'RU',
-    langUz: 'UZ',
-
-    // Tabs
     tabCatalog: 'Каталог',
     tabTeams: 'Кабинет',
 
     // Teams — вход / создание
-    authTitle: 'Вход',
-    registerTitle: 'Команда',
-    authSubtitle: 'Корпоративные обеды для вашей команды',
-    phone: 'Телефон',
     password: 'Пароль',
     name: 'Имя',
-    loginLabel: 'Войти',
-    teamName: 'Название команды',
-    teamSize: 'Кол-во людей',
     teamSizePlaceholder: 'Например: 10',
-    teamSizeHint: 'Столько людей будет в команде',
-    companyCode: 'Код команды',
-    companyCodePlaceholder: 'Например: ABC123',
-    createTeam: 'Создать команду',
-    joinTeam: 'Присоединиться',
-    createTeamLink: 'Нет команды — создать',
-    joinTeamLink: 'У меня есть код команды',
-    switchToLogin: 'Уже есть аккаунт — войти',
-    registerEmployeeHint: 'Введите код команды, чтобы присоединиться',
+    teamSizeHint: 'Сколько человек в команде — необязательно, можно пропустить',
     authError: 'Не удалось войти. Проверьте данные',
     logout: 'Выйти',
 
@@ -209,7 +182,6 @@ const translations: Record<Lang, Record<string, string>> = {
     obPathCreate: 'Я создаю свою команду',
     obPathJoin: 'У меня есть код команды',
     obCompanyNameLabel: 'Название команды',
-    obCompanyCodeLabel: 'Код команды',
     obCompanyCodePlaceholder: 'Например: ABC123',
     obCompanyCodeHint: 'Вам его покажет менеджер или руководитель',
     obSubmitLogin: 'Войти',
@@ -238,7 +210,6 @@ const translations: Record<Lang, Record<string, string>> = {
     currentSet: 'Выбрано',
 
     // Manager — сводка команды
-    managerTitle: 'Менеджер · подтверждение',
     teamCode: 'Код команды',
     teamMembers: 'Сотрудников',
     copied: 'Скопировано',
@@ -264,21 +235,18 @@ const translations: Record<Lang, Record<string, string>> = {
     optionalField: 'необязательно',
 
     // ── v4: адрес доставки на карте ─────────────────────────────
-    deliverySection: 'Доставка',
     deliveryAddress: 'Адрес доставки',
     selectAddressOnMap: 'Выбрать адрес на карте',
     changeAddress: 'Изменить адрес',
     mapSearchPlaceholder: 'Поиск: улица, дом, организация…',
     myLocation: 'Моё местоположение',
     dropPinHint: 'Поставьте метку на карте (тап по карте или перетащите маркер)',
-    locating: 'Определяю координаты…',
     locError: 'Не удалось определить местоположение. Поставьте метку вручную.',
     destDetailPlaceholder: 'Подъезд, этаж, домофон, ориентир',
     destDetail: 'До двери',
     confirmAddress: 'Подтвердить адрес',
     deliveryFee: 'Доставка',
     totalWithDelivery: 'Итого с доставкой',
-    noDeliveryZone: 'Доставка за пределы зон — уточните у менеджера',
     deliveryQuoteLoading: 'Считаем стоимость доставки…',
     deliveryQuoteError: 'Не удалось посчитать доставку. Проверьте связь и попробуйте ещё раз.',
     retry: 'Повторить',
@@ -289,7 +257,6 @@ const translations: Record<Lang, Record<string, string>> = {
     geoConsentRequired: 'Подтвердите согласие на использование геопозиции',
     locAccuracyLabel: 'Точность: ±{m}',
     locAccuracyLow: 'Точность низкая — уточните метку, передвинув её на карте',
-    geoAllowedHint: 'Геопозиция доступна: вы дали согласие при входе',
     geoNotAllowedHint: 'Геопозиция включится, если дать согласие при входе — пока адрес можно задать поиском или меткой',
     loginToTrackHint: 'Войдите в кабинет, чтобы видеть заказ и его статус',
     tgContactLabel: 'Аккаунт Telegram (определён автоматически)',
@@ -303,7 +270,6 @@ const translations: Record<Lang, Record<string, string>> = {
     scopeHintThis: 'Изменения затронут только этот день',
 
     // ── v3: статусы заказа ──────────────────────────────────────
-    orderStatusLabel: 'Статус',
     status_new: 'Новый',
     status_confirmed: 'Подтверждён',
     status_in_progress: 'Готовится',
@@ -316,7 +282,6 @@ const translations: Record<Lang, Record<string, string>> = {
     leadText: 'Спасибо! Менеджер Lunchistan свяжется с вами, чтобы подтвердить заказ.',
 
     // ── v3: Кабинет ─────────────────────────────────────────────
-    cabinetLogin: 'Вход в кабинет',
     myOrders: 'Мои заказы',
     myOrdersEmpty: 'Пока нет заказов',
     ordersSection: 'Заказы',
@@ -327,7 +292,6 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // ── v3: Сводка владельца ───────────────────────────────────
     ownerTitle: 'Сводка',
-    ownerSubtitle: 'Что происходит с заказами',
     rangeWeek: 'Неделя',
     range2Weeks: '2 недели',
     rangeMonth: 'Месяц',
@@ -341,7 +305,6 @@ const translations: Record<Lang, Record<string, string>> = {
     kitchenSheet: 'Лист для кухни',
     kitchenEmpty: 'На эти даты заказов нет',
     portionsShort: 'порц.',
-    orderDetail: 'Заказ',
     changeStatus: 'Сменить статус',
     statusChanged: 'Статус обновлён',
     cancelConfirmText: 'Точно отменить заказ №{number}? Клиент и кухня могут уже быть в курсе — автоматическое уведомление об отмене не отправляется.',
@@ -359,7 +322,6 @@ const translations: Record<Lang, Record<string, string>> = {
     headerSubtitle: "Jamoangiz uchun muvozanatli tushliklar — 2 oylik to'liq menyu ({n} set)",
 
     // Calculator
-    calculatorTitle: 'Narx hisoblagichi',
     calendarTitle: 'Ish kunlari taqvimi',
     calendarSubtitle: 'Shu oy uchun tushlik yetkazib berish sanalarini belgilang',
     preset22: '2/2',
@@ -369,7 +331,6 @@ const translations: Record<Lang, Record<string, string>> = {
     calendarPrevMonth: 'Oldingi oy',
     calendarNextMonth: 'Keyingi oy',
     noDatesSelected: "Taqvimda sanalarni tanlang, menyu shakllanadi",
-    workingDays: 'Oylik ish kunlari',
     employees: 'Xodimlar soni',
     selectAll: 'Barcha {n} kunni tanlash',
     deselectAll: 'Bekor qilish',
@@ -406,8 +367,6 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // Ingredients
     salad: 'Salat',
-    flatbread: 'Non',
-    drink: 'Ichimlik',
     mainDishLocked: "Asosiy taomni chiqarib bo'lmaydi",
     incompleteSelectionHint: "Davom etish uchun har bir kun uchun salat va ichimlik tanlang",
     selectedDaysTitle: 'Tanlangan kunlar',
@@ -418,9 +377,6 @@ const translations: Record<Lang, Record<string, string>> = {
     tokensAllSpent: 'Barcha kunlarga taom tanlandi ✓',
     chooseSalad: 'Salat tanlash',
     saladModalTitle: 'Salat tanlovi',
-    comingSoon: 'Tez orada',
-
-    // Detail modal
     close: 'Yopish',
     beverage: 'Ichimlik',
     water: 'Suv',
@@ -461,7 +417,6 @@ const translations: Record<Lang, Record<string, string>> = {
     stickyBarLabel: '{active} kun · {employees} xodim · {portions} pors.',
 
     // Order alert
-    orderAlert: "{employees} xodim uchun buyurtma rasmiylashtirildi.\nTo'lov usuli: {method}\nUmumiy summa: {price}",
     corporateLabel: "Ko'chirma orqali",
     cardLabel: "Kartaga o'tkazma",
     cashLabel: "Naqd pul",
@@ -502,33 +457,14 @@ const translations: Record<Lang, Record<string, string>> = {
     settingsSaveError: "Sozlamalarni saqlab bo'lmadi",
 
     // Language
-    langRu: 'RU',
-    langUz: 'UZ',
-
-    // Tabs
     tabCatalog: 'Katalog',
     tabTeams: 'Kabinet',
 
     // Teams — kirish / yaratish
-    authTitle: 'Kirish',
-    registerTitle: 'Jamoa',
-    authSubtitle: "Jamoangiz uchun korporativ tushliklar",
-    phone: 'Telefon',
     password: 'Parol',
     name: 'Ism',
-    loginLabel: 'Kirish',
-    teamName: 'Jamoa nomi',
-    teamSize: 'Odamlar soni',
     teamSizePlaceholder: 'Masalan: 10',
-    teamSizeHint: 'Jamoada shuncha odam bo\'ladi',
-    companyCode: 'Jamoa kodi',
-    companyCodePlaceholder: 'Masalan: ABC123',
-    createTeam: 'Jamoa yaratish',
-    joinTeam: 'Qo\'shilish',
-    createTeamLink: 'Jamoa yo\'q — yaratish',
-    joinTeamLink: 'Jamoa kodim bor',
-    switchToLogin: 'Akkount bor — kirish',
-    registerEmployeeHint: 'Qo\'shilish uchun jamoa kodini kiriting',
+    teamSizeHint: 'Jamoada nechta odam bor — majburiy emas, tashlab ketish mumkin',
     authError: 'Kirish imkoni bo\'lmadi. Ma\'lumotlarni tekshiring',
     logout: 'Chiqish',
 
@@ -560,7 +496,6 @@ const translations: Record<Lang, Record<string, string>> = {
     obPathCreate: "O'z jamoamni yarataman",
     obPathJoin: 'Jamoa kodim bor',
     obCompanyNameLabel: 'Jamoa nomi',
-    obCompanyCodeLabel: 'Jamoa kodi',
     obCompanyCodePlaceholder: 'Masalan: ABC123',
     obCompanyCodeHint: 'Buni menejer yoki rahbar ko\'rsatadi',
     obSubmitLogin: 'Kirish',
@@ -589,7 +524,6 @@ const translations: Record<Lang, Record<string, string>> = {
     currentSet: 'Tanlandi',
 
     // Manager — jamoa hisoboti
-    managerTitle: 'Menejer · tasdiqlash',
     teamCode: 'Jamoa kodi',
     teamMembers: 'Xodimlar',
     copied: 'Nusxalandi',
@@ -615,21 +549,18 @@ const translations: Record<Lang, Record<string, string>> = {
     optionalField: 'ixtiyoriy',
 
     // ── v4: xaritada yetkazib berish manzili ─────────────────────
-    deliverySection: 'Yetkazib berish',
     deliveryAddress: 'Yetkazib berish manzili',
     selectAddressOnMap: 'Manzilni xaritada tanlash',
     changeAddress: 'Manzilni o\'zgartirish',
     mapSearchPlaceholder: 'Qidiruv: ko\'cha, uy, tashkilot…',
     myLocation: 'Mening joylashuvim',
     dropPinHint: 'Xaritada belgi qo\'ying (xaritaga bosing yoki markerni suring)',
-    locating: 'Koordinatalarni aniqlayapman…',
     locError: 'Joylashuvni aniqlab bo\'lmadi. Belgini qo\'lda qo\'ying.',
     destDetailPlaceholder: 'Kirish, qavat, domofon, mo\'ljal',
     destDetail: 'Eshikkacha',
     confirmAddress: 'Manzilni tasdiqlash',
     deliveryFee: 'Yetkazib berish',
     totalWithDelivery: "Yetkazib berish bilan jami",
-    noDeliveryZone: "Hududlardan tashqari yetkazib berish — menejer bilan aniqlashtiring",
     deliveryQuoteLoading: 'Yetkazib berish narxi hisoblanmoqda…',
     deliveryQuoteError: "Yetkazib berishni hisoblab bo'lmadi. Aloqani tekshirib, qayta urinib ko'ring.",
     retry: "Qayta urinish",
@@ -640,7 +571,6 @@ const translations: Record<Lang, Record<string, string>> = {
     geoConsentRequired: "Geolokatsiyadan foydalanishga rozilikni tasdiqlang",
     locAccuracyLabel: 'Aniqlik: ±{m}',
     locAccuracyLow: "Aniqlik past — xaritada belgini surib aniqroq qo'ying",
-    geoAllowedHint: "Geolokatsiya mavjud: kirishda rozilik berdingiz",
     geoNotAllowedHint: "Geolokatsiya kirishda rozilik berilsa ishlaydi — hozircha manzilni qidiruv yoki belgi bilan ko'rsating",
     loginToTrackHint: "Buyurtma va uning holatini ko'rish uchun kabinetga kiring",
     tgContactLabel: 'Telegram akkaunti (avtomatik aniqlandi)',
@@ -654,7 +584,6 @@ const translations: Record<Lang, Record<string, string>> = {
     scopeHintThis: 'O\'zgarish faqat shu kunga taalluqli',
 
     // ── v3: buyurtma holatlari ─────────────────────────────────
-    orderStatusLabel: 'Holat',
     status_new: 'Yangi',
     status_confirmed: 'Tasdiqlangan',
     status_in_progress: 'Tayyorlanmoqda',
@@ -667,7 +596,6 @@ const translations: Record<Lang, Record<string, string>> = {
     leadText: "Rahmat! Lunchistan menejeri buyurtmani tasdiqlash uchun siz bilan bog'lanadi.",
 
     // ── v3: Kabinet ────────────────────────────────────────────
-    cabinetLogin: 'Kabinetga kirish',
     myOrders: 'Buyurtmalarim',
     myOrdersEmpty: "Hozircha buyurtma yo'q",
     ordersSection: 'Buyurtmalar',
@@ -678,7 +606,6 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // ── v3: Egasi svodkasi ─────────────────────────────────────
     ownerTitle: 'Svodka',
-    ownerSubtitle: "Buyurtmalar bilan nima bo'lyapti",
     rangeWeek: 'Hafta',
     range2Weeks: '2 hafta',
     rangeMonth: 'Oy',
@@ -692,7 +619,6 @@ const translations: Record<Lang, Record<string, string>> = {
     kitchenSheet: 'Oshxona uchun ro\'yxat',
     kitchenEmpty: "Bu sanalarga buyurtma yo'q",
     portionsShort: 'pors.',
-    orderDetail: 'Buyurtma',
     changeStatus: "Holatni o'zgartirish",
     statusChanged: 'Holat yangilandi',
     cancelConfirmText: "Rostdan ham №{number} buyurtmani bekor qilasizmi? Mijoz va oshxona allaqachon xabardor bo'lishi mumkin — bekor qilish haqida avtomatik xabar yuborilmaydi.",

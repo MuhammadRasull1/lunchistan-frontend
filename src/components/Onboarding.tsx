@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react'
 import { AnimatePresence, motion, type Variants } from 'framer-motion'
-import { UtensilsCrossed, Check, KeyRound, UserRound } from 'lucide-react'
+import { UtensilsCrossed, Check, KeyRound, UserRound, Users } from 'lucide-react'
 import type { Lang } from '../types'
 import { t } from '../locales/translations'
-import { login, registerTeam, joinTeam, apiErrorMessage } from '../lib/api'
+import { login, registerTeam, joinTeam, apiErrorMessage, needsCompanyCode } from '../lib/api'
 import type { AuthResponse } from '../lib/api'
 import { isValidName } from '../lib/nameValidator'
 import { getGeoConsent, setGeoConsent } from '../lib/geoConsent'
@@ -64,8 +64,12 @@ export default function Onboarding({ lang, onAuth }: OnboardingProps) {
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
   const [companyName, setCompanyName] = useState('')
+  const [companySize, setCompanySize] = useState('')
   const [companyCode, setCompanyCode] = useState('')
   const [busy, setBusy] = useState(false)
+  // Тёзка в другой компании: бэкенд не может различить двух Иванов по имени+паролю
+  // и просит код команды — только тогда показываем это поле при обычном входе.
+  const [loginNeedsCode, setLoginNeedsCode] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [touched, setTouched] = useState(false)
   // Согласие на геопозицию — обязательное условие входа (хранится локально+CloudStorage).
@@ -95,17 +99,27 @@ export default function Onboarding({ lang, onAuth }: OnboardingProps) {
       setError(t(lang, 'obFieldError'))
       return
     }
+    if (mode === 'login' && loginNeedsCode && !trimmedCode) {
+      setError(t(lang, 'obFieldError'))
+      return
+    }
     setBusy(true)
     setError(null)
     try {
       let result: AuthResponse
       if (mode === 'login') {
-        result = await login({ name: name.trim(), password })
+        result = await login({
+          name: name.trim(),
+          password,
+          ...(trimmedCode ? { companyCode: trimmedCode } : {}),
+        })
       } else if (mode === 'create') {
+        const size = Number(companySize)
         result = await registerTeam({
           name: name.trim(),
           password,
           companyName: companyName.trim(),
+          ...(Number.isInteger(size) && size > 0 ? { companySize: size } : {}),
         })
       } else {
         result = await joinTeam({
@@ -116,6 +130,7 @@ export default function Onboarding({ lang, onAuth }: OnboardingProps) {
       }
       onAuth(result)
     } catch (err) {
+      if (needsCompanyCode(err)) setLoginNeedsCode(true)
       setError(apiErrorMessage(err) ?? t(lang, 'authError'))
     } finally {
       setBusy(false)
@@ -316,22 +331,38 @@ export default function Onboarding({ lang, onAuth }: OnboardingProps) {
               {mode && (
                 <form className="ob-submit-area" onSubmit={e => { e.preventDefault(); submit() }}>
                   {mode === 'create' && (
-                    <div className="ob-field">
-                      <div className="ob-field__row">
-                        <input
-                          value={companyName}
-                          onChange={e => { setCompanyName(e.target.value); setError(null) }}
-                          placeholder={t(lang, 'obCompanyNameLabel')}
-                          autoFocus
-                          autoComplete="organization"
-                          maxLength={80}
-                        />
+                    <>
+                      <div className="ob-field">
+                        <div className="ob-field__row">
+                          <input
+                            value={companyName}
+                            onChange={e => { setCompanyName(e.target.value); setError(null) }}
+                            placeholder={t(lang, 'obCompanyNameLabel')}
+                            autoFocus
+                            autoComplete="organization"
+                            maxLength={80}
+                          />
+                        </div>
                       </div>
-                    </div>
+                      <div className="ob-field">
+                        <div className="ob-field__row">
+                          <Users size={18} strokeWidth={2} />
+                          <input
+                            value={companySize}
+                            onChange={e => { setCompanySize(e.target.value.replace(/\D/g, '').slice(0, 4)); setError(null) }}
+                            placeholder={t(lang, 'teamSizePlaceholder')}
+                            inputMode="numeric"
+                            autoComplete="off"
+                          />
+                        </div>
+                        <p className="ob-hint">{t(lang, 'teamSizeHint')}</p>
+                      </div>
+                    </>
                   )}
-                  {mode === 'join' && (
+                  {(mode === 'join' || (mode === 'login' && loginNeedsCode)) && (
                     <div className="ob-field">
                       <div className="ob-field__row">
+                        {mode === 'login' && <KeyRound size={18} strokeWidth={2} />}
                         <input
                           value={companyCode}
                           onChange={e => { setCompanyCode(e.target.value); setError(null) }}
