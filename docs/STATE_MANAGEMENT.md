@@ -1,7 +1,7 @@
 # ⚙️ Управление состоянием (State Management)
 
-> Версия: 2.4 — блюдо на день (`CartItem.setId`, модель токенов)  \
-> Последнее обновление: 06.09.2026  \
+> Версия: 2.5 — дневное меню вместо ротации (`dayMenus`, авто-назначение при 1 блюде)  \
+> Последнее обновление: 17.09.2026  \
 > Связанные файлы: [[ARCHITECTURE]], [[COMPONENTS]], [[B2B_RULES]]
 
 ---
@@ -23,7 +23,8 @@
 | ---------------- | ---------- | ------------------ | ------------------------------------- |
 | `screen`         | `Screen`   | `'catalog'`        | Текущий экран (`catalog` / `cart` / `success`) |
 | `employeeCount`  | `number`   | `1` (из localStorage, clamp [1, 500]) | Множитель стоимости (сотрудники)      |
-| `cartState`      | `CartState`| `{}` (0 дней)      | Выбранные даты (`YYYY-MM-DD`) с настройками дня; **прошедшие даты исключаются** |
+| `cartState`      | `CartState`| `{}` (0 дней)      | Выбранные даты (`YYYY-MM-DD`) с настройками дня; **прошедшие даты и даты без внесённого меню исключаются** |
+| 🆆 `dayMenus`     | `Record<string, LunchSet[]>` | `{}` | Кеш «меню по датам» (`fetchDayMenu`), подгружается по каждой дате из `cartState` |
 | `lang`           | `Lang`     | из localStorage (`lunchistan_lang`) | Текущий язык интерфейса (RU/UZ), персистится |
 
 ### 2.2. CartState — детальная структура
@@ -48,7 +49,13 @@ interface CartItem {
 }
 ```
 
-🆆 **v3.2:** блюдо дня — это `item.setId` (выбор клиента через `SetPicker`), резолвится `getSetById`. `getSetForDate` (ротация `MONTHLY_SETS[(ordinal-1) % 56]`) больше **не** источник блюда — только плейсхолдер `SelectedDay.set` для ещё не выбранного дня. `makeDefaultDay()` создаёт день с `setId: null`. Сохранёнка — `lunchistan:order:v3` ([[STATE_MANAGEMENT#7-сброс-состояния-new-order]]).
+🆆 **v3.2:** блюдо дня — это `item.setId` (выбор клиента через `SetPicker`), резолвится `getSetById`. `makeDefaultDay()` создаёт день с `setId: null`. Сохранёнка — `lunchistan:order:v3` ([[STATE_MANAGEMENT#7-сброс-состояния-new-order]]).
+
+🆆 **v2.5 (17.09.2026):** блюда бизнеса не повторяются день в день — ротация `getSetForDate` (`MONTHLY_SETS[(ordinal-1) % 56]`) была неверной моделью реальности и **удалена** из `src/lib/menu.ts`. Вместо неё:
+- `dayMenus[date]` (кеш в `App.tsx`, подгружается `fetchDayMenu(date)` при появлении даты в `cartState`) — блюда, реально предложенные на эту дату.
+- Если `dayMenus[date].length === 1` — единственное блюдо назначается автоматически: `cartState[date].setId` проставляется этим id, как только кеш пришёл (`ensureDayMenu` в `App.tsx`), без похода в `SetPicker`.
+- Если блюд несколько — прежний флоу ручного выбора, но `SetPicker` показывает только `dayMenus[date]`, а не весь каталог.
+- Плейсхолдер `SelectedDay.set` для ещё не выбранного дня — теперь `dayMenus[date]?.[0] ?? menu[0]` (первое блюдо дневного меню, если уже загружено).
 
 ---
 
@@ -56,9 +63,9 @@ interface CartItem {
 
 ```typescript
 selectedDates            = Object.keys(cartState).sort()            // единственный источник количества дней
-orderDays: SelectedDay[] = selectedDates.map(date => {              // 🆆 v3.2
-  const chosenSet = getSetById(cartState[date].setId)
-  return { date, set: chosenSet ?? getSetForDate(date), chosen: chosenSet !== undefined, item: cartState[date] }
+orderDays: SelectedDay[] = selectedDates.map(date => {              // 🆆 v2.5
+  const chosenSet = getSetById(menu, cartState[date].setId)
+  return { date, set: chosenSet ?? dayMenus[date]?.[0] ?? menu[0], chosen: chosenSet !== undefined, item: cartState[date] }
 })
 allDishesChosen          = orderDays.length > 0 && orderDays.every(d => d.chosen)   // 🆆 v3.2 gate оформления
 activeDays               = selectedDates.length
@@ -75,8 +82,9 @@ totalMonthlyPrice        = totalPortionsFromActive × employeeCount × SET_PRICE
 
 | Функция                         | Действие                                           |
 | ------------------------------- | ------------------------------------------------- |
-| `handleToggleDate(date)`        | Включить/выключить день (используется корзиной: удаление строки). **Защитный слой:** прошедшие даты не включаются (`isPastDate`), удаление всегда разрешено. Резка «сегодня после 10:00» — на уровне UI ([[COMPONENTS#35-calendarmodaltsx—модалка-выбора-дат-v22]]) через `canSelectDate` |
-| `handleApplySelectedDates(dates)` | 🆆 Применить подтверждённый выбор из календарной модалки: новые даты получают дефолтный конфиг, конфиги остающихся дат сохраняются, снятые — удаляются. Прошедшие даты отфильтровываются (`isPastDate`) |
+| `handleToggleDate(date)`        | Включить/выключить день (используется корзиной: удаление строки). **Защитный слой:** прошедшие даты не включаются (`isPastDate`), даты с уже известным пустым дневным меню (`dayMenus[date]?.length === 0`) не включаются, удаление всегда разрешено. Резка «сегодня после 10:00» и доступность меню — на уровне UI ([[COMPONENTS#35-calendarmodaltsx—модалка-выбора-дат-v22]]) через `canPick` |
+| `handleApplySelectedDates(dates)` | 🆆 Применить подтверждённый выбор из календарной модалки: новые даты получают дефолтный конфиг, конфиги остающихся дат сохраняются, снятые — удаляются. Прошедшие даты и даты с известным пустым дневным меню отфильтровываются (`isPastDate`, `dayMenus`) |
+| 🆆 `ensureDayMenu(date)`         | Подгружает `dayMenus[date]` через `fetchDayMenu` (дедуп через `fetchingDaysRef`); если пришло ровно 1 блюдо — сразу проставляет его `setId` в `cartState[date]` (если ещё не выбрано) |
 | `handleBeverageChange(date, bev)` | Сменить напиток для даты                        |
 | `handleSaladChange(date, salad)` | Сменить салат для даты                           |
 | 🆆 `handleSetChange(date, setId)` | Клиент выбрал блюдо на день («потратил токен») — `cartState[date].setId = setId` |

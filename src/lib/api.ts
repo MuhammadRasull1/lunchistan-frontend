@@ -187,6 +187,52 @@ export async function fetchMenu(): Promise<LunchSet[]> {
   }))
 }
 
+// ── Меню по датам (17.09.2026 — блюда бизнеса не повторяются день в день;
+// getSetForDate/ротация из lib/menu.ts удалена, блюдо на дату теперь приходит
+// с бэкенда) ──────────────────────────────────────────────────────
+/** Блюда, предложенные именно на эту дату. Пустой массив — меню на дату не внесено. */
+export async function fetchDayMenu(date: string): Promise<LunchSet[]> {
+  const { data } = await http.get<{ date: string; sets: RawMenuSet[] }>(`/api/menu/day/${date}`)
+  return data.sets.map((s, index) => ({
+    id: s.id,
+    dayNumber: index + 1,
+    weekDay: WEEK_DAYS[index % 5],
+    category: s.category,
+    name: s.name,
+    description: s.description,
+    price: s.price,
+    imageUrl: s.image_url ?? undefined,
+    calories: s.calories ?? undefined,
+    proteins: s.proteins ?? undefined,
+    fats: s.fats ?? undefined,
+    carbs: s.carbs ?? undefined,
+    composition: s.composition ?? [],
+  }))
+}
+
+/** Какие даты в диапазоне вообще имеют внесённое меню (для блокировки остальных в календаре). */
+export async function fetchAvailableDates(from: string, to: string): Promise<string[]> {
+  const { data } = await http.get<{ dates: string[] }>('/api/menu/available-dates', { params: { from, to } })
+  return data.dates
+}
+
+// ── Владелец: меню по датам — какие блюда каталога предложены на конкретную
+// дату (17.09.2026, раздел «Меню по датам» в OwnerView) ────────────────────
+export interface OwnerDailyMenu {
+  date: string
+  setIds: number[]
+}
+
+export async function fetchOwnerDailyMenu(date: string): Promise<OwnerDailyMenu> {
+  const { data } = await http.get<OwnerDailyMenu>(`/api/owner/daily-menu/${date}`)
+  return data
+}
+
+export async function saveOwnerDailyMenu(date: string, setIds: number[]): Promise<OwnerDailyMenu> {
+  const { data } = await http.put<OwnerDailyMenu>(`/api/owner/daily-menu/${date}`, { setIds })
+  return data
+}
+
 // ── Владелец: управление меню (11.09.2026 — раньше меню правилось только
 // деплоем кода, теперь дядя/брат сами добавляют/меняют/скрывают блюда) ─────
 export interface OwnerMenuItem extends RawMenuSet {

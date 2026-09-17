@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ChevronLeft, ChevronRight, CalendarPlus, Check } from 'lucide-react'
 import type { Lang, PresetPattern } from '../types'
@@ -16,6 +16,7 @@ import {
   TODAY_ORDER_CUTOFF_HOUR,
 } from '../lib/calendar'
 import { hapticImpact } from '../lib/telegram'
+import { fetchAvailableDates } from '../lib/api'
 
 interface CalendarModalProps {
   isOpen: boolean
@@ -63,17 +64,43 @@ const SHEET_VARIANTS = {
  * поэтому черновой выбор и видимый месяц инициализируются из пропсов без эффектов.
  */
 function CalendarSheet({ initialSelectedDates, minMonth, maxMonth, lang, onConfirm, onClose }: Omit<CalendarModalProps, 'isOpen'>) {
+  // Прошлые даты и «сегодня» после резки — исключаем сразу; даты без внесённого
+  // меню НЕ исключаем здесь (ещё не знаем список — см. availableDates ниже), чтобы
+  // уже подтверждённый ранее выбор не мигал/не терялся, пока идёт загрузка.
   const [draftDates, setDraftDates] = useState<Set<string>>(() =>
     new Set(initialSelectedDates.filter(date => canSelectDate(date)))
   )
   const [visibleMonth, setVisibleMonth] = useState<Date>(() => new Date(minMonth.getTime()))
 
+  // 🆆 17.09.2026: заказывать можно только даты, на которые владелец внёс меню —
+  // остальные недоступны для выбора (не только на checkout, само добавление в
+  // подписку невозможно). Подтягиваем список сразу при открытии модалки.
+  const [availableDates, setAvailableDates] = useState<Set<string> | null>(null)
+  const [availableDatesError, setAvailableDatesError] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    const from = formatDate(minMonth)
+    const to = formatDate(new Date(maxMonth.getFullYear(), maxMonth.getMonth() + 1, 0))
+    fetchAvailableDates(from, to)
+      .then(dates => { if (!cancelled) setAvailableDates(new Set(dates)) })
+      .catch(() => { if (!cancelled) setAvailableDatesError(true) })
+    return () => { cancelled = true }
+    // minMonth/maxMonth стабильны на весь жизненный цикл модалки (мемоизированы в Catalog).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  /** На дату внесено меню? Пока список не загружен — считаем недоступной (fail-closed). */
+  const hasMenu = (date: string): boolean => availableDates?.has(date) ?? false
+  /** Можно выбрать НОВУЮ дату: не прошлое/не после резки И на неё внесено меню. */
+  const canPick = (date: string): boolean => canSelectDate(date) && hasMenu(date)
+
   const visibleMonthKey = monthKeyOf(visibleMonth.getFullYear(), visibleMonth.getMonth())
   const weeks = buildMonthWeeks(visibleMonth)
   const monthCells = buildMonthGrid(visibleMonth)
-  // Все даты месяца, доступные для заказа (не прошлое и, если сегодня, до временной резки)
+  // Даты месяца, доступные для выбора (не прошлое, до резки, с внесённым меню)
   const monthSelectableDates = monthCells
-    .filter(cell => !cell.isEmpty && cell.date !== undefined && canSelectDate(cell.date))
+    .filter(cell => !cell.isEmpty && cell.date !== undefined && canPick(cell.date))
     .map(cell => cell.date as string)
   const draftCount = draftDates.size
   const todayKey = formatDate(new Date())
@@ -87,8 +114,10 @@ function CalendarSheet({ initialSelectedDates, minMonth, maxMonth, lang, onConfi
   }
 
   const toggleDate = (date: string) => {
-    // Прошедшие даты и «сегодня» после временной резки выбрать нельзя.
-    if (!canSelectDate(date)) return
+    const alreadySelected = draftDates.has(date)
+    // Снятие уже выбранной даты разрешено всегда; выбор новой — только если доступна
+    // (не прошлое/не после резки И на неё внесено меню — см. canPick выше).
+    if (!alreadySelected && !canPick(date)) return
     hapticImpact('light')
     setDraftDates(prev => {
       const next = new Set(prev)
@@ -101,10 +130,12 @@ function CalendarSheet({ initialSelectedDates, minMonth, maxMonth, lang, onConfi
     })
   }
 
-  /** Пресет «Вся неделя»: выбирает все дни Пн..Вс той недели, на которую нажали (повторно — снимает) */
+  /** Пресет «Вся неделя»: выбирает все дни Пн..Вс той недели, на которую нажали (повторно — снимает).
+   * Кандидаты — доступные для выбора даты ИЛИ уже выбранные ранее (чтобы «Вся неделя» могла снять
+   * и дни, чьё меню владелец убрал позже подтверждения). */
   const toggleWorkWeek = (weekIndex: number) => {
     hapticImpact('light')
-    const weekDates = workWeekDatesOf(weeks[weekIndex]).filter(date => canSelectDate(date))
+    const weekDates = workWeekDatesOf(weeks[weekIndex]).filter(date => canPick(date) || draftDates.has(date))
     if (weekDates.length === 0) return
     setDraftDates(prev => {
       const next = new Set(prev)
@@ -118,12 +149,15 @@ function CalendarSheet({ initialSelectedDates, minMonth, maxMonth, lang, onConfi
     })
   }
 
-  /** Глобальные пресеты: toggle. Первое нажатие добавляет даты пресета в видимый месяц,
-   * повторное — снимает ровно пресетные даты (вручную добавленные/снятые дни сохраняются).
-   * Даты других месяцев не затрагиваются. */
+  /** Глобальные пресеты: toggle. Первое нажатие добавляет доступные даты пресета в видимый
+   * месяц, повторное — снимает их (вручную добавленные/снятые дни сохраняются). Даты без
+   * внесённого меню молча пропускаются — не выбираются пресетом. */
+  const presetCandidates = (pattern: PresetPattern): string[] =>
+    buildPresetDates(visibleMonthKey, pattern).filter(date => canPick(date) || draftDates.has(date))
+
   const togglePreset = (pattern: PresetPattern) => {
     hapticImpact('light')
-    const presetDates = buildPresetDates(visibleMonthKey, pattern)
+    const presetDates = presetCandidates(pattern)
     if (presetDates.length === 0) return
     setDraftDates(prev => {
       const next = new Set(prev)
@@ -137,9 +171,9 @@ function CalendarSheet({ initialSelectedDates, minMonth, maxMonth, lang, onConfi
     })
   }
 
-  /** Пресет активен, если выбор видимого месяца в точности равен результату пресета */
+  /** Пресет активен, если выбор видимого месяца в точности равен доступным датам пресета */
   const isPresetActive = (pattern: PresetPattern): boolean => {
-    const presetDates = new Set(buildPresetDates(visibleMonthKey, pattern))
+    const presetDates = new Set(presetCandidates(pattern))
     if (presetDates.size === 0) return false
     for (const date of draftDates) {
       if (monthKeyOfDate(date) !== visibleMonthKey) continue
@@ -220,6 +254,7 @@ function CalendarSheet({ initialSelectedDates, minMonth, maxMonth, lang, onConfi
           <h2 className="calendar-modal__title">{t(lang, 'calendarModalTitle')}</h2>
           <p className="calendar-modal__subtitle">{t(lang, 'calendarSubtitle')}</p>
           <p className="calendar-modal__hint">{t(lang, 'calendarLockedHint', { n: TODAY_ORDER_CUTOFF_HOUR })}</p>
+          {availableDatesError && <p className="calendar-modal__hint">{t(lang, 'menuLoadError')}</p>}
 
           {/* Навигация по месяцам (текущий → следующий) */}
           <div className="calendar__header">
@@ -295,12 +330,16 @@ function CalendarSheet({ initialSelectedDates, minMonth, maxMonth, lang, onConfi
                       return <div key={cellIndex} className="calendar__day calendar__day--empty" />
                     }
                     const selected = draftDates.has(cell.date)
-                    const locked = !canSelectDate(cell.date)
+                    // Уже выбранная дата остаётся кликабельной (чтобы её можно было снять),
+                    // даже если её меню задним числом стало недоступно.
+                    const locked = !selected && !canPick(cell.date)
+                    const menuNotReady = !selected && canSelectDate(cell.date) && !hasMenu(cell.date)
                     return (
                       <button
                         key={cellIndex}
                         type="button"
                         disabled={locked}
+                        title={menuNotReady ? t(lang, 'dateMenuNotReady') : undefined}
                         className={`calendar__day${selected ? ' calendar__day--selected' : ''}${cell.isWeekend ? ' calendar__day--weekend' : ''}${cell.date === todayKey ? ' calendar__day--today' : ''}${locked ? ' calendar__day--disabled' : ''}`}
                         onClick={() => toggleDate(cell.date!)}
                         aria-pressed={selected}

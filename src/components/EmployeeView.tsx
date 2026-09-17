@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { CalendarDays, Lock } from 'lucide-react'
 import type { Lang, LunchSet } from '../types'
 import { t, WEEKDAYS_SHORT } from '../locales/translations'
-import { fetchMyDays, putMyDays, putMyChoice } from '../lib/api'
+import { fetchMyDays, putMyDays, putMyChoice, fetchDayMenu } from '../lib/api'
 import type { MyDay } from '../lib/api'
 import CalendarModal from './CalendarModal'
 import SetPicker from './SetPicker'
@@ -14,8 +14,6 @@ interface EmployeeViewProps {
   userName: string
   companyName: string
   onLogout: () => void
-  /** Текущее меню (с бэкенда) — до 11.09.2026 бралось из захардкоженного mockMenu.ts */
-  menu: LunchSet[]
 }
 
 function dayLabel(date: string, lang: Lang): string {
@@ -24,11 +22,15 @@ function dayLabel(date: string, lang: Lang): string {
   return `${String(d).padStart(2, '0')}.${String(m).padStart(2, '0')} · ${wd}`
 }
 
-export default function EmployeeView({ lang, userName, companyName, onLogout, menu }: EmployeeViewProps) {
+export default function EmployeeView({ lang, userName, companyName, onLogout }: EmployeeViewProps) {
   const [days, setDays] = useState<MyDay[]>([])
   const [loading, setLoading] = useState(true)
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [pickFor, setPickFor] = useState<MyDay | null>(null)
+  // Меню на конкретную дату («Команды» тоже ограничены реально внесённым
+  // меню дня, не всем каталогом — см. routes.js PUT /api/my/days/:date/choice,
+  // которая отклоняет setId, если он не в daily_menu на эту дату).
+  const [pickForMenu, setPickForMenu] = useState<LunchSet[]>([])
   const [error, setError] = useState<string | null>(null)
   const [minMonth] = useState(() => startOfMonth(new Date()))
   const maxMonth = addMonths(minMonth, 1)
@@ -69,6 +71,17 @@ export default function EmployeeView({ lang, userName, companyName, onLogout, me
       setCalendarOpen(false)
     }
   }
+
+  useEffect(() => {
+    if (!pickFor) return
+    let cancelled = false
+    fetchDayMenu(pickFor.date)
+      .then(sets => { if (!cancelled) setPickForMenu(sets) })
+      .catch(() => { if (!cancelled) setPickForMenu([]) })
+    return () => {
+      cancelled = true
+    }
+  }, [pickFor])
 
   const pickSet = async (setId: number) => {
     if (!pickFor) return
@@ -151,7 +164,7 @@ export default function EmployeeView({ lang, userName, companyName, onLogout, me
 
       <SetPicker
         isOpen={pickFor !== null}
-        menu={menu}
+        menu={pickFor ? pickForMenu : []}
         lang={lang}
         dayLabel={pickFor ? dayLabel(pickFor.date, lang) : undefined}
         current={pickFor?.choice ?? null}

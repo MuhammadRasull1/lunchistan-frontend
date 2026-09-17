@@ -22,6 +22,13 @@ interface CatalogProps {
   days: SelectedDay[]
   /** Текущее меню (с бэкенда) — до 11.09.2026 бралось из захардкоженного mockMenu.ts */
   menu: LunchSet[]
+  /**
+   * 🆆 17.09.2026: дневное меню по дате (блюда не повторяются день в день —
+   * ротация getSetForDate удалена). undefined — ещё не загружено, [] — на дату
+   * не внесено меню (не должно случаться для уже выбранных дней — см. App.tsx),
+   * [x] — единственное блюдо (назначается само), несколько — выбор через SetPicker.
+   */
+  dayMenus: Record<string, LunchSet[]>
   allSetsCount: number
   employeeCount: number
   totalMonthlyPrice: number
@@ -55,6 +62,7 @@ const CATEGORY_TABS: { value: CategoryFilter; labelKey: string }[] = [
 function Catalog({
   days,
   menu,
+  dayMenus,
   allSetsCount,
   employeeCount,
   totalMonthlyPrice,
@@ -306,37 +314,52 @@ function Catalog({
           </div>
           <p className="view__section-desc view__section-desc--muted">{t(lang, 'tokensHint')}</p>
           <div className="days-list">
-            {days.map((day, i) => (
-              <Reveal key={day.date} delay={Math.min(i * 0.05, 0.3)} y={12}>
-                <div className={`day-row${day.chosen ? '' : ' day-row--empty'}`}>
-                  <div className="day-row__date">{formatDayLabel(day.date, lang)}</div>
-                  <button
-                    type="button"
-                    className="day-row__dish day-row__dish--btn"
-                    onClick={() => (day.chosen ? handleOpenModal(day.date) : setPickForDate(day.date))}
-                  >
-                    {day.chosen ? (
-                      <>
-                        <span className="day-row__name">{day.set.name}</span>
-                        <span className="day-row__hint">
-                          {day.item.salad} · {t(lang, day.item.beverage === 'Вода' ? 'water' : 'compote')}
-                          {' · '}{day.item.portions} {t(lang, 'portionsPerEmployee')}
+            {days.map((day, i) => {
+              const dayMenu = dayMenus[day.date]
+              const menuLoading = dayMenu === undefined
+              // Несколько блюд на день — клиент выбирает сам через SetPicker; ровно одно —
+              // назначается автоматически (App.tsx, ensureDayMenu), менять нечего, кнопки нет.
+              const hasChoice = (dayMenu?.length ?? 0) > 1
+              return (
+                <Reveal key={day.date} delay={Math.min(i * 0.05, 0.3)} y={12}>
+                  <div className={`day-row${day.chosen ? '' : ' day-row--empty'}`}>
+                    <div className="day-row__date">{formatDayLabel(day.date, lang)}</div>
+                    <button
+                      type="button"
+                      className="day-row__dish day-row__dish--btn"
+                      disabled={!day.chosen && !hasChoice}
+                      onClick={() => {
+                        if (day.chosen) handleOpenModal(day.date)
+                        else if (hasChoice) setPickForDate(day.date)
+                      }}
+                    >
+                      {day.chosen ? (
+                        <>
+                          <span className="day-row__name">{day.set.name}</span>
+                          <span className="day-row__hint">
+                            {day.item.salad} · {t(lang, day.item.beverage === 'Вода' ? 'water' : 'compote')}
+                            {' · '}{day.item.portions} {t(lang, 'portionsPerEmployee')}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="day-row__hint day-row__hint--warn">
+                          {menuLoading ? t(lang, 'loadingLabel') : t(lang, 'daySetNotChosen')}
                         </span>
-                      </>
-                    ) : (
-                      <span className="day-row__hint day-row__hint--warn">{t(lang, 'daySetNotChosen')}</span>
+                      )}
+                    </button>
+                    {hasChoice && (
+                      <button
+                        type="button"
+                        className="btn btn--outline day-row__pick"
+                        onClick={() => setPickForDate(day.date)}
+                      >
+                        {day.chosen ? t(lang, 'changeSet') : t(lang, 'chooseSet')}
+                      </button>
                     )}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn--outline day-row__pick"
-                    onClick={() => setPickForDate(day.date)}
-                  >
-                    {day.chosen ? t(lang, 'changeSet') : t(lang, 'chooseSet')}
-                  </button>
-                </div>
-              </Reveal>
-            ))}
+                  </div>
+                </Reveal>
+              )
+            })}
           </div>
         </section>
       )}
@@ -465,10 +488,11 @@ function Catalog({
         daysCount={0}
       />
 
-      {/* Пикер выбора блюда на день («трата токена») */}
+      {/* Пикер выбора блюда на день («трата токена») — только блюда, предложенные
+          именно на эту дату (дневное меню), а не весь каталог */}
       <SetPicker
         isOpen={pickForDate !== null}
-        menu={menu}
+        menu={pickForDate ? dayMenus[pickForDate] ?? [] : []}
         lang={lang}
         dayLabel={pickForDate ? formatDayLabel(pickForDate, lang) : undefined}
         current={pickForDay?.chosen

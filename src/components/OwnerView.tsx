@@ -6,6 +6,7 @@ import { t } from '../locales/translations'
 import {
   fetchOwnerSummary, fetchOwnerOrders, fetchOwnerKitchen,
   fetchOwnerMenu, createMenuItem, updateMenuItem,
+  fetchOwnerDailyMenu, saveOwnerDailyMenu,
   fetchSettings, updateSettings,
 } from '../lib/api'
 import type { OwnerSummary, OrderView, KitchenDay, OwnerMenuItem, MenuItemInput, BusinessSettings } from '../lib/api'
@@ -41,6 +42,7 @@ export default function OwnerView({ lang, userName, onLogout }: Props) {
   const [allOrders, setAllOrders] = useState<OrderView[] | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [dailyMenuOpen, setDailyMenuOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   useEffect(() => {
@@ -75,6 +77,9 @@ export default function OwnerView({ lang, userName, onLogout }: Props) {
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn btn--outline" onClick={() => setMenuOpen(true)}>
             {t(lang, 'menuManage')}
+          </button>
+          <button className="btn btn--outline" onClick={() => setDailyMenuOpen(true)}>
+            {t(lang, 'dailyMenuManage')}
           </button>
           <button className="btn btn--outline" onClick={() => setSettingsOpen(true)}>
             {t(lang, 'settingsManage')}
@@ -210,6 +215,10 @@ export default function OwnerView({ lang, userName, onLogout }: Props) {
 
       {/* Управление меню — до 11.09.2026 меню можно было поменять только деплоем кода */}
       {menuOpen && <MenuManagerSheet lang={lang} onClose={() => setMenuOpen(false)} />}
+
+      {/* Меню по датам — 17.09.2026: блюда бизнеса не повторяются день в день,
+          на каждую дату владелец сам отмечает, какие блюда каталога предлагаются */}
+      {dailyMenuOpen && <DailyMenuSheet lang={lang} onClose={() => setDailyMenuOpen(false)} />}
 
       {/* Настройки оплаты — номер карты для ручного перевода (не эквайринг) */}
       {settingsOpen && <SettingsSheet lang={lang} onClose={() => setSettingsOpen(false)} />}
@@ -379,9 +388,11 @@ function MenuManagerSheet({ lang, onClose }: { lang: Lang; onClose: () => void }
 }
 
 // ── Форма блюда: общая для создания и редактирования ─────────────
+// 🆆 onSaved получает созданное блюдо (если это было создание, не правка) —
+// используется в DailyMenuSheet, чтобы сразу включить новое блюдо на выбранную дату.
 function DishFormSheet({
   lang, item, onClose, onSaved,
-}: { lang: Lang; item: OwnerMenuItem | null; onClose: () => void; onSaved: () => void }) {
+}: { lang: Lang; item: OwnerMenuItem | null; onClose: () => void; onSaved: (created?: OwnerMenuItem) => void }) {
   const [name, setName] = useState(item?.name ?? '')
   const [category, setCategory] = useState<SetCategory>(item?.category ?? 'hot')
   const [price, setPrice] = useState(item ? String(item.price) : '')
@@ -418,9 +429,13 @@ function DishFormSheet({
       carbs: toIntOrNull(carbs),
     }
     try {
-      if (item) await updateMenuItem(item.id, input)
-      else await createMenuItem(input)
-      onSaved()
+      if (item) {
+        await updateMenuItem(item.id, input)
+        onSaved()
+      } else {
+        const created = await createMenuItem(input)
+        onSaved(created)
+      }
     } catch {
       setError(t(lang, 'menuSaveError'))
     } finally {
@@ -491,6 +506,152 @@ function DishFormSheet({
         </div>
       </motion.div>
     </>
+  )
+}
+
+// ── Меню по датам: на каждую дату владелец отмечает, какие блюда каталога
+// предлагаются (17.09.2026 — блюда бизнеса не повторяются день в день) ─────
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function DailyMenuSheet({ lang, onClose }: { lang: Lang; onClose: () => void }) {
+  const [date, setDate] = useState(todayIso)
+  const [items, setItems] = useState<OwnerMenuItem[] | null>(null)
+  const [itemsError, setItemsError] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [loadingDay, setLoadingDay] = useState(true)
+  const [dayError, setDayError] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [status, setStatus] = useState<'idle' | 'saved' | 'error'>('idle')
+  const [addOpen, setAddOpen] = useState(false)
+
+  // Весь каталог (включая скрытые — скрытое блюдо всё равно нельзя предложить на дату,
+  // фильтруем ниже по is_active).
+  useEffect(() => {
+    let cancelled = false
+    fetchOwnerMenu()
+      .then((data) => { if (!cancelled) { setItems(data); setItemsError(false) } })
+      .catch(() => { if (!cancelled) setItemsError(true) })
+    return () => { cancelled = true }
+  }, [reloadKey])
+
+  // Что уже предложено на выбранную дату. loadingDay/status для новой даты
+  // сбрасываются в onChange инпута (событие, а не эффект) — здесь только читаем ответ.
+  useEffect(() => {
+    let cancelled = false
+    fetchOwnerDailyMenu(date)
+      .then((res) => { if (!cancelled) { setSelectedIds(new Set(res.setIds)); setDayError(false) } })
+      .catch(() => { if (!cancelled) { setSelectedIds(new Set()); setDayError(true) } })
+      .finally(() => { if (!cancelled) setLoadingDay(false) })
+    return () => { cancelled = true }
+  }, [date])
+
+  const toggle = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    setStatus('idle')
+    try {
+      await saveOwnerDailyMenu(date, [...selectedIds])
+      setStatus('saved')
+    } catch {
+      setStatus('error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const activeItems = items?.filter((i) => i.is_active) ?? null
+
+  return (
+    <AnimatePresence>
+      <motion.div key="dm-overlay" className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} />
+      <motion.div key="dm-sheet" className="modal-sheet" initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 300, damping: 32 }}>
+        <div className="modal-sheet__handle" />
+        <button type="button" className="modal-sheet__close" onClick={onClose} aria-label={t(lang, 'close')}>
+          <X size={20} strokeWidth={2.5} />
+        </button>
+        <div className="modal-sheet__scroll">
+          <h2 className="calendar-modal__title">{t(lang, 'dailyMenuTitle')}</h2>
+          <p className="calendar-modal__subtitle">{t(lang, 'dailyMenuHint')}</p>
+
+          <div className="auth-field" style={{ marginTop: 12, maxWidth: 220 }}>
+            <label>{t(lang, 'dailyMenuDateLabel')}</label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => {
+                if (!e.target.value) return
+                setLoadingDay(true)
+                setStatus('idle')
+                setDate(e.target.value)
+              }}
+            />
+          </div>
+
+          {status === 'saved' && <div className="auth-error" style={{ background: 'var(--success-bg, #e8f7ee)', color: 'var(--success, #22a058)' }}>{t(lang, 'settingsSaved')}</div>}
+          {status === 'error' && <div className="auth-error">{t(lang, 'settingsSaveError')}</div>}
+          {dayError && <div className="auth-error">{t(lang, 'menuLoadError')}</div>}
+          {itemsError && <div className="auth-error">{t(lang, 'menuLoadError')}</div>}
+
+          <button className="btn btn--outline" style={{ marginTop: 16, marginBottom: 12 }} onClick={() => setAddOpen(true)}>
+            <Plus size={15} /> {t(lang, 'menuAddDish')}
+          </button>
+
+          {activeItems === null && !itemsError && <p className="view__section-desc">{t(lang, 'loadingLabel')}</p>}
+          {activeItems !== null && activeItems.length === 0 && <p className="view__section-desc">{t(lang, 'menuEmpty')}</p>}
+
+          <div className="days-list">
+            {activeItems?.map((item) => (
+              <label
+                key={item.id}
+                className="day-row"
+                style={{ cursor: loadingDay ? 'wait' : 'pointer', opacity: loadingDay ? 0.6 : 1 }}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(item.id)}
+                  disabled={loadingDay}
+                  onChange={() => toggle(item.id)}
+                  style={{ width: 18, height: 18, marginRight: 4, flexShrink: 0 }}
+                />
+                <div className="day-row__dish">
+                  <span className="day-row__name">{item.name}</span>
+                  <span className="day-row__hint">{categoryLabel(lang, item.category)} · {formatMoney(item.price, lang)}</span>
+                </div>
+              </label>
+            ))}
+          </div>
+
+          <button className="btn btn--primary" style={{ marginTop: 20 }} onClick={handleSave} disabled={saving || loadingDay || activeItems === null}>
+            {t(lang, 'menuSave')}
+          </button>
+        </div>
+      </motion.div>
+
+      {addOpen && (
+        <DishFormSheet
+          lang={lang}
+          item={null}
+          onClose={() => setAddOpen(false)}
+          onSaved={(created) => {
+            setAddOpen(false)
+            setReloadKey((k) => k + 1)
+            // Сразу включаем новое блюдо на выбранную дату — не заставляем искать его в списке.
+            if (created) setSelectedIds((prev) => new Set(prev).add(created.id))
+          }}
+        />
+      )}
+    </AnimatePresence>
   )
 }
 

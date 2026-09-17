@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import './App.css'
 import Catalog from './components/Catalog'
@@ -11,13 +11,13 @@ import EmployeeView from './components/EmployeeView'
 import ManagerView from './components/ManagerView'
 import OwnerView from './components/OwnerView'
 import SupportLink from './components/SupportLink'
-import { getSetForDate, getSetById } from './lib/menu'
+import { getSetById } from './lib/menu'
 import type { CartState, Screen, PaymentMethod, Beverage, Salad, Lang, LunchSet, SelectedDay } from './types'
 import { EMPLOYEE_MAX } from './types'
 import { t } from './locales/translations'
 import { showTelegramAlert } from './lib/telegram'
 import { loadSavedOrder, saveOrder, clearSavedOrder } from './lib/orderStorage'
-import { submitOrder, getToken, setToken, fetchMe, fetchMenu, restoreTokenFromCloud } from './lib/api'
+import { submitOrder, getToken, setToken, fetchMe, fetchMenu, fetchDayMenu, restoreTokenFromCloud } from './lib/api'
 import { restoreGeoConsentFromCloud } from './lib/geoConsent'
 import type { AuthResponse, AuthUser, OrderContact } from './lib/api'
 import { getDefaultSalad } from './components/saladOptions'
@@ -159,6 +159,37 @@ function App() {
     }
   }, [menuReloadKey])
 
+  // Меню по датам (17.09.2026 — блюда не повторяются день в день, ротация
+  // getSetForDate удалена). Кеш по дате: undefined — ещё не загружено,
+  // [] — на дату не внесено меню, [x] — единственное блюдо (назначается само),
+  // [x, y, ...] — несколько блюд (клиент выбирает через SetPicker).
+  const [dayMenus, setDayMenus] = useState<Record<string, LunchSet[]>>({})
+  const fetchingDaysRef = useRef<Set<string>>(new Set())
+  const ensureDayMenu = useCallback((date: string) => {
+    if (dayMenus[date] !== undefined) return
+    if (fetchingDaysRef.current.has(date)) return
+    fetchingDaysRef.current.add(date)
+    fetchDayMenu(date)
+      .then(sets => {
+        setDayMenus(prev => (prev[date] !== undefined ? prev : { ...prev, [date]: sets }))
+        // Ровно одно блюдо на день — выбирать нечего, назначаем сразу («токен» тратится сам).
+        if (sets.length === 1) {
+          const onlyId = Number(sets[0].id)
+          setCartState(prev => {
+            const item = prev[date]
+            if (!item || item.setId != null) return prev
+            return { ...prev, [date]: { ...item, setId: onlyId } }
+          })
+        }
+      })
+      .catch(() => {
+        setDayMenus(prev => (prev[date] !== undefined ? prev : { ...prev, [date]: [] }))
+      })
+      .finally(() => {
+        fetchingDaysRef.current.delete(date)
+      })
+  }, [dayMenus])
+
   const handleAuth = (result: AuthResponse) => {
     setToken(result.token)
     setUser(result.user)
@@ -180,17 +211,26 @@ function App() {
 
   // Единственный источник истины по количеству дней — выбранные даты.
   const selectedDates = Object.keys(cartState).sort()
-  // Пока меню не загрузилось, getSetForDate/getSetById не могут вернуть сет —
-  // Catalog всё равно не рендерится раньше booted+menu (см. ниже), это просто
-  // держит типы честными (SelectedDay.set обязателен) без "as LunchSet".
+
+  // Подгружаем дневное меню для каждой выбранной даты (кеш выше не теряется
+  // между ре-рендерами — ensureDayMenu не повторяет уже идущий/завершённый запрос).
+  useEffect(() => {
+    for (const date of selectedDates) ensureDayMenu(date)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDates.join(',')])
+
+  // Пока меню не загрузилось, getSetById не может вернуть сет — Catalog всё
+  // равно не рендерится раньше booted+menu (см. ниже), это просто держит
+  // типы честными (SelectedDay.set обязателен) без "as LunchSet".
   const orderDays: SelectedDay[] = menu.length === 0 ? [] : selectedDates.map(date => {
     const item = cartState[date]
-    // Сет дня = выбор клиента (item.setId). Ротация getSetForDate — только
-    // визуальный плейсхолдер, пока блюдо не выбрано.
+    // Сет дня = выбор клиента (item.setId), резолвится из полного каталога
+    // (дневное меню — подмножество активных блюд). Пока не выбрано — плейсхолдер:
+    // первое блюдо дневного меню этой даты (если уже загружено), иначе первое из каталога.
     const chosenSet = getSetById(menu, item?.setId)
     return {
       date,
-      set: chosenSet ?? getSetForDate(menu, date) ?? menu[0],
+      set: chosenSet ?? dayMenus[date]?.[0] ?? menu[0],
       chosen: chosenSet !== undefined,
       item,
     }
@@ -210,6 +250,9 @@ function App() {
       }
       // Защитный слой: прошедшие даты нельзя включить (удаление всегда разрешено).
       if (isPastDate(date)) return prev
+      // Защитный слой: дата без внесённого дневного меню не может попасть в подписку
+      // (обычно уже отсечена календарём через fetchAvailableDates — см. CalendarModal).
+      if (dayMenus[date] && dayMenus[date].length === 0) return prev
       return { ...prev, [date]: makeDefaultDay(menu) }
     })
   }
@@ -279,6 +322,8 @@ function App() {
       for (const date of dates) {
         // Защитный слой: прошедшие даты не применяются.
         if (isPastDate(date)) continue
+        // Защитный слой: дата без внесённого дневного меню не применяется (см. CalendarModal).
+        if (dayMenus[date] && dayMenus[date].length === 0) continue
         next[date] = prev[date] ?? makeDefaultDay(menu)
       }
       return next
@@ -434,6 +479,7 @@ function App() {
                 <Catalog
                   days={orderDays}
                   menu={menu}
+                  dayMenus={dayMenus}
                   allSetsCount={menu.length}
                   employeeCount={employeeCount}
                   totalMonthlyPrice={totalMonthlyPrice}
@@ -522,7 +568,6 @@ function App() {
                 <div className="view__enter">
                   <EmployeeView
                     lang={lang}
-                    menu={menu}
                     userName={user.name}
                     companyName={user.companyName ?? ''}
                     onLogout={handleLogout}
