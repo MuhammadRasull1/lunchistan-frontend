@@ -1,7 +1,7 @@
 # 🧩 Компоненты Lunchistan
 
-> Версия: 3.4 — дневное меню (`dayMenus`) вместо ротации, «Меню по датам» у владельца  \
-> Последнее обновление: 17.09.2026  \
+> Версия: 3.5 — хозяйские функции (OwnerView) переехали в lunchistan-core  \
+> Последнее обновление: 21.09.2026  \
 > Связанные файлы: [[ARCHITECTURE]], [[STATE_MANAGEMENT]], [[CHECKOUT_FLOW]], [[B2B_RULES]]
 
 ---
@@ -398,31 +398,30 @@ interface StepperProps {
 
 | role | Экран |
 |---|---|
-| `owner` | **`OwnerView`** — сводка (деньги, заказы, заявки, лист кухни) |
+| `owner` | 🆆 (21.09.2026) вежливое сообщение «раздел переехал» — весь хозяйский экран теперь в отдельном приложении `lunchistan-core` |
 | `admin` | **`ManagerView`** с под-вкладками «Заказы» (`MyOrdersView`) / «Команда» (прежний функционал) |
 | `employee` | `EmployeeView` (без изменений) |
 
-### 13.1. OwnerView.tsx — сводка владельца
+### 13.1. Хозяйские функции переехали в lunchistan-core (21.09.2026)
 
-- Диапазон: `Неделя` / `2 недели` / `Месяц` (today → today+7/14/30). Перезагрузка через `reloadKey`.
-- `GET /api/owner/summary?from&to` → рендер:
-  - **Деньги** (`.owner-money`, 3 `.stat-tile`): Заказано / Оплачено (зелёный) / Долг (красный при > 0).
-  - **Заказы по статусам** — чипы `.manager-dates__chip` + `.status-dot`; кнопка «Все заказы» → `OrdersListSheet` (`GET /api/owner/orders`).
-  - **Новые заявки** — `summary.leads.recent`, кнопка `tel:` «Позвонить».
-  - **Лист для кухни** — `summary.byDate` (кликабельные `.day-row--btn`) → `KitchenDaySheet` (`GET /api/owner/kitchen?date=`): порции по сетам с салатом/напитком/исключениями и компанией.
-- Вложенные компоненты в файле: `KitchenDaySheet`, `OrdersListSheet` (оба — bottom-sheet с `key`-ами на motion-детях внутри `AnimatePresence`).
-- Кнопки в шапке: «Меню» (`MenuManagerSheet`) / 🆆 «Меню по датам» (`DailyMenuSheet`) / «Настройки» (`SettingsSheet`).
+`OwnerView.tsx` (сводка, заказы, заявки, лист кухни, управление меню, «Меню по датам»,
+настройки оплаты) полностью удалён из этого репозитория и перенесён в `lunchistan-core`
+(тот же компонент, тот же общий бэкенд — `lunchistan-core/src/components/OwnerView.tsx`).
 
-### 13.1.1. Управление меню — `MenuManagerSheet` и 🆆 `DailyMenuSheet`
+**Why:** решение пользователя — клиентское приложение не должно содержать даже намёка на
+закрытый для клиента «хозяйский» раздел; всё управление бизнесом изолировано в отдельном
+приложении для владельца/персонала.
 
-Оба вложены в `OwnerView.tsx`, переиспользуют общий `DishFormSheet` (форма блюда).
-
-- **`MenuManagerSheet`** (11.09.2026) — весь каталог (`fetchOwnerMenu`, включая скрытые), toggle `is_active` (`updateMenuItem`), кнопка «Добавить блюдо» → `DishFormSheet`.
-- 🆆 **`DailyMenuSheet` (17.09.2026)** — «Меню по датам»: блюда бизнеса не повторяются день в день, владелец сам отмечает, какие блюда каталога предложены на конкретную дату.
-  - `<input type="date">` (без завязки на `CalendarModal` — выбор произвольной даты, включая прошлые, для правок задним числом).
-  - Список активных блюд каталога (`fetchOwnerMenu`, фильтр `is_active`) с чекбоксами; состояние чекбоксов — `GET /api/owner/daily-menu/:date` (`fetchOwnerDailyMenu`), сохранение — `PUT /api/owner/daily-menu/:date` (`saveOwnerDailyMenu`, `{ setIds: number[] }`), явная кнопка «Сохранить» (без автосейва на каждый чекбокс).
-  - Кнопка «Добавить блюдо» открывает тот же `DishFormSheet`; при создании нового блюда (`onSaved(created)`) оно сразу отмечается чекбоксом на выбранную дату — не нужно искать его в списке заново.
-  - `DishFormSheet.onSaved` получил опциональный параметр `created?: OwnerMenuItem` (раньше — без параметров) именно для этого сценария; `MenuManagerSheet` его игнорирует.
+Роль `owner` в этом приложении при входе в «Кабинет» видит только текст `ownerMovedToCore`
+(`src/locales/translations.ts`) и кнопку выхода — никакой функциональности здесь для неё
+больше нет. Заодно из `src/lib/api.ts` удалены как мёртвый код: `fetchOwnerSummary`,
+`fetchOwnerKitchen`, `fetchOwnerOrders` (список), `fetchOwnerMenu`/`createMenuItem`/
+`updateMenuItem`/`deleteMenuItem`, `fetchOwnerDailyMenu`/`saveOwnerDailyMenu`, `updateSettings`
+и типы `OwnerSummary`/`KitchenDay`/`OwnerMenuItem`/`MenuItemInput`/`OwnerDailyMenu`.
+**Оставлены** (используются не только владельцем): `fetchOwnerOrder`/`setOrderStatus`
+(нужны `OrderDetailSheet` — им пользуется и `MyOrdersView`), `fetchSettings`/`BusinessSettings`
+(номер карты нужен клиенту на checkout в `Cart.tsx`, ещё до входа в «Кабинет»),
+`RawMenuSet` (используется `fetchMenu`/`fetchDayMenu` для клиентского каталога).
 
 ### 13.2. MyOrdersView.tsx — заказы моей компании
 

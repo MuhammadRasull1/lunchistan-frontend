@@ -9,7 +9,6 @@ import type { AppTab } from './components/AppHeader'
 import Onboarding from './components/Onboarding'
 import EmployeeView from './components/EmployeeView'
 import ManagerView from './components/ManagerView'
-import OwnerView from './components/OwnerView'
 import SupportLink from './components/SupportLink'
 import { getSetById } from './lib/menu'
 import type { CartState, Screen, PaymentMethod, Beverage, Salad, Lang, LunchSet, SelectedDay } from './types'
@@ -545,6 +544,9 @@ function App() {
               </motion.div>
             )}
 
+            {/* Хозяйские функции (сводка, меню, настройки) переехали в Lunchistan Core
+                (21.09.2026) — здесь для владельца только вежливое сообщение, без
+                намёка на «закрытый для клиента раздел». */}
             {tab === 'teams' && user?.role === 'owner' && (
               <motion.div
                 key="scr-owner"
@@ -553,7 +555,13 @@ function App() {
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
               >
-                <OwnerView lang={lang} userName={user.name} onLogout={handleLogout} />
+                <main className="view__body">
+                  <div className="catalog__heading" style={{ marginTop: 20 }}>{user.name}</div>
+                  <p className="catalog__subtitle">
+                    <button className="auth-toggle with-ml" onClick={handleLogout}>{t(lang, 'logout')}</button>
+                  </p>
+                  <p className="view__section-desc" style={{ marginTop: 24 }}>{t(lang, 'ownerMovedToCore')}</p>
+                </main>
               </motion.div>
             )}
 

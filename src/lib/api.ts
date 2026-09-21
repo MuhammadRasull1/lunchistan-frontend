@@ -216,64 +216,9 @@ export async function fetchAvailableDates(from: string, to: string): Promise<str
   return data.dates
 }
 
-// ── Владелец: меню по датам — какие блюда каталога предложены на конкретную
-// дату (17.09.2026, раздел «Меню по датам» в OwnerView) ────────────────────
-export interface OwnerDailyMenu {
-  date: string
-  setIds: number[]
-}
-
-export async function fetchOwnerDailyMenu(date: string): Promise<OwnerDailyMenu> {
-  const { data } = await http.get<OwnerDailyMenu>(`/api/owner/daily-menu/${date}`)
-  return data
-}
-
-export async function saveOwnerDailyMenu(date: string, setIds: number[]): Promise<OwnerDailyMenu> {
-  const { data } = await http.put<OwnerDailyMenu>(`/api/owner/daily-menu/${date}`, { setIds })
-  return data
-}
-
-// ── Владелец: управление меню (11.09.2026 — раньше меню правилось только
-// деплоем кода, теперь дядя/брат сами добавляют/меняют/скрывают блюда) ─────
-export interface OwnerMenuItem extends RawMenuSet {
-  is_active: boolean
-}
-
-export interface MenuItemInput {
-  name: string
-  category: LunchSet['category']
-  price: number
-  description?: string
-  image_url?: string | null
-  calories?: number | null
-  proteins?: number | null
-  fats?: number | null
-  carbs?: number | null
-}
-
-/** Всё меню, включая скрытые блюда (is_active=false) — только владельцу. */
-export async function fetchOwnerMenu(): Promise<OwnerMenuItem[]> {
-  const { data } = await http.get<OwnerMenuItem[]>('/api/owner/menu')
-  return data
-}
-
-export async function createMenuItem(input: MenuItemInput): Promise<OwnerMenuItem> {
-  const { data } = await http.post<OwnerMenuItem>('/api/owner/menu', input)
-  return data
-}
-
-export async function updateMenuItem(
-  id: number,
-  input: Partial<MenuItemInput> & { is_active?: boolean },
-): Promise<OwnerMenuItem> {
-  const { data } = await http.put<OwnerMenuItem>(`/api/owner/menu/${id}`, input)
-  return data
-}
-
-/** Мягкое удаление (is_active=false) — блюдо пропадает из каталога, не из истории заказов. */
-export async function deleteMenuItem(id: number): Promise<void> {
-  await http.delete(`/api/owner/menu/${id}`)
-}
+// «Меню по датам» и управление меню (OwnerDailyMenu/OwnerMenuItem/MenuItemInput,
+// fetchOwnerMenu/createMenuItem/updateMenuItem/deleteMenuItem) переехали в
+// lunchistan-core вместе с OwnerView (21.09.2026) — здесь больше не нужны.
 
 // ── Сотрудник: мои дни и выбор блюд ────────────────────────────────
 export async function fetchMyDays(): Promise<MyDay[]> {
@@ -476,38 +421,8 @@ export async function fetchMyOrders(): Promise<OrderView[]> {
 export const ORDER_STATUSES = ['new', 'confirmed', 'in_progress', 'delivered', 'paid', 'cancelled'] as const
 export type OrderStatus = typeof ORDER_STATUSES[number]
 
-export interface OwnerSummary {
-  range: { from: string; to: string }
-  orders: { total: number; byStatus: Record<OrderStatus, number> }
-  money: { ordered: number; paid: number; unpaid: number }
-  byDate: { date: string; portions: number; amount: number; bySet: { setName: string; portions: number }[] }[]
-  teams: { pickedPortions: number; amount: number }
-  leads: {
-    new: number
-    recent: { id: number; number: string; contactName: string | null; contactPhone: string | null; companyName: string | null; createdAt: string }[]
-  }
-}
-
-export async function fetchOwnerSummary(from?: string, to?: string): Promise<OwnerSummary> {
-  const { data } = await http.get<OwnerSummary>('/api/owner/summary', { params: { from, to } })
-  return data
-}
-
-export interface KitchenDay {
-  date: string
-  totalPortions: number
-  lines: { setName: string; salad: string | null; beverage: string | null; excluded: string[]; portions: number; company: string | null }[]
-}
-
-export async function fetchOwnerKitchen(date: string): Promise<KitchenDay> {
-  const { data } = await http.get<KitchenDay>('/api/owner/kitchen', { params: { date } })
-  return data
-}
-
-export async function fetchOwnerOrders(opts: { status?: string; leads?: '0' | '1' } = {}): Promise<OrderView[]> {
-  const { data } = await http.get<{ orders: OrderView[] }>('/api/owner/orders', { params: opts })
-  return data.orders
-}
+// Сводка/кухня/список заказов владельца (fetchOwnerSummary/fetchOwnerKitchen/fetchOwnerOrders)
+// переехали в lunchistan-core вместе с OwnerView (21.09.2026) — здесь больше не нужны.
 
 export async function fetchOwnerOrder(id: number): Promise<OrderView> {
   const { data } = await http.get<OrderView>(`/api/owner/orders/${id}`)
@@ -536,6 +451,4 @@ export async function fetchSettings(): Promise<BusinessSettings> {
   return data
 }
 
-export async function updateSettings(input: Partial<BusinessSettings>): Promise<void> {
-  await http.put('/api/owner/settings', input)
-}
+// updateSettings (владелец правит номер карты) переехал в lunchistan-core вместе с OwnerView.
