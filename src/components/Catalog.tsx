@@ -217,7 +217,8 @@ function Catalog({
             <button
               type="button"
               className="btn btn--outline btn--outline-danger"
-              onClick={openCalendar}
+              disabled={activeDays === 0}
+              onClick={() => onApplySelectedDates([])}
             >
               {t(lang, 'deselectAll')}
             </button>
