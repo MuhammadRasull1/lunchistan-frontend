@@ -1830,6 +1830,17 @@ img {
   opacity: 0.8;
 }
 
+.calendar-modal__hint--warning {
+  background: rgba(217, 119, 6, 0.1);
+  border: 1px solid rgba(217, 119, 6, 0.25);
+  color: #a35c05;
+  font-size: 13px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  opacity: 1;
+  margin: 0 0 16px;
+}
+
 .calendar__header {
   display: flex;
   align-items: center;

@@ -255,6 +255,12 @@ function CalendarSheet({ initialSelectedDates, minMonth, maxMonth, lang, onConfi
           <p className="calendar-modal__subtitle">{t(lang, 'calendarSubtitle')}</p>
           <p className="calendar-modal__hint">{t(lang, 'calendarLockedHint', { n: TODAY_ORDER_CUTOFF_HOUR })}</p>
           {availableDatesError && <p className="calendar-modal__hint">{t(lang, 'menuLoadError')}</p>}
+          {/* 23.09.2026: title-тултип на disabled-кнопке невидим на тач-экранах (Telegram
+              Mini App) — пользователь просто видит серый календарь без объяснения.
+              Явный баннер, когда весь видимый месяц без внесённого меню. */}
+          {availableDates !== null && !availableDatesError && monthSelectableDates.length === 0 && (
+            <p className="calendar-modal__hint calendar-modal__hint--warning">{t(lang, 'calendarMonthNotReady')}</p>
+          )}
 
           {/* Навигация по месяцам (текущий → следующий) */}
           <div className="calendar__header">
