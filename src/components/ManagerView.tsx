@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
-import { CheckCircle2, Lock, Users, Copy } from 'lucide-react'
+import { CheckCircle2, Lock, Users, Copy, Trash2, KeyRound } from 'lucide-react'
 import type { Lang } from '../types'
 import { t, WEEKDAYS_SHORT } from '../locales/translations'
-import { fetchManagerDates, fetchDayReport, confirmDay, resendDayReport } from '../lib/api'
-import type { DayReport, ManagerDate } from '../lib/api'
+import {
+  fetchManagerDates, fetchDayReport, confirmDay, resendDayReport,
+  fetchEmployees, deleteEmployee, resetEmployeePassword,
+} from '../lib/api'
+import type { DayReport, ManagerDate, TeamEmployee } from '../lib/api'
 import MyOrdersView from './MyOrdersView'
 import Reveal from './Reveal'
 
@@ -36,6 +39,43 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
   const [message, setMessage] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [sub, setSub] = useState<'orders' | 'team'>('orders')
+
+  const [employees, setEmployees] = useState<TeamEmployee[]>([])
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
+  const [newPasswordFor, setNewPasswordFor] = useState<{ name: string; password: string } | null>(null)
+  const [empBusyId, setEmpBusyId] = useState<number | null>(null)
+
+  const loadEmployees = () => {
+    fetchEmployees().then(setEmployees).catch(() => {})
+  }
+  useEffect(() => {
+    if (sub === 'team') loadEmployees()
+  }, [sub])
+
+  const onDeleteEmployee = async (id: number) => {
+    setEmpBusyId(id)
+    try {
+      await deleteEmployee(id)
+      setConfirmDeleteId(null)
+      loadEmployees()
+    } catch {
+      setMessage(t(lang, 'authError'))
+    } finally {
+      setEmpBusyId(null)
+    }
+  }
+
+  const onResetPassword = async (emp: TeamEmployee) => {
+    setEmpBusyId(emp.id)
+    try {
+      const { newPassword } = await resetEmployeePassword(emp.id)
+      setNewPasswordFor({ name: emp.name, password: newPassword })
+    } catch {
+      setMessage(t(lang, 'authError'))
+    } finally {
+      setEmpBusyId(null)
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -148,6 +188,56 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
           </span>
         </div>
       </div>
+
+      <div className="view__section-head">
+        <h2 className="view__section-title">{t(lang, 'employeesTitle')}</h2>
+      </div>
+      {employees.length === 0 && <p className="view__section-desc">{t(lang, 'employeesEmpty')}</p>}
+      <div className="days-list">
+        {employees.map(emp => (
+          <div key={emp.id} className="day-row">
+            <div className="day-row__dish">
+              <span className="day-row__name">{emp.name}</span>
+              <span className="day-row__hint">{emp.phone}</span>
+            </div>
+            {confirmDeleteId === emp.id ? (
+              <div className="cancel-confirm">
+                <p className="cancel-confirm__text">{t(lang, 'deleteEmployeeConfirm', { name: emp.name })}</p>
+                <div className="cancel-confirm__actions">
+                  <button className="btn btn--outline" disabled={empBusyId === emp.id} onClick={() => setConfirmDeleteId(null)}>
+                    {t(lang, 'cancelConfirmNo')}
+                  </button>
+                  <button className="btn btn--primary" disabled={empBusyId === emp.id} onClick={() => onDeleteEmployee(emp.id)}>
+                    {empBusyId === emp.id && <span className="btn__spinner" />}
+                    {t(lang, 'deleteEmployeeBtn')}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="day-row__pick" style={{ display: 'flex', gap: 8 }}>
+                <button className="btn btn--outline" disabled={empBusyId === emp.id} onClick={() => onResetPassword(emp)}>
+                  <KeyRound size={14} /> {t(lang, 'resetPasswordBtn')}
+                </button>
+                <button className="btn btn--outline" disabled={empBusyId === emp.id} onClick={() => setConfirmDeleteId(emp.id)}>
+                  <Trash2 size={14} /> {t(lang, 'deleteEmployeeBtn')}
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {newPasswordFor && (
+        <div className="modal-overlay" onClick={() => setNewPasswordFor(null)}>
+          <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
+            <h3 className="view__section-title">{t(lang, 'newPasswordTitle')}</h3>
+            <p className="view__section-desc">{newPasswordFor.name}</p>
+            <p className="team-card__code" style={{ fontSize: 24, justifyContent: 'center' }}><b>{newPasswordFor.password}</b></p>
+            <p className="view__section-desc view__section-desc--muted">{t(lang, 'newPasswordHint')}</p>
+            <button className="btn btn--primary btn--lg" onClick={() => setNewPasswordFor(null)}>OK</button>
+          </div>
+        </div>
+      )}
 
       <div className="manager-dates">
         {loadingDates && <p className="view__section-desc">…</p>}

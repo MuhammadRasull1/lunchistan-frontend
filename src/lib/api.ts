@@ -258,6 +258,29 @@ export async function resendDayReport(date: string): Promise<{ success: boolean;
   return data
 }
 
+export interface TeamEmployee {
+  id: number
+  name: string
+  phone: string
+  createdAt: string
+}
+
+/** Раньше менеджер не мог увидеть/уволить сотрудника или сбросить пароль — только через прямой доступ к БД. */
+export async function fetchEmployees(): Promise<TeamEmployee[]> {
+  const { data } = await http.get<{ employees: TeamEmployee[] }>('/api/manager/employees')
+  return data.employees
+}
+
+export async function deleteEmployee(id: number): Promise<void> {
+  await http.delete(`/api/manager/employees/${id}`)
+}
+
+/** Сброс пароля сотрудника менеджером — у сотрудников нет почты/телефона для самостоятельного восстановления. */
+export async function resetEmployeePassword(id: number): Promise<{ newPassword: string }> {
+  const { data } = await http.post<{ ok: boolean; newPassword: string }>(`/api/manager/employees/${id}/reset-password`)
+  return data
+}
+
 // ── Ошибки ─────────────────────────────────────────────────────────
 /** Вход не смог различить тёзок — бэкенд просит код команды (см. /api/auth/login). */
 export function needsCompanyCode(err: unknown): boolean {
@@ -415,6 +438,12 @@ export interface OrderView {
 export async function fetchMyOrders(): Promise<OrderView[]> {
   const { data } = await http.get<{ orders: OrderView[] }>('/api/my/orders')
   return data.orders
+}
+
+/** Раньше отменить заказ можно было только звонком — сервер разрешает, пока кухня не начала готовить (new/confirmed). */
+export async function cancelMyOrder(id: number): Promise<OrderView> {
+  const { data } = await http.post<OrderView>(`/api/my/orders/${id}/cancel`)
+  return data
 }
 
 // ── Сводка владельца ───────────────────────────────────────────────

@@ -4,7 +4,7 @@ import { X } from 'lucide-react'
 import type { Lang } from '../types'
 import { t } from '../locales/translations'
 import type { OrderView, OrderStatus } from '../lib/api'
-import { fetchOwnerOrder, setOrderStatus } from '../lib/api'
+import { fetchOwnerOrder, setOrderStatus, cancelMyOrder } from '../lib/api'
 import { statusLabel, statusColor, nextStatuses, formatMoney, dateChip } from '../lib/orderStatus'
 
 interface Props {
@@ -62,6 +62,26 @@ export default function OrderDetailSheet({ lang, orderId, owner, preset, onClose
       return
     }
     change(s)
+  }
+
+  // Клиент (не владелец) может отменить свой заказ сам, пока кухня не начала
+  // готовить — раньше это было возможно только звонком (bug 4c, аудит 12.09).
+  const clientCancellable = !owner && order != null && (order.status === 'new' || order.status === 'confirmed')
+  const cancelAsClient = async () => {
+    if (!order || busy) return
+    setBusy(true)
+    setMsg(null)
+    try {
+      const updated = await cancelMyOrder(order.id)
+      setFetched({ ...order, ...updated })
+      setMsg(t(lang, 'statusChanged'))
+      onChanged?.(updated)
+      setConfirmingCancel(false)
+    } catch {
+      setMsg(t(lang, 'authError'))
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -198,6 +218,36 @@ export default function OrderDetailSheet({ lang, orderId, owner, preset, onClose
                             </button>
                           </div>
                         </div>
+                      )}
+                    </>
+                  )}
+
+                  {clientCancellable && (
+                    <>
+                      {confirmingCancel ? (
+                        <div className="cancel-confirm">
+                          <p className="cancel-confirm__text">
+                            {t(lang, 'cancelConfirmText', { number: order!.number })}
+                          </p>
+                          <div className="cancel-confirm__actions">
+                            <button type="button" className="btn btn--outline" disabled={busy} onClick={() => setConfirmingCancel(false)}>
+                              {t(lang, 'cancelConfirmNo')}
+                            </button>
+                            <button type="button" className="btn btn--outline btn--outline-danger" disabled={busy} onClick={cancelAsClient}>
+                              {t(lang, 'cancelConfirmYes')}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn btn--outline btn--outline-danger"
+                          style={{ marginTop: 16 }}
+                          disabled={busy}
+                          onClick={() => setConfirmingCancel(true)}
+                        >
+                          {t(lang, 'cancelOrderBtn')}
+                        </button>
                       )}
                     </>
                   )}
