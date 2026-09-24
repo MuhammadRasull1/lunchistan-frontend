@@ -287,6 +287,11 @@ export function needsCompanyCode(err: unknown): boolean {
   return axios.isAxiosError(err) && err.response?.data?.needCompanyCode === true
 }
 
+/** Запрос не дошёл до сервера (нет сети/таймаут) — это не «нет данных» и не «сессия истекла». */
+export function isNetworkError(err: unknown): boolean {
+  return axios.isAxiosError(err) && !err.response
+}
+
 export function apiErrorMessage(err: unknown): string | null {
   if (axios.isAxiosError(err)) {
     const msg: string | undefined = err.response?.data?.error

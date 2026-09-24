@@ -235,6 +235,9 @@ const translations: Record<Lang, Record<string, string>> = {
     deliveryQuoteLoading: 'Считаем стоимость доставки…',
     deliveryQuoteError: 'Не удалось посчитать доставку. Проверьте связь и попробуйте ещё раз.',
     retry: 'Повторить',
+    networkError: 'Нет связи с сервером — проверьте интернет',
+    employeesLoadError: 'Не удалось загрузить сотрудников — проверьте интернет.',
+    teamActionError: 'Не получилось — проверьте интернет и попробуйте ещё раз.',
 
     // ── v4: согласие на геопозицию при входе ─────────────────────
     geoConsentLabel: 'Я соглашаюсь, что моя геопозиция будет использоваться для заказов и доставки',
@@ -535,6 +538,9 @@ const translations: Record<Lang, Record<string, string>> = {
     deliveryQuoteLoading: 'Yetkazib berish narxi hisoblanmoqda…',
     deliveryQuoteError: "Yetkazib berishni hisoblab bo'lmadi. Aloqani tekshirib, qayta urinib ko'ring.",
     retry: "Qayta urinish",
+    networkError: "Server bilan aloqa yo'q — internetni tekshiring",
+    employeesLoadError: "Xodimlarni yuklab bo'lmadi — internetni tekshiring.",
+    teamActionError: "Bo'lmadi — internetni tekshirib, qayta urinib ko'ring.",
 
     // ── v4: kirishda geolokatsiyaga rozilik ──────────────────────
     geoConsentLabel: "Buyurtmalar va yetkazib berish uchun mening geolokatsiyamdan foydalanishga roziman",

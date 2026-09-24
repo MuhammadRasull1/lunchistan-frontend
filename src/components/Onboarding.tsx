@@ -16,6 +16,8 @@ interface OnboardingProps {
 type Phase = 'welcome' | 'name' | 'password' | 'path'
 type PathMode = 'login' | 'create' | 'join'
 
+const WELCOME_SEEN_KEY = 'lunchistan_welcome_seen'
+
 const phaseVariants: Variants = {
   hidden: { opacity: 0, y: 14 },
   visible: {
@@ -60,6 +62,10 @@ function SlowText({ text, delay = 0 }: { text: string; delay?: number }) {
 
 export default function Onboarding({ lang, onAuth }: OnboardingProps) {
   const [phase, setPhase] = useState<Phase>('welcome')
+  // Приветствие уже видели — кнопка «Начать» сразу, без 2,5 с ожидания при каждом входе.
+  const [welcomeSeen] = useState(() => {
+    try { return localStorage.getItem(WELCOME_SEEN_KEY) === '1' } catch { return false }
+  })
   const [mode, setMode] = useState<PathMode | null>(null)
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
@@ -191,12 +197,15 @@ export default function Onboarding({ lang, onAuth }: OnboardingProps) {
                 className="ob-start-row"
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 2.5, duration: 0.45, ease: 'easeOut' }}
+                transition={{ delay: welcomeSeen ? 0 : 2.5, duration: 0.45, ease: 'easeOut' }}
               >
                 <button
                   className="btn btn--primary btn--lg"
                   type="button"
-                  onClick={() => setPhase('name')}
+                  onClick={() => {
+                    try { localStorage.setItem(WELCOME_SEEN_KEY, '1') } catch { /* TMA без localStorage — не страшно */ }
+                    setPhase('name')
+                  }}
                 >
                   {t(lang, 'obStart')}
                 </button>

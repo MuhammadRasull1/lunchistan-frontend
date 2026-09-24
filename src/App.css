@@ -3636,3 +3636,14 @@ img {
 @keyframes address-picker-rotate {
   to { transform: rotate(360deg); }
 }
+
+/* Спиннер экрана загрузки (раньше было голое «…») */
+.boot-spinner {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--divider);
+  border-top-color: var(--brand);
+  border-radius: 50%;
+  animation: btnSpin 0.8s linear infinite;
+}

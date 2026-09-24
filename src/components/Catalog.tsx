@@ -36,6 +36,9 @@ interface CatalogProps {
   lang: Lang
   /** Все выбранные дни имеют выбранное блюдо (иначе оформить заказ нельзя) */
   allDishesChosen: boolean
+  /** Даты, дневное меню которых не загрузилось из-за сети (не путать с «меню нет») */
+  dayMenuErrors: Record<string, boolean>
+  onRetryDayMenus: () => void
   /** Применяет подтверждённый выбор из календарной модалки к основному state заказа */
   onApplySelectedDates: (dates: string[]) => void
   onEmployeeCountChange: (count: number) => void
@@ -69,6 +72,8 @@ function Catalog({
   setPrice,
   lang,
   allDishesChosen,
+  dayMenuErrors,
+  onRetryDayMenus,
   onApplySelectedDates,
   onEmployeeCountChange,
   onBeverageChange,
@@ -317,12 +322,13 @@ function Catalog({
           <div className="days-list">
             {days.map((day, i) => {
               const dayMenu = dayMenus[day.date]
-              const menuLoading = dayMenu === undefined
+              const menuFailed = dayMenuErrors[day.date] === true
+              const menuLoading = dayMenu === undefined && !menuFailed
               // Несколько блюд на день — клиент выбирает сам через SetPicker; ровно одно —
               // назначается автоматически (App.tsx, ensureDayMenu), менять нечего, кнопки нет.
               const hasChoice = (dayMenu?.length ?? 0) > 1
               // Владелец снял меню с уже выбранной даты — выбрать нечего, день надо убрать.
-              const noMenu = !menuLoading && dayMenu.length === 0 && !day.chosen
+              const noMenu = dayMenu !== undefined && dayMenu.length === 0 && !day.chosen
               return (
                 <Reveal key={day.date} delay={Math.min(i * 0.05, 0.3)} y={12}>
                   <div className={`day-row${day.chosen ? '' : ' day-row--empty'}`}>
@@ -346,10 +352,15 @@ function Catalog({
                         </>
                       ) : (
                         <span className="day-row__hint day-row__hint--warn">
-                          {menuLoading ? t(lang, 'loadingLabel') : noMenu ? t(lang, 'dayMenuRemoved') : t(lang, 'daySetNotChosen')}
+                          {menuLoading ? t(lang, 'loadingLabel') : menuFailed ? t(lang, 'networkError') : noMenu ? t(lang, 'dayMenuRemoved') : t(lang, 'daySetNotChosen')}
                         </span>
                       )}
                     </button>
+                    {menuFailed && !day.chosen && (
+                      <button type="button" className="btn btn--outline day-row__pick" onClick={onRetryDayMenus}>
+                        {t(lang, 'retry')}
+                      </button>
+                    )}
                     {noMenu && (
                       <button
                         type="button"

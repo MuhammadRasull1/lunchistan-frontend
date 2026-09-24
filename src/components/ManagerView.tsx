@@ -44,9 +44,17 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
   const [newPasswordFor, setNewPasswordFor] = useState<{ name: string; password: string } | null>(null)
   const [empBusyId, setEmpBusyId] = useState<number | null>(null)
+  // Раньше сбой сети выглядел как «сотрудников нет», а ошибки действий
+  // показывались только во вкладке отчёта — здесь их не было видно.
+  const [employeesState, setEmployeesState] = useState<'loading' | 'ok' | 'error'>('loading')
+  const [teamError, setTeamError] = useState<string | null>(null)
+  const [passwordCopied, setPasswordCopied] = useState(false)
 
+  // 'loading' ставится в обработчике «Повторить», а не здесь — функция вызывается и из эффекта.
   const loadEmployees = () => {
-    fetchEmployees().then(setEmployees).catch(() => {})
+    fetchEmployees()
+      .then(list => { setEmployees(list); setEmployeesState('ok') })
+      .catch(() => setEmployeesState('error'))
   }
   useEffect(() => {
     if (sub === 'team') loadEmployees()
@@ -54,12 +62,13 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
 
   const onDeleteEmployee = async (id: number) => {
     setEmpBusyId(id)
+    setTeamError(null)
     try {
       await deleteEmployee(id)
       setConfirmDeleteId(null)
       loadEmployees()
     } catch {
-      setMessage(t(lang, 'authError'))
+      setTeamError(t(lang, 'teamActionError'))
     } finally {
       setEmpBusyId(null)
     }
@@ -67,11 +76,13 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
 
   const onResetPassword = async (emp: TeamEmployee) => {
     setEmpBusyId(emp.id)
+    setTeamError(null)
     try {
       const { newPassword } = await resetEmployeePassword(emp.id)
+      setPasswordCopied(false)
       setNewPasswordFor({ name: emp.name, password: newPassword })
     } catch {
-      setMessage(t(lang, 'authError'))
+      setTeamError(t(lang, 'teamActionError'))
     } finally {
       setEmpBusyId(null)
     }
@@ -192,7 +203,15 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
       <div className="view__section-head">
         <h2 className="view__section-title">{t(lang, 'employeesTitle')}</h2>
       </div>
-      {employees.length === 0 && <p className="view__section-desc">{t(lang, 'employeesEmpty')}</p>}
+      {teamError && <div className="auth-error">{teamError}</div>}
+      {employeesState === 'loading' && employees.length === 0 && <p className="view__section-desc">{t(lang, 'loadingLabel')}</p>}
+      {employeesState === 'error' && (
+        <div className="auth-error">
+          {t(lang, 'employeesLoadError')}{' '}
+          <button className="auth-toggle with-ml" onClick={() => { setEmployeesState('loading'); loadEmployees() }}>{t(lang, 'retry')}</button>
+        </div>
+      )}
+      {employeesState === 'ok' && employees.length === 0 && <p className="view__section-desc">{t(lang, 'employeesEmpty')}</p>}
       <div className="days-list">
         {employees.map(emp => (
           <div key={emp.id} className="day-row">
@@ -232,7 +251,23 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
           <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
             <h3 className="view__section-title">{t(lang, 'newPasswordTitle')}</h3>
             <p className="view__section-desc">{newPasswordFor.name}</p>
-            <p className="team-card__code" style={{ fontSize: 24, justifyContent: 'center' }}><b>{newPasswordFor.password}</b></p>
+            <button
+              type="button"
+              className="team-card__code"
+              style={{ fontSize: 24, justifyContent: 'center', width: '100%' }}
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(newPasswordFor.password)
+                  setPasswordCopied(true)
+                } catch {
+                  // буфер недоступен — пароль всё равно виден крупно
+                }
+              }}
+            >
+              <b>{newPasswordFor.password}</b>
+              <Copy size={16} />
+              {passwordCopied && <span className="team-card__copied">{t(lang, 'copied')}</span>}
+            </button>
             <p className="view__section-desc view__section-desc--muted">{t(lang, 'newPasswordHint')}</p>
             <button className="btn btn--primary btn--lg" onClick={() => setNewPasswordFor(null)}>OK</button>
           </div>

@@ -16,7 +16,7 @@ import { EMPLOYEE_MAX } from './types'
 import { t } from './locales/translations'
 import { showTelegramAlert } from './lib/telegram'
 import { loadSavedOrder, saveOrder, clearSavedOrder } from './lib/orderStorage'
-import { submitOrder, getToken, setToken, fetchMe, fetchMenu, fetchDayMenu, restoreTokenFromCloud } from './lib/api'
+import { submitOrder, getToken, setToken, fetchMe, fetchMenu, fetchDayMenu, restoreTokenFromCloud, isNetworkError } from './lib/api'
 import { restoreGeoConsentFromCloud } from './lib/geoConsent'
 import type { AuthResponse, AuthUser, OrderContact } from './lib/api'
 import { getDefaultSalad } from './components/saladOptions'
@@ -81,6 +81,9 @@ function App() {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [employeesCount, setEmployeesCount] = useState(0)
   const [booted, setBooted] = useState(false)
+  // Сбой сети при восстановлении сессии: раньше токен стирался и человека «выкидывало» в онбординг.
+  const [bootNetError, setBootNetError] = useState(false)
+  const [bootKey, setBootKey] = useState(0)
   const [menu, setMenu] = useState<LunchSet[]>([])
   const [menuError, setMenuError] = useState(false)
   // Анимация появления названия компании сразу после входа
@@ -117,9 +120,13 @@ function App() {
       // CloudStorage Telegram (персистентное хранилище, привязано к аккаунту).
       // Таймаут 3с: колбэк CloudStorage иногда не вызывается вовсе (баг клиента/
       // сети) — без таймаута boot() зависал навсегда и приложение не открывалось.
-      const token = getToken() ?? (await withTimeout(restoreTokenFromCloud(), 3000, null))
+      // Оба чтения CloudStorage параллельно: худший случай 3 с, а не 6 с «…» на экране.
       // Согласие на геопозицию тоже живёт в CloudStorage — восстанавливаем молча.
-      await withTimeout(restoreGeoConsentFromCloud(), 3000, false)
+      const [cloudToken] = await Promise.all([
+        getToken() ? Promise.resolve(null) : withTimeout(restoreTokenFromCloud(), 3000, null),
+        withTimeout(restoreGeoConsentFromCloud(), 3000, false),
+      ])
+      const token = getToken() ?? cloudToken
       if (!token) {
         setBooted(true)
         return
@@ -130,17 +137,20 @@ function App() {
           setUser(data.user)
           setEmployeesCount(data.employeesCount)
         }
-      } catch {
+      } catch (err) {
+        if (isNetworkError(err)) {
+          if (!cancelled) setBootNetError(true)
+          return
+        }
         setToken(null)
-      } finally {
-        if (!cancelled) setBooted(true)
       }
+      if (!cancelled) setBooted(true)
     }
     boot()
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [bootKey])
 
   // Меню — с бэкенда (см. lib/api.ts fetchMenu, до 11.09.2026 было захардкожено
   // в data/mockMenu.ts). Независимо от boot() выше: логин не должен ждать меню,
@@ -163,9 +173,11 @@ function App() {
   // [] — на дату не внесено меню, [x] — единственное блюдо (назначается само),
   // [x, y, ...] — несколько блюд (клиент выбирает через SetPicker).
   const [dayMenus, setDayMenus] = useState<Record<string, LunchSet[]>>({})
+  const [dayMenuErrors, setDayMenuErrors] = useState<Record<string, boolean>>({})
   const fetchingDaysRef = useRef<Set<string>>(new Set())
   const ensureDayMenu = useCallback((date: string) => {
     if (dayMenus[date] !== undefined) return
+    if (dayMenuErrors[date]) return
     if (fetchingDaysRef.current.has(date)) return
     fetchingDaysRef.current.add(date)
     fetchDayMenu(date)
@@ -183,12 +195,15 @@ function App() {
         }
       })
       .catch(() => {
-        setDayMenus(prev => (prev[date] !== undefined ? prev : { ...prev, [date]: [] }))
+        // Сбой сети — не «на дату нет меню»: помечаем отдельно, в каталоге будет «Повторить».
+        setDayMenuErrors(prev => ({ ...prev, [date]: true }))
       })
       .finally(() => {
         fetchingDaysRef.current.delete(date)
       })
-  }, [dayMenus])
+  }, [dayMenus, dayMenuErrors])
+
+  const retryDayMenus = () => setDayMenuErrors({})
 
   const handleAuth = (result: AuthResponse) => {
     setToken(result.token)
@@ -217,7 +232,7 @@ function App() {
   useEffect(() => {
     for (const date of selectedDates) ensureDayMenu(date)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDates.join(',')])
+  }, [selectedDates.join(','), dayMenuErrors])
 
   // Пока меню не загрузилось, getSetById не может вернуть сет — Catalog всё
   // равно не рендерится раньше booted+menu (см. ниже), это просто держит
@@ -429,7 +444,15 @@ function App() {
 
   return (
     <div className="app">
-      {!booted && <div className="view__body view__boot">…</div>}
+      {!booted && !bootNetError && <BootLoader lang={lang} />}
+      {!booted && bootNetError && (
+        <div className="view__body view__boot">
+          <p>{t(lang, 'networkError')}</p>
+          <button type="button" className="btn btn--primary" onClick={() => { setBootNetError(false); setBootKey(k => k + 1) }}>
+            {t(lang, 'retry')}
+          </button>
+        </div>
+      )}
 
       {booted && !user && (
         <Onboarding lang={lang} onAuth={handleAuth} />
@@ -450,9 +473,7 @@ function App() {
             </div>
           )}
 
-          {!menuError && menu.length === 0 && (
-            <div className="view__body view__boot">…</div>
-          )}
+          {!menuError && menu.length === 0 && <BootLoader lang={lang} />}
 
           {revealCompany && (
             <div className="reveal-overlay">
@@ -490,6 +511,8 @@ function App() {
                   setPrice={FALLBACK_PRICE}
                   lang={lang}
                   allDishesChosen={allDishesChosen}
+                  dayMenuErrors={dayMenuErrors}
+                  onRetryDayMenus={retryDayMenus}
                   onApplySelectedDates={handleApplySelectedDates}
                   onEmployeeCountChange={handleEmployeeCountChange}
                   onBeverageChange={handleBeverageChange}
@@ -620,3 +643,12 @@ function App() {
 }
 
 export default App
+/** Экран загрузки: спиннер + подпись вместо голого «…» */
+function BootLoader({ lang }: { lang: Lang }) {
+  return (
+    <div className="view__body view__boot">
+      <span className="boot-spinner" />
+      <p>{t(lang, 'loadingLabel')}</p>
+    </div>
+  )
+}
