@@ -211,7 +211,9 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
           <button className="auth-toggle with-ml" onClick={() => { setEmployeesState('loading'); loadEmployees() }}>{t(lang, 'retry')}</button>
         </div>
       )}
-      {employeesState === 'ok' && employees.length === 0 && <p className="view__section-desc">{t(lang, 'employeesEmpty')}</p>}
+      {employeesState === 'ok' && employees.length === 0 && (
+        <p className="view__section-desc">{t(lang, 'employeesEmpty')} {t(lang, 'employeesEmptyHow', { code: teamCode ?? '—' })}</p>
+      )}
       <div className="days-list">
         {employees.map(emp => (
           <div key={emp.id} className="day-row">
@@ -276,7 +278,7 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
 
       <div className="manager-dates">
         {loadingDates && <p className="view__section-desc">…</p>}
-        {!loadingDates && dates.length === 0 && <p className="view__section-desc">{t(lang, 'reportEmpty')}</p>}
+        {!loadingDates && dates.length === 0 && employees.length > 0 && <p className="view__section-desc">{t(lang, 'reportEmpty')}</p>}
         {dates.map(d => (
           <button
             key={d.date}

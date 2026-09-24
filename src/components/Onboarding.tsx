@@ -6,7 +6,7 @@ import { t } from '../locales/translations'
 import { login, registerTeam, joinTeam, apiErrorMessage, needsCompanyCode } from '../lib/api'
 import type { AuthResponse } from '../lib/api'
 import { isValidName } from '../lib/nameValidator'
-import { getGeoConsent, setGeoConsent } from '../lib/geoConsent'
+import { setGeoConsent } from '../lib/geoConsent'
 
 interface OnboardingProps {
   lang: Lang
@@ -79,7 +79,9 @@ export default function Onboarding({ lang, onAuth }: OnboardingProps) {
   const [error, setError] = useState<string | null>(null)
   const [touched, setTouched] = useState(false)
   // Согласие на геопозицию — обязательное условие входа (хранится локально+CloudStorage).
-  const [geoConsent, setGeoConsentState] = useState(() => getGeoConsent())
+  // Всегда снята при входе/регистрации: это выбор человека, а не галочка, унаследованная
+  // с прошлого аккаунта на этом же Telegram (раньше подставлялась из хранилища).
+  const [geoConsent, setGeoConsentState] = useState(false)
   const nextRef = useRef<HTMLInputElement>(null)
 
   const nameValid = isValidName(name)
