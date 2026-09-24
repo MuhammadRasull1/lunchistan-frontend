@@ -172,11 +172,12 @@ function App() {
       .then(sets => {
         setDayMenus(prev => (prev[date] !== undefined ? prev : { ...prev, [date]: sets }))
         // Ровно одно блюдо на день — выбирать нечего, назначаем сразу («токен» тратится сам).
+        // Выбор, которого больше нет в меню даты (владелец заменил блюдо), тоже переназначаем.
         if (sets.length === 1) {
           const onlyId = Number(sets[0].id)
           setCartState(prev => {
             const item = prev[date]
-            if (!item || item.setId != null) return prev
+            if (!item || item.setId === onlyId) return prev
             return { ...prev, [date]: { ...item, setId: onlyId } }
           })
         }
@@ -227,10 +228,14 @@ function App() {
     // (дневное меню — подмножество активных блюд). Пока не выбрано — плейсхолдер:
     // первое блюдо дневного меню этой даты (если уже загружено), иначе первое из каталога.
     const chosenSet = getSetById(menu, item?.setId)
+    // Выбор больше не в дневном меню даты (владелец снял/заменил блюдо) — считаем невыбранным,
+    // иначе заказ уйдёт с блюдом, которого в этот день нет.
+    const dayMenu = dayMenus[date]
+    const stillOnMenu = dayMenu === undefined || dayMenu.some(s => Number(s.id) === item?.setId)
     return {
       date,
       set: chosenSet ?? dayMenus[date]?.[0] ?? menu[0],
-      chosen: chosenSet !== undefined,
+      chosen: chosenSet !== undefined && stillOnMenu,
       item,
     }
   })

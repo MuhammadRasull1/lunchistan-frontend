@@ -321,6 +321,8 @@ function Catalog({
               // Несколько блюд на день — клиент выбирает сам через SetPicker; ровно одно —
               // назначается автоматически (App.tsx, ensureDayMenu), менять нечего, кнопки нет.
               const hasChoice = (dayMenu?.length ?? 0) > 1
+              // Владелец снял меню с уже выбранной даты — выбрать нечего, день надо убрать.
+              const noMenu = !menuLoading && dayMenu.length === 0 && !day.chosen
               return (
                 <Reveal key={day.date} delay={Math.min(i * 0.05, 0.3)} y={12}>
                   <div className={`day-row${day.chosen ? '' : ' day-row--empty'}`}>
@@ -344,10 +346,19 @@ function Catalog({
                         </>
                       ) : (
                         <span className="day-row__hint day-row__hint--warn">
-                          {menuLoading ? t(lang, 'loadingLabel') : t(lang, 'daySetNotChosen')}
+                          {menuLoading ? t(lang, 'loadingLabel') : noMenu ? t(lang, 'dayMenuRemoved') : t(lang, 'daySetNotChosen')}
                         </span>
                       )}
                     </button>
+                    {noMenu && (
+                      <button
+                        type="button"
+                        className="btn btn--outline day-row__pick"
+                        onClick={() => onApplySelectedDates(days.filter(d => d.date !== day.date).map(d => d.date))}
+                      >
+                        {t(lang, 'removeDay')}
+                      </button>
+                    )}
                     {hasChoice && (
                       <button
                         type="button"

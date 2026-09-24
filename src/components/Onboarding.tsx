@@ -287,6 +287,7 @@ export default function Onboarding({ lang, onAuth }: OnboardingProps) {
                     {passwordValid && <Check className="ob-field__ok" size={18} strokeWidth={2.5} />}
                   </div>
                   <p className="ob-hint">{t(lang, 'obPasswordHint')}</p>
+                  {error && <div className="auth-error">{error}</div>}
                 </div>
 
                 <button className="btn btn--primary btn--lg ob-next" type="submit">
