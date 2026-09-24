@@ -6,7 +6,7 @@ import {
   fetchManagerDates, fetchDayReport, confirmDay, resendDayReport,
   fetchEmployees, deleteEmployee, resetEmployeePassword,
 } from '../lib/api'
-import type { DayReport, ManagerDate, TeamEmployee } from '../lib/api'
+import type { DayReport, ManagerDate, TeamEmployee, OrderView } from '../lib/api'
 import MyOrdersView from './MyOrdersView'
 import Reveal from './Reveal'
 
@@ -18,6 +18,7 @@ interface ManagerViewProps {
   teamSize: number | null
   employeesCount: number
   onLogout: () => void
+  onRepeatOrder?: (order: OrderView) => void
 }
 
 function dayLabel(date: string, lang: Lang): string {
@@ -26,7 +27,7 @@ function dayLabel(date: string, lang: Lang): string {
   return `${String(d).padStart(2, '0')}.${String(m).padStart(2, '0')} · ${wd}`
 }
 
-export default function ManagerView({ lang, userName, companyName, teamCode, teamSize, employeesCount, onLogout }: ManagerViewProps) {
+export default function ManagerView({ lang, userName, companyName, teamCode, teamSize, employeesCount, onLogout, onRepeatOrder }: ManagerViewProps) {
   const [dates, setDates] = useState<ManagerDate[]>([])
   const [activeDate, setActiveDate] = useState<string | null>(null)
   const [report, setReport] = useState<DayReport | null>(null)
@@ -178,7 +179,7 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
         </button>
       </div>
 
-      {sub === 'orders' && <MyOrdersView lang={lang} />}
+      {sub === 'orders' && <MyOrdersView lang={lang} onRepeatOrder={onRepeatOrder} />}
 
       {sub === 'team' && <>
       <div className="team-card">

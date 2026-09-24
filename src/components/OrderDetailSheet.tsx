@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X } from 'lucide-react'
+import { X, RotateCcw } from 'lucide-react'
 import type { Lang } from '../types'
 import { t } from '../locales/translations'
 import type { OrderView, OrderStatus } from '../lib/api'
@@ -16,9 +16,11 @@ interface Props {
   preset?: OrderView | null
   onClose: () => void
   onChanged?: (order: OrderView) => void
+  /** Клиент: перенести этот заказ в корзину на ближайшие даты с меню */
+  onRepeat?: (order: OrderView) => void
 }
 
-export default function OrderDetailSheet({ lang, orderId, owner, preset, onClose, onChanged }: Props) {
+export default function OrderDetailSheet({ lang, orderId, owner, preset, onClose, onChanged, onRepeat }: Props) {
   const [fetched, setFetched] = useState<OrderView | null>(null)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
@@ -153,7 +155,7 @@ export default function OrderDetailSheet({ lang, orderId, owner, preset, onClose
                           <span className="report-line__meta">
                             {dateChip(l.date, lang)}
                             {l.salad ? ` · ${l.salad}` : ''}{l.beverage ? ` · ${l.beverage}` : ''}
-                            {l.excluded.length ? ` · без: ${l.excluded.join(', ')}` : ''}
+                            {l.excluded.length ? ` · ${t(lang, 'withoutIngredients')}: ${l.excluded.join(', ')}` : ''}
                           </span>
                         </div>
                         <div className="report-line__count">{l.portions}×</div>
@@ -220,6 +222,17 @@ export default function OrderDetailSheet({ lang, orderId, owner, preset, onClose
                         </div>
                       )}
                     </>
+                  )}
+
+                  {!owner && onRepeat && order.lines.length > 0 && (
+                    <button
+                      type="button"
+                      className="btn btn--primary"
+                      style={{ marginTop: 16, width: '100%' }}
+                      onClick={() => onRepeat(order)}
+                    >
+                      <RotateCcw size={16} /> {t(lang, 'repeatOrderBtn')}
+                    </button>
                   )}
 
                   {clientCancellable && (

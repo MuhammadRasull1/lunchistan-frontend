@@ -10,9 +10,10 @@ import Reveal from './Reveal'
 
 interface Props {
   lang: Lang
+  onRepeatOrder?: (order: OrderView) => void
 }
 
-export default function MyOrdersView({ lang }: Props) {
+export default function MyOrdersView({ lang, onRepeatOrder }: Props) {
   const [orders, setOrders] = useState<OrderView[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [openId, setOpenId] = useState<number | null>(null)
@@ -62,7 +63,13 @@ export default function MyOrdersView({ lang }: Props) {
         ))}
       </div>
 
-      <OrderDetailSheet lang={lang} orderId={openId} preset={openOrder} onClose={() => setOpenId(null)} />
+      <OrderDetailSheet
+        lang={lang}
+        orderId={openId}
+        preset={openOrder}
+        onClose={() => setOpenId(null)}
+        onRepeat={onRepeatOrder ? (o) => { setOpenId(null); onRepeatOrder(o) } : undefined}
+      />
     </div>
   )
 }

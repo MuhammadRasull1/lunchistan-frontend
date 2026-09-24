@@ -16,11 +16,11 @@ import { EMPLOYEE_MAX } from './types'
 import { t } from './locales/translations'
 import { showTelegramAlert } from './lib/telegram'
 import { loadSavedOrder, saveOrder, clearSavedOrder } from './lib/orderStorage'
-import { submitOrder, getToken, setToken, fetchMe, fetchMenu, fetchDayMenu, restoreTokenFromCloud, isNetworkError } from './lib/api'
+import { submitOrder, getToken, setToken, fetchMe, fetchMenu, fetchDayMenu, restoreTokenFromCloud, isNetworkError, fetchAvailableDates } from './lib/api'
 import { restoreGeoConsentFromCloud } from './lib/geoConsent'
-import type { AuthResponse, AuthUser, OrderContact } from './lib/api'
+import type { AuthResponse, AuthUser, OrderContact, OrderView } from './lib/api'
 import { getDefaultSalad } from './components/saladOptions'
-import { isPastDate, isValidDateString } from './lib/calendar'
+import { isPastDate, isValidDateString, canSelectDate, formatDate } from './lib/calendar'
 
 // До 11.09.2026 меню было захардкожено в data/mockMenu.ts с единой ценой на все блюда.
 // Теперь у каждого блюда своя цена из БД — это лишь запасное значение на случай,
@@ -415,6 +415,51 @@ function App() {
     }
   }
 
+  /**
+   * Повтор заказа: те же дни по счёту, сотрудники, салат/напиток/порции — на ближайшие
+   * даты, где владелец назначил меню. Блюдо переносится, только если оно есть в меню новой
+   * даты (иначе день помечен «выберите блюдо», единственное блюдо дня подставится само).
+   */
+  const handleRepeatOrder = async (order: OrderView) => {
+    const byDate = new Map<string, OrderView['lines'][number]>()
+    for (const l of [...order.lines].sort((a, b) => a.date.localeCompare(b.date))) {
+      if (!byDate.has(l.date)) byDate.set(l.date, l)
+    }
+    const oldDays = [...byDate.values()]
+    const from = formatDate(new Date())
+    const to = formatDate(new Date(Date.now() + 60 * 24 * 3600 * 1000))
+    let available: string[]
+    try {
+      available = (await fetchAvailableDates(from, to)).filter(canSelectDate)
+    } catch {
+      showTelegramAlert(t(lang, 'networkError'))
+      return
+    }
+    if (available.length === 0) {
+      showTelegramAlert(t(lang, 'repeatOrderNoDates'))
+      return
+    }
+    const next: CartState = {}
+    available.slice(0, oldDays.length).forEach((date, i) => {
+      const old = oldDays[i]
+      next[date] = {
+        active: true,
+        portions: old.portions > 0 ? old.portions : 1,
+        beverage: old.beverage === 'Компот в ассортименте' ? 'Компот в ассортименте' : 'Вода',
+        salad: old.salad ?? getDefaultSalad(menu),
+        setId: old.setId,
+      }
+    })
+    setCartState(next)
+    setEmployeeCount(Math.min(EMPLOYEE_MAX, Math.max(1, order.employeeCount)))
+    setSuccessInfo(null)
+    setScreen('catalog')
+    setTab('catalog')
+    if (available.length < oldDays.length) {
+      showTelegramAlert(t(lang, 'repeatOrderFewerDates', { n: available.length, total: oldDays.length }))
+    }
+  }
+
   const handleNewOrder = () => {
     setCartState({})
     setEmployeeCount(1)
@@ -629,6 +674,7 @@ function App() {
                     teamSize={user.companySize}
                     employeesCount={employeesCount}
                     onLogout={handleLogout}
+                    onRepeatOrder={handleRepeatOrder}
                   />
                 </div>
               </motion.div>
