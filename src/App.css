@@ -1007,6 +1007,13 @@ img {
   letter-spacing: -0.01em;
 }
 
+/* 25.09.2026: на 390px колонке названия оставалось ~85px — «Аджахур|и», «Бефстрог|анов».
+   Значок-вилка одинаковый у всех блюд и смысла не несёт — на телефоне убираем. */
+@media (max-width: 480px) {
+  .cart__item-icon { display: none; }
+  .cart__item-sum { min-width: 0; }
+}
+
 .cart__item-price {
   color: var(--text-muted);
   font-weight: 700;

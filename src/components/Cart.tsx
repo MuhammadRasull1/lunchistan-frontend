@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { X, UtensilsCrossed, Building2, CreditCard, Banknote, MapPin } from 'lucide-react'
 import type { SelectedDay, PaymentMethod, Lang } from '../types'
 import { formatPrice } from '../types'
-import { t } from '../locales/translations'
+import { t, countLabel } from '../locales/translations'
 import { getTelegramWebApp, getTelegramUser, hapticImpact } from '../lib/telegram'
 import { formatDayLabel } from '../lib/calendar'
 import type { AuthUser, OrderContact, DeliveryQuote, CompanyAddress, BusinessSettings } from '../lib/api'
@@ -60,7 +60,8 @@ function Cart({
   // автоматически и заменить его вручную нельзя. На лендинге (обычный браузер) = null.
   const tgUser = getTelegramUser()
   const [contactName, setContactName] = useState(user?.name ?? tgUser?.firstName ?? '')
-  const [contactPhone, setContactPhone] = useState(user?.phone ?? '')
+  // регистрация без номера даёт служебный user_<hex> — это не телефон, поле оставляем пустым
+  const [contactPhone, setContactPhone] = useState(user?.phone && !user.phone.startsWith('user_') ? user.phone : '')
   const [companyName, setCompanyName] = useState(user?.companyName ?? '')
   const [comment, setComment] = useState('')
 
@@ -244,7 +245,7 @@ function Cart({
             animate={{ opacity: 1 }}
             transition={{ delay: 0.15, duration: 0.4 }}
           >
-            {activeDays} {t(lang, 'days')} · {employeeCount} {t(lang, 'employeesPlural')} · {totalItems} {t(lang, 'portionsPlural')}
+            {countLabel(lang, activeDays, 'daysForms')} · {countLabel(lang, employeeCount, 'employeesForms')} · {countLabel(lang, totalItems, 'portionsForms')}
           </motion.p>
 
           <motion.ul

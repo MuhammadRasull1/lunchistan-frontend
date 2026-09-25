@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, RotateCcw } from 'lucide-react'
 import type { Lang } from '../types'
-import { t } from '../locales/translations'
+import { t, countLabel } from '../locales/translations'
 import type { OrderView, OrderStatus } from '../lib/api'
 import { fetchOwnerOrder, setOrderStatus, cancelMyOrder } from '../lib/api'
 import { statusLabel, statusColor, nextStatuses, formatMoney, dateChip } from '../lib/orderStatus'
@@ -168,7 +168,7 @@ export default function OrderDetailSheet({ lang, orderId, owner, preset, onClose
                     <span className="cart__summary-total">{formatMoney(order.totalAmount, lang)}</span>
                   </div>
                   <p className="view__section-desc view__section-desc--muted">
-                    {order.employeeCount} {t(lang, 'employeesPlural')}
+                    {countLabel(lang, order.employeeCount, 'employeesForms')}
                     {order.paymentMethod ? ` · ${t(lang, order.paymentMethod)}` : ''}
                   </p>
 

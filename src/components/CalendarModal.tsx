@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ChevronLeft, ChevronRight, CalendarPlus, Check } from 'lucide-react'
 import type { Lang, PresetPattern } from '../types'
-import { t, WEEKDAYS_SHORT } from '../locales/translations'
+import { t, WEEKDAYS_SHORT, countLabel } from '../locales/translations'
 import {
   buildMonthGrid,
   buildMonthWeeks,
@@ -368,7 +368,7 @@ function CalendarSheet({ initialSelectedDates, minMonth, maxMonth, lang, onConfi
               className="btn btn--outline"
               onClick={selectAllInMonth}
             >
-              {t(lang, 'selectAll', { n: monthSelectableDates.length })}
+              {t(lang, 'selectAll', { n: countLabel(lang, monthSelectableDates.length, 'daysForms') })}
             </button>
             <button
               type="button"

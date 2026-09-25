@@ -1,6 +1,6 @@
 import type { Lang, PaymentMethod } from '../types'
 import { formatPrice } from '../types'
-import { t } from '../locales/translations'
+import { t, countLabel } from '../locales/translations'
 import { statusLabel, statusColor } from '../lib/orderStatus'
 import Reveal from './Reveal'
 
@@ -73,7 +73,7 @@ function Success({
             {activeDays !== undefined && employeeCount !== undefined && (
               <div className="success__summary-row">
                 <span>{t(lang, 'selectedDays')}</span>
-                <span>{activeDays} {t(lang, 'days')} · {employeeCount} {t(lang, 'employeesPlural')}</span>
+                <span>{countLabel(lang, activeDays, 'daysForms')} · {countLabel(lang, employeeCount, 'employeesForms')}</span>
               </div>
             )}
             {!!deliveryFee && (

@@ -86,6 +86,16 @@ declare global {
   }
 }
 
+/**
+ * Приложение реально открыто внутри Telegram. Сам объект window.Telegram.WebApp есть и в обычном
+ * браузере (скрипт telegram-web-app.js грузится всегда), но там MainButton не рисуется — по наличию
+ * объекта нельзя прятать свои кнопки (25.09.2026: в браузере нельзя было оформить заказ).
+ * Внутри Telegram initData всегда непустая.
+ */
+export function isInsideTelegram(): boolean {
+  return Boolean(getTelegramWebApp()?.initData)
+}
+
 export function getTelegramWebApp(): TelegramWebApp | undefined {
   if (typeof window === 'undefined') return undefined
   return window.Telegram?.WebApp

@@ -11,7 +11,7 @@ import AnimatedCount from './AnimatedCount'
 import Stepper from './Stepper'
 import CalendarModal from './CalendarModal'
 import Reveal from './Reveal'
-import { getTelegramWebApp, hapticImpact } from '../lib/telegram'
+import { getTelegramWebApp, isInsideTelegram, hapticImpact } from '../lib/telegram'
 import { getDefaultSalad, getSaladOptions } from './saladOptions'
 import { startOfMonth, addMonths, formatDayLabel } from '../lib/calendar'
 
@@ -94,7 +94,7 @@ function Catalog({
 
   // Внутри Telegram оформление уже доступно через нативный MainButton —
   // кастомная кнопка в нижней панели в этом случае не дублируется.
-  const hasMainButton = !!getTelegramWebApp()?.MainButton
+  const hasMainButton = isInsideTelegram()
 
   const defaultSalad = useMemo(() => getDefaultSalad(menu), [menu])
   const saladOptions = useMemo(() => getSaladOptions(menu), [menu])

@@ -18,7 +18,11 @@ const translations: Record<Lang, Record<string, string>> = {
     calendarNextMonth: 'Следующий месяц',
     noDatesSelected: 'Выберите даты в календаре, чтобы собрать меню',
     employees: 'Количество сотрудников',
-    selectAll: 'Выбрать все {n} дней',
+    selectAll: 'Выбрать все {n}',
+    daysForms: 'день|дня|дней',
+    employeesForms: 'сотрудник|сотрудника|сотрудников',
+    portionsForms: 'порция|порции|порций',
+    flatbread: 'Лепёшка',
     deselectAll: 'Сбросить все',
     chooseDays: 'Выбрать дни',
     calendarModalTitle: 'Выбор дат доставки',
@@ -150,8 +154,8 @@ const translations: Record<Lang, Record<string, string>> = {
     obNameError: 'Пожалуйста, введите настоящее имя — буквами, от 2 до 50 символов',
     obNext: 'Далее',
     obPasswordTitle: 'Придумайте пароль',
-    obPasswordHint: 'Минимум 4 символа — например: obed123',
-    obPasswordError: 'Пароль должен быть не короче 4 символов',
+    obPasswordHint: 'Минимум 6 символов — например: obed123',
+    obPasswordError: 'Пароль должен быть не короче 6 символов',
     obBack: 'Назад',
     obPathOverline: 'Почти готово',
     obPathTitle: 'Как вы будете заходить?',
@@ -326,7 +330,11 @@ const translations: Record<Lang, Record<string, string>> = {
     calendarNextMonth: 'Keyingi oy',
     noDatesSelected: "Taqvimda sanalarni tanlang, menyu shakllanadi",
     employees: 'Xodimlar soni',
-    selectAll: 'Barcha {n} kunni tanlash',
+    selectAll: 'Barcha {n}ni tanlash',
+    daysForms: 'kun',
+    employeesForms: 'xodim',
+    portionsForms: 'porsiya',
+    flatbread: 'Non',
     deselectAll: 'Bekor qilish',
     chooseDays: 'Kunlarni tanlash',
     calendarModalTitle: 'Yetkazib berish sanalarini tanlash',
@@ -458,8 +466,8 @@ const translations: Record<Lang, Record<string, string>> = {
     obNameError: 'Iltimos, haqiqiy ism kiriting — harflar bilan, 2 dan 50 gacha',
     obNext: 'Keyingisi',
     obPasswordTitle: 'Parol o\'ylab toping',
-    obPasswordHint: 'Kamida 4 ta belgi — masalan: obed123',
-    obPasswordError: 'Parol kamida 4 ta belgidan iborat bo\'lishi kerak',
+    obPasswordHint: 'Kamida 6 ta belgi — masalan: obed123',
+    obPasswordError: 'Parol kamida 6 ta belgidan iborat bo\'lishi kerak',
     obBack: 'Orqaga',
     obPathOverline: 'Deyarli tayyor',
     obPathTitle: 'Qanday kirmoqchisiz?',
@@ -629,6 +637,21 @@ export function t(lang: Lang, key: string, params?: Record<string, string | numb
     }
   }
   return text
+}
+
+/**
+ * «2 дня», «5 дней», «1 сотрудник» — склонение для русского (раньше было «2 дней · 1 сотрудников»).
+ * formsKey — ключ со строкой «один|два|пять»; в узбекском форма одна, склонения нет.
+ */
+export function countLabel(lang: Lang, n: number, formsKey: string): string {
+  const forms = t(lang, formsKey).split('|')
+  if (forms.length < 3) return `${n} ${forms[0]}`
+  const mod10 = n % 10
+  const mod100 = n % 100
+  const form = mod10 === 1 && mod100 !== 11 ? forms[0]
+    : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14) ? forms[1]
+      : forms[2]
+  return `${n} ${form}`
 }
 
 /** Локализация стандартных ингредиентов; названия блюд остаются на русском */

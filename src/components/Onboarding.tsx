@@ -3,7 +3,7 @@ import { AnimatePresence, motion, type Variants } from 'framer-motion'
 import { UtensilsCrossed, Check, KeyRound, UserRound, Users } from 'lucide-react'
 import type { Lang } from '../types'
 import { t } from '../locales/translations'
-import { login, registerTeam, joinTeam, apiErrorMessage, needsCompanyCode } from '../lib/api'
+import { login, registerTeam, joinTeam, apiErrorMessage, isNetworkError, needsCompanyCode } from '../lib/api'
 import type { AuthResponse } from '../lib/api'
 import { isValidName } from '../lib/nameValidator'
 import { setGeoConsent } from '../lib/geoConsent'
@@ -85,7 +85,7 @@ export default function Onboarding({ lang, onAuth }: OnboardingProps) {
   const nextRef = useRef<HTMLInputElement>(null)
 
   const nameValid = isValidName(name)
-  const passwordValid = password.length >= 4
+  const passwordValid = password.length >= 6 // как MIN_PASSWORD на сервере (auth.js)
   const trimmedCode = companyCode.trim()
 
   const toggleGeoConsent = (checked: boolean) => {
@@ -139,7 +139,8 @@ export default function Onboarding({ lang, onAuth }: OnboardingProps) {
       onAuth(result)
     } catch (err) {
       if (needsCompanyCode(err)) setLoginNeedsCode(true)
-      setError(apiErrorMessage(err) ?? t(lang, 'authError'))
+      // сервер недоступен — это не «неверные данные», иначе человек зря перепроверяет пароль
+      setError(isNetworkError(err) ? t(lang, 'networkError') : apiErrorMessage(err) ?? t(lang, 'authError'))
     } finally {
       setBusy(false)
     }
