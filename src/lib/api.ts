@@ -247,9 +247,14 @@ export async function fetchDayReport(date: string): Promise<DayReport> {
   return data
 }
 
-export async function confirmDay(date: string): Promise<DayReport> {
-  const { data } = await http.post<DayReport>(`/api/manager/report/${date}/confirm`)
-  return data
+export async function confirmDay(date: string): Promise<{ plan: DayReport; telegramSent: boolean }> {
+  // Сервер отвечает { success, telegramSent, plan } — отчёт лежит в plan. Раньше сюда возвращался весь
+  // ответ целиком, ManagerView брал у него report.perSet → undefined.map → белый экран сразу после
+  // «Подтвердить заказ на день» (найдено сквозным тестом 25.09.2026; день при этом подтверждался).
+  const { data } = await http.post<{ success: boolean; telegramSent: boolean; plan: DayReport }>(
+    `/api/manager/report/${date}/confirm`,
+  )
+  return { plan: data.plan, telegramSent: data.telegramSent !== false }
 }
 
 /** Повторная отправка чека кухне в Telegram для уже подтверждённого дня (если не дошло с первого раза). */

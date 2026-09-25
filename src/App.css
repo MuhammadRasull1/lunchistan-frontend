@@ -2840,6 +2840,18 @@ img {
   flex-shrink: 0;
 }
 
+/* 25.09.2026: на 390px тексту блюда оставалось ~55px — «Не выбрано — по умолчанию…» шло по букве в строку.
+   На телефоне: дата и кнопка в первой строке, блюдо — отдельной строкой на всю ширину. */
+@media (max-width: 480px) {
+  .day-row { flex-wrap: wrap; row-gap: 8px; }
+  .day-row__pick { margin-left: auto; }
+  .day-row__dish { order: 3; flex: 1 1 100%; }
+  /* карточка сотрудника у менеджера: имя сверху, две кнопки строкой ниже (раньше «Уволить» вылезала за край) */
+  .day-row--employee .day-row__dish { order: 0; }
+  .day-row--employee .day-row__pick { order: 3; margin-left: 0; width: 100%; }
+  .day-row--employee .day-row__pick .btn { flex: 1; }
+}
+
 /* ---------- Выбранные дни в каталоге (клиентский поток) ---------- */
 .selected-days {
   margin: 8px 0 4px;

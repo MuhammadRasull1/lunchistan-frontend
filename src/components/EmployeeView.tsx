@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { CalendarDays, Lock } from 'lucide-react'
 import type { Lang, LunchSet } from '../types'
 import { t, WEEKDAYS_SHORT } from '../locales/translations'
-import { fetchMyDays, putMyDays, putMyChoice, fetchDayMenu } from '../lib/api'
+import { fetchMyDays, putMyDays, putMyChoice, fetchDayMenu, isNetworkError } from '../lib/api'
 import type { MyDay } from '../lib/api'
 import CalendarModal from './CalendarModal'
 import SetPicker from './SetPicker'
@@ -50,8 +50,8 @@ export default function EmployeeView({ lang, userName, companyName, onLogout }: 
           setError(null)
         }
       })
-      .catch(() => {
-        if (!cancelled) setError(t(lang, 'authError'))
+      .catch((err) => {
+        if (!cancelled) setError(t(lang, isNetworkError(err) ? 'networkError' : 'authError'))
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -65,8 +65,9 @@ export default function EmployeeView({ lang, userName, companyName, onLogout }: 
     try {
       await putMyDays(dates)
       await reload()
-    } catch {
-      setError(t(lang, 'authError'))
+    } catch (err) {
+      // нет сети — это не «проверьте данные» (25.09.2026)
+      setError(t(lang, isNetworkError(err) ? 'networkError' : 'authError'))
     } finally {
       setCalendarOpen(false)
     }
@@ -88,8 +89,9 @@ export default function EmployeeView({ lang, userName, companyName, onLogout }: 
     try {
       await putMyChoice(pickFor.date, setId)
       await reload()
-    } catch {
-      setError(t(lang, 'authError'))
+    } catch (err) {
+      // нет сети — это не «проверьте данные» (25.09.2026)
+      setError(t(lang, isNetworkError(err) ? 'networkError' : 'authError'))
     } finally {
       setPickFor(null)
     }

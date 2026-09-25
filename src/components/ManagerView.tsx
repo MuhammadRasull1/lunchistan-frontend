@@ -125,11 +125,12 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
     setConfirming(true)
     setMessage(null)
     try {
-      const plan = await confirmDay(activeDate)
+      const { plan, telegramSent } = await confirmDay(activeDate)
       setReport(plan)
       const refreshed = await fetchManagerDates()
       setDates(refreshed)
-      setMessage(t(lang, 'confirmSuccess'))
+      // раньше «Чек отправлен в Telegram» писалось всегда, даже если кухня его не получила
+      setMessage(t(lang, telegramSent ? 'confirmSuccess' : 'confirmSuccessNoTelegram'))
       setShowConfirmDialog(false)
     } catch {
       setMessage(t(lang, 'authError'))
@@ -217,10 +218,11 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
       )}
       <div className="days-list">
         {employees.map(emp => (
-          <div key={emp.id} className="day-row">
+          <div key={emp.id} className="day-row day-row--employee">
             <div className="day-row__dish">
               <span className="day-row__name">{emp.name}</span>
-              <span className="day-row__hint">{emp.phone}</span>
+              {/* служебный user_<hex> (регистрация без номера) — не телефон, не показываем */}
+              {emp.phone && !emp.phone.startsWith('user_') && <span className="day-row__hint">{emp.phone}</span>}
             </div>
             {confirmDeleteId === emp.id ? (
               <div className="cancel-confirm">
@@ -285,6 +287,9 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
             key={d.date}
             className={`manager-dates__chip${activeDate === d.date ? ' manager-dates__chip--active' : ''}${d.confirmed ? ' manager-dates__chip--done' : ''}`}
             onClick={() => {
+              // повторный клик по активному дню стирал отчёт, а загрузка не перезапускалась
+              // (activeDate не менялся) — отчёт пропадал до перезагрузки (25.09.2026)
+              if (d.date === activeDate) return
               setReport(null)
               setActiveDate(d.date)
             }}

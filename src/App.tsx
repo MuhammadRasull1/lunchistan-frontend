@@ -135,6 +135,7 @@ function App() {
         const data = await fetchMe()
         if (!cancelled) {
           setUser(data.user)
+          if (data.user.role === 'employee') setTab('teams')
           setEmployeesCount(data.employeesCount)
         }
       } catch (err) {
@@ -208,6 +209,8 @@ function App() {
   const handleAuth = (result: AuthResponse) => {
     setToken(result.token)
     setUser(result.user)
+    // у сотрудника своё место — «Кабинет» с его днями; оптовый каталог компании ему не нужен (25.09.2026)
+    if (result.user.role === 'employee') setTab('teams')
     setRevealCompany(result.user.companyName ?? '')
     window.setTimeout(() => setRevealCompany(null), 1600)
     if (result.user.role === 'admin') {
