@@ -2199,6 +2199,7 @@ img {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap; /* 360px: плашка «Блюда выбраны на все дни ✓» обрезалась справа */
   margin-top: 32px;
 }
 

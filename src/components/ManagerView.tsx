@@ -202,7 +202,8 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
             <Users size={14} /> {t(lang, 'teamMembers')}
           </span>
           <span className="team-card__value">
-            {employeesCount} / {teamSize ?? '∞'}
+            {/* после удаления сотрудника счётчик из пропса оставался старым */}
+            {employeesState === 'ok' ? employees.length : employeesCount} / {teamSize ?? '∞'}
           </span>
         </div>
       </div>
@@ -298,6 +299,9 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
               if (d.date === activeDate) return
               setReport(null)
               setReportError(false)
+              // окно подтверждения и «Чек отправлен» относились к прошлому дню
+              setShowConfirmDialog(false)
+              setMessage(null)
               setActiveDate(d.date)
             }}
           >
