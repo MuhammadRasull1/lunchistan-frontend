@@ -167,7 +167,7 @@ export default function OrderDetailSheet({ lang, orderId, owner, preset, onClose
 
                   <div className="cart__summary">
                     <span>{t(lang, 'totalToPay')}</span>
-                    <span className="cart__summary-total">{formatMoney(order.totalAmount, lang)}</span>
+                    <span className="cart__summary-total">{formatMoney(order.totalWithDelivery ?? order.totalAmount, lang)}</span>
                   </div>
                   <p className="view__section-desc view__section-desc--muted">
                     {countLabel(lang, order.employeeCount, 'employeesForms')}

@@ -429,6 +429,9 @@ export interface OrderView {
   paymentMethod: string | null
   employeeCount: number
   totalAmount: number
+  /** С доставкой — сервер отдаёт с 27.09; у старого бэкенда поля нет */
+  deliveryFee?: number
+  totalWithDelivery?: number
   createdAt: string
   lines: {
     date: string
