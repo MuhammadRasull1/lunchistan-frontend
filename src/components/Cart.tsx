@@ -1,4 +1,5 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { Component, lazy, Suspense, useEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import { motion } from 'framer-motion'
 import { X, UtensilsCrossed, Building2, CreditCard, Banknote, MapPin } from 'lucide-react'
 import type { SelectedDay, PaymentMethod, Lang } from '../types'
@@ -13,6 +14,13 @@ import type { AddressPick } from './AddressPicker'
 
 // Leaflet и карта тяжёлые — грузим только когда открылся пикер адреса.
 const AddressPicker = lazy(() => import('./AddressPicker'))
+
+/** Ловит ошибки загрузки chunk-а карты (плохая сеть, старый кэш после деплоя). */
+class MapErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false }
+  static getDerivedStateFromError() { return { failed: true } }
+  render() { return this.state.failed ? null : this.props.children }
+}
 
 interface CartLine {
   date: string
@@ -496,6 +504,7 @@ function Cart({
         </>
       )}
 
+      <MapErrorBoundary>
       <Suspense fallback={null}>
         <AddressPicker
           isOpen={pickerOpen}
@@ -510,6 +519,7 @@ function Cart({
           }}
         />
       </Suspense>
+      </MapErrorBoundary>
     </motion.div>
   )
 }

@@ -137,7 +137,11 @@ export default function EmployeeView({ lang, userName, companyName, onLogout }: 
                       </span>
                     </>
                   ) : (
-                    <span className="day-row__hint">{t(lang, 'defaultSetNote', { name: day.defaultSet.setName })}</span>
+                    <span className="day-row__hint">
+                      {day.defaultSet
+                        ? t(lang, 'defaultSetNote', { name: day.defaultSet.setName })
+                        : t(lang, 'chooseSet')}
+                    </span>
                   )}
                   {isLocked && (
                     <span className="day-row__lock">

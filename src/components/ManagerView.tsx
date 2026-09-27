@@ -32,6 +32,8 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
   const [activeDate, setActiveDate] = useState<string | null>(null)
   const [report, setReport] = useState<DayReport | null>(null)
   const [loadingDates, setLoadingDates] = useState(true)
+  const [datesError, setDatesError] = useState(false)
+  const [reportError, setReportError] = useState(false)
   const [confirming, setConfirming] = useState(false)
   // Подтверждение дня отправляет чек в Telegram и блокирует день для правок сотрудниками —
   // необратимо по смыслу, поэтому один тап не должен запускать это сразу.
@@ -95,7 +97,11 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
       .then(data => {
         if (cancelled) return
         setDates(data)
+        setDatesError(false)
         setActiveDate(prev => prev ?? data.find(d => !d.locked)?.date ?? data[0]?.date ?? null)
+      })
+      .catch(() => {
+        if (!cancelled) setDatesError(true)
       })
       .finally(() => {
         if (!cancelled) setLoadingDates(false)
@@ -108,12 +114,13 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
   useEffect(() => {
     if (!activeDate) return
     let cancelled = false
+    setReportError(false)
     fetchDayReport(activeDate)
       .then(data => {
-        if (!cancelled) setReport(data)
+        if (!cancelled) { setReport(data); setReportError(false) }
       })
       .catch(() => {
-        if (!cancelled) setReport(null)
+        if (!cancelled) { setReport(null); setReportError(true) }
       })
     return () => {
       cancelled = true
@@ -281,7 +288,8 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
 
       <div className="manager-dates">
         {loadingDates && <p className="view__section-desc">…</p>}
-        {!loadingDates && dates.length === 0 && employees.length > 0 && <p className="view__section-desc">{t(lang, 'reportEmpty')}</p>}
+        {!loadingDates && datesError && <p className="view__section-desc" style={{color:'var(--clr-error)'}}>{t(lang, 'authError')}</p>}
+        {!loadingDates && !datesError && dates.length === 0 && employees.length > 0 && <p className="view__section-desc">{t(lang, 'reportEmpty')}</p>}
         {dates.map(d => (
           <button
             key={d.date}
@@ -302,6 +310,11 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
         ))}
       </div>
 
+      {!report && reportError && activeDate && (
+        <p className="view__section-desc" style={{color:'var(--clr-error)'}}>
+          {t(lang, 'authError')}
+        </p>
+      )}
       {report && (
         <Reveal key={report.date} y={14}>
           <div className="manager-report">

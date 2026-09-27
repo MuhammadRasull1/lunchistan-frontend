@@ -223,6 +223,10 @@ function App() {
   }
 
   const handleLogout = () => {
+    // Очищаем корзину чтобы следующая компания не увидела данные предыдущей
+    clearSavedOrder()
+    setCartState({})
+    setEmployeesCount(1)
     setToken(null)
     setUser(null)
   }
@@ -260,7 +264,12 @@ function App() {
   // Все дни с выбранным блюдом? (иначе заказ оформить нельзя)
   const allDishesChosen = orderDays.length > 0 && orderDays.every(d => d.chosen)
   const totalPortionsFromActive = selectedDates.reduce((sum, date) => sum + (cartState[date]?.portions ?? 1), 0)
-  const totalMonthlyPrice = totalPortionsFromActive * employeeCount * FALLBACK_PRICE
+  // Считаем по реальной цене каждого выбранного блюда, не по FALLBACK_PRICE
+  const totalMonthlyPrice = orderDays.reduce((sum, d) => {
+    const price = d.set?.price ?? FALLBACK_PRICE
+    const portions = (cartState[d.date]?.portions ?? 1) * employeeCount
+    return sum + price * portions
+  }, 0)
   const totalItems = totalPortionsFromActive * employeeCount
   /** Включить/выключить день: при отключении настройки дня (салат/напиток/порции) удаляются из state */
   const handleToggleDate = (date: string) => {
@@ -556,7 +565,7 @@ function App() {
                   allSetsCount={menu.length}
                   employeeCount={employeeCount}
                   totalMonthlyPrice={totalMonthlyPrice}
-                  setPrice={FALLBACK_PRICE}
+                  setPrice={orderDays[0]?.set?.price ?? FALLBACK_PRICE}
                   lang={lang}
                   allDishesChosen={allDishesChosen}
                   dayMenuErrors={dayMenuErrors}
