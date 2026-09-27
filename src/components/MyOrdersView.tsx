@@ -23,7 +23,7 @@ export default function MyOrdersView({ lang, onRepeatOrder }: Props) {
     let cancelled = false
     fetchMyOrders()
       .then((list) => { if (!cancelled) { setOrders(list); setError(null) } })
-      .catch(() => { if (!cancelled) { setError(t(lang, 'authError')); setOrders([]) } })
+      .catch(() => { if (!cancelled) { setError(t(lang, 'actionError')); setOrders([]) } })
     return () => { cancelled = true }
   }, [lang, reloadKey])
 

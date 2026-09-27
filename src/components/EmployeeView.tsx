@@ -52,7 +52,7 @@ export default function EmployeeView({ lang, userName, companyName, onLogout }: 
         }
       })
       .catch((err) => {
-        if (!cancelled) setError(t(lang, isNetworkError(err) ? 'networkError' : 'authError'))
+        if (!cancelled) setError(t(lang, isNetworkError(err) ? 'networkError' : 'actionError'))
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -68,7 +68,7 @@ export default function EmployeeView({ lang, userName, companyName, onLogout }: 
       await reload()
     } catch (err) {
       // нет сети — это не «проверьте данные» (25.09.2026)
-      setError(t(lang, isNetworkError(err) ? 'networkError' : 'authError'))
+      setError(t(lang, isNetworkError(err) ? 'networkError' : 'actionError'))
     } finally {
       setCalendarOpen(false)
     }
@@ -92,7 +92,7 @@ export default function EmployeeView({ lang, userName, companyName, onLogout }: 
       await reload()
     } catch (err) {
       // нет сети — это не «проверьте данные» (25.09.2026)
-      setError(t(lang, isNetworkError(err) ? 'networkError' : 'authError'))
+      setError(t(lang, isNetworkError(err) ? 'networkError' : 'actionError'))
     } finally {
       setPickFor(null)
     }

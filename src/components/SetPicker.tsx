@@ -22,6 +22,9 @@ interface SetPickerProps {
   daysCount?: number
   onBeverageChange?: (beverage: Beverage) => void
   onSaladChange?: (salad: Salad) => void
+  /** «Ко всем дням» — раньше сюда шёл обработчик одного дня */
+  onApplyBeverageToAll?: (beverage: Beverage) => void
+  onApplySaladToAll?: (salad: Salad) => void
   onPortionsChange?: (portions: number) => void
   onPick: (setId: number) => void
   onClose: () => void
@@ -48,7 +51,7 @@ const CATEGORY_LABEL_KEY: Record<SetCategory, string> = {
   soup: 'categorySoup',
 }
 
-export default function SetPicker({ isOpen, menu, lang, current, dayLabel, item, daysCount, onBeverageChange, onSaladChange, onPortionsChange, onPick, onClose }: SetPickerProps) {
+export default function SetPicker({ isOpen, menu, lang, current, dayLabel, item, daysCount, onBeverageChange, onSaladChange, onApplyBeverageToAll, onApplySaladToAll, onPortionsChange, onPick, onClose }: SetPickerProps) {
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<CategoryFilter>('all')
   const [pendingSet, setPendingSet] = useState<LunchSet | null>(null)
@@ -163,10 +166,10 @@ export default function SetPicker({ isOpen, menu, lang, current, dayLabel, item,
           dateLabel={dayLabel}
           beverage={item?.beverage ?? 'Вода'}
           onBeverageChange={onBeverageChange ?? (() => {})}
-          onApplyBeverageToAll={onBeverageChange ?? (() => {})}
+          onApplyBeverageToAll={onApplyBeverageToAll ?? onBeverageChange ?? (() => {})}
           salad={item?.salad ?? defaultSalad}
           onSaladChange={onSaladChange ?? (() => {})}
-          onApplySaladToAll={onSaladChange ?? (() => {})}
+          onApplySaladToAll={onApplySaladToAll ?? onSaladChange ?? (() => {})}
           saladOptions={saladOptions}
           portions={item?.portions ?? 1}
           onPortionsChange={onPortionsChange ?? (() => {})}

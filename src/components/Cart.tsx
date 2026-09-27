@@ -32,6 +32,8 @@ interface CartLine {
 
 interface CartProps {
   days: SelectedDay[]
+  /** В меню есть салаты — иначе салат не обязателен (раньше без салатов заказ был невозможен) */
+  saladRequired?: boolean
   totalMonthlyPrice: number
   employeeCount: number
   totalItems: number
@@ -45,6 +47,7 @@ interface CartProps {
 
 function Cart({
   days,
+  saladRequired = true,
   totalMonthlyPrice,
   employeeCount,
   totalItems,
@@ -154,7 +157,7 @@ function Cart({
   const activeDays = activeLines.length
   const allDishesChosen = activeLines.length > 0 && activeLines.every(({ item }) => item?.setId != null)
   const canCheckout = allDishesChosen && contactOk && deliveryReady && activeLines.every(({ item }) => {
-    return !!item?.salad && !!item?.beverage
+    return (!saladRequired || !!item?.salad) && !!item?.beverage
   })
 
   const paymentOptions: { value: PaymentMethod; label: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number }> }[] = [
@@ -284,11 +287,11 @@ function Cart({
                     {formatDayLabel(date, lang)} · {portions} {t(lang, 'portionsPerEmployee')}
                   </span>
                   {(() => {
-                    if (!item?.salad || !item?.beverage) return null
+                    if (!item?.beverage) return null
                     const beverageLabel = t(lang, item.beverage === 'Вода' ? 'water' : 'compote')
                     return (
                       <span className="cart__item-desc">
-                        {item.salad} · {beverageLabel}
+                        {item.salad ? `${item.salad} · ` : ''}{beverageLabel}
                       </span>
                     )
                   })()}

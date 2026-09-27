@@ -25,6 +25,13 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 /** Заказ на «сегодня» возможен только до этого часа (включительно с 00:00 до этого часа). */
 export const TODAY_ORDER_CUTOFF_HOUR = 10
 
+/** «Сейчас» в часах Ташкента: сервер режет заказы по Asia/Tashkent (UTC+5), а телефон может
+ *  жить в другом поясе. Локальные компоненты возвращённой даты = настенное время Ташкента. */
+function tashkentNow(): Date {
+  const d = new Date()
+  return new Date(d.getTime() + (5 * 60 + d.getTimezoneOffset()) * 60000)
+}
+
 /** Текущее время как число-часов с долей (0..24) */
 function currentHourFraction(now: Date): number {
   return now.getHours() + now.getMinutes() / 60
@@ -181,7 +188,7 @@ export function formatMonthLabel(month: Date, lang: Lang): string {
 
 /** Дату уже нельзя заказать — она раньше сегодняшнего дня (по календарным компонентам). */
 export function isPastDate(date: string): boolean {
-  return date < formatDate(new Date())
+  return date < formatDate(tashkentNow())
 }
 
 /**
@@ -190,7 +197,7 @@ export function isPastDate(date: string): boolean {
  * до временной резки TODAY_ORDER_CUTOFF_HOUR (иначе заказать на сегодня нельзя).
  */
 export function canSelectDate(date: string): boolean {
-  const now = new Date()
+  const now = tashkentNow()
   const todayKey = formatDate(now)
   if (date < todayKey) return false
   if (date === todayKey) {

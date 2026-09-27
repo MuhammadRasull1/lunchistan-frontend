@@ -4,8 +4,7 @@ import type { Lang } from '../types'
 import { t, WEEKDAYS_SHORT } from '../locales/translations'
 import {
   fetchManagerDates, fetchDayReport, confirmDay, resendDayReport,
-  fetchEmployees, deleteEmployee, resetEmployeePassword,
-} from '../lib/api'
+  fetchEmployees, deleteEmployee, resetEmployeePassword, apiErrorMessage } from '../lib/api'
 import type { DayReport, ManagerDate, TeamEmployee, OrderView } from '../lib/api'
 import MyOrdersView from './MyOrdersView'
 import Reveal from './Reveal'
@@ -138,8 +137,8 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
       // раньше «Чек отправлен в Telegram» писалось всегда, даже если кухня его не получила
       setMessage(t(lang, telegramSent ? 'confirmSuccess' : 'confirmSuccessNoTelegram'))
       setShowConfirmDialog(false)
-    } catch {
-      setMessage(t(lang, 'authError'))
+    } catch (err) {
+      setMessage(apiErrorMessage(err) ?? t(lang, 'actionError'))
     } finally {
       setConfirming(false)
     }
@@ -152,8 +151,8 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
     try {
       const r = await resendDayReport(activeDate)
       setMessage(t(lang, r.telegramSent ? 'resendSuccess' : 'resendFailed'))
-    } catch {
-      setMessage(t(lang, 'authError'))
+    } catch (err) {
+      setMessage(apiErrorMessage(err) ?? t(lang, 'actionError'))
     } finally {
       setResending(false)
     }
@@ -287,7 +286,7 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
 
       <div className="manager-dates">
         {loadingDates && <p className="view__section-desc">…</p>}
-        {!loadingDates && datesError && <p className="view__section-desc" style={{color:'var(--clr-error)'}}>{t(lang, 'authError')}</p>}
+        {!loadingDates && datesError && <p className="view__section-desc" style={{color:'var(--clr-error)'}}>{t(lang, 'actionError')}</p>}
         {!loadingDates && !datesError && dates.length === 0 && employees.length > 0 && <p className="view__section-desc">{t(lang, 'reportEmpty')}</p>}
         {dates.map(d => (
           <button
@@ -312,7 +311,7 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
 
       {!report && reportError && activeDate && (
         <p className="view__section-desc" style={{color:'var(--clr-error)'}}>
-          {t(lang, 'authError')}
+          {t(lang, 'actionError')}
         </p>
       )}
       {report && (

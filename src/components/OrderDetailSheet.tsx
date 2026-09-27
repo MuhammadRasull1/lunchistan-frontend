@@ -4,7 +4,7 @@ import { X, RotateCcw } from 'lucide-react'
 import type { Lang } from '../types'
 import { t, countLabel } from '../locales/translations'
 import type { OrderView, OrderStatus } from '../lib/api'
-import { fetchOwnerOrder, setOrderStatus, cancelMyOrder } from '../lib/api'
+import { fetchOwnerOrder, setOrderStatus, cancelMyOrder, apiErrorMessage } from '../lib/api'
 import { statusLabel, statusColor, nextStatuses, formatMoney, dateChip } from '../lib/orderStatus'
 
 interface Props {
@@ -53,8 +53,8 @@ export default function OrderDetailSheet({ lang, orderId, owner, preset, onClose
       onChanged?.(updated)
       setConfirmingCancel(false)
       setCancelNote('')
-    } catch {
-      setMsg(t(lang, 'authError'))
+    } catch (err) {
+      setMsg(apiErrorMessage(err) ?? t(lang, 'actionError'))
     } finally {
       setBusy(false)
     }
@@ -81,8 +81,8 @@ export default function OrderDetailSheet({ lang, orderId, owner, preset, onClose
       setMsg(t(lang, 'statusChanged'))
       onChanged?.(updated)
       setConfirmingCancel(false)
-    } catch {
-      setMsg(t(lang, 'authError'))
+    } catch (err) {
+      setMsg(apiErrorMessage(err) ?? t(lang, 'actionError'))
     } finally {
       setBusy(false)
     }

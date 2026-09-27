@@ -525,6 +525,8 @@ function Catalog({
         daysCount={pickForDate ? days.length : 0}
         onBeverageChange={(beverage) => { if (pickForDate) onBeverageChange(pickForDate, beverage) }}
         onSaladChange={(salad) => { if (pickForDate) onSaladChange(pickForDate, salad) }}
+        onApplyBeverageToAll={onApplyBeverageToAll}
+        onApplySaladToAll={onApplySaladToAll}
         onPortionsChange={(portions) => { if (pickForDate) onPortionsChange(pickForDate, portions) }}
         onPick={(setId) => {
           if (pickForDate) onSetChange(pickForDate, setId)

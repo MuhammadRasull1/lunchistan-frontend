@@ -16,10 +16,10 @@ import { EMPLOYEE_MAX } from './types'
 import { t } from './locales/translations'
 import { showTelegramAlert } from './lib/telegram'
 import { loadSavedOrder, saveOrder, clearSavedOrder } from './lib/orderStorage'
-import { submitOrder, getToken, setToken, fetchMe, fetchMenu, fetchDayMenu, restoreTokenFromCloud, isNetworkError, fetchAvailableDates } from './lib/api'
+import { apiErrorMessage, submitOrder, getToken, setToken, fetchMe, fetchMenu, fetchDayMenu, restoreTokenFromCloud, isNetworkError, fetchAvailableDates } from './lib/api'
 import { restoreGeoConsentFromCloud } from './lib/geoConsent'
 import type { AuthResponse, AuthUser, OrderContact, OrderView } from './lib/api'
-import { getDefaultSalad } from './components/saladOptions'
+import { getDefaultSalad, getSaladOptions } from './components/saladOptions'
 import { isPastDate, isValidDateString, canSelectDate, formatDate } from './lib/calendar'
 
 // До 11.09.2026 меню было захардкожено в data/mockMenu.ts с единой ценой на все блюда.
@@ -94,8 +94,8 @@ function App() {
     if (!savedOrder) return {}
     const merged: CartState = {}
     for (const [date, item] of Object.entries(savedOrder.cartState)) {
-      // Защитный слой: сохранённые прошедшие даты не восстанавливаются.
-      if (isValidDateString(date) && !isPastDate(date)) merged[date] = item
+      // Сохранённые даты, которые уже нельзя заказать (прошли или сегодня после 10:00), не восстанавливаем
+      if (isValidDateString(date) && canSelectDate(date)) merged[date] = item
     }
     return merged
   })
@@ -253,7 +253,9 @@ function App() {
     // Выбор больше не в дневном меню даты (владелец снял/заменил блюдо) — считаем невыбранным,
     // иначе заказ уйдёт с блюдом, которого в этот день нет.
     const dayMenu = dayMenus[date]
-    const stillOnMenu = dayMenu === undefined || dayMenu.some(s => Number(s.id) === item?.setId)
+    // Пока меню дня не загрузилось, блюдо не считаем подтверждённым — иначе «Повторить заказ»
+    // пропускал в корзину блюдо, которого в этот день нет
+    const stillOnMenu = dayMenu !== undefined && dayMenu.some(s => Number(s.id) === item?.setId)
     return {
       date,
       set: chosenSet ?? dayMenus[date]?.[0] ?? menu[0],
@@ -421,7 +423,8 @@ function App() {
       setScreen('success')
     } catch (error) {
       console.error('Ошибка при отправке заказа:', error)
-      showTelegramAlert(t(lang, 'orderError'))
+      // Сервер называет причину («Дата … уже недоступна») — показываем её, а не общую фразу
+      showTelegramAlert(apiErrorMessage(error) ?? t(lang, 'orderError'))
     } finally {
       setIsSubmitting(false)
     }
@@ -593,6 +596,7 @@ function App() {
               >
                 <Cart
                   days={orderDays}
+                  saladRequired={getSaladOptions(menu).length > 0}
                   totalMonthlyPrice={totalMonthlyPrice}
                   employeeCount={employeeCount}
                   totalItems={totalItems}

@@ -43,9 +43,9 @@ export interface TelegramLocationData {
 /** Геолокация Telegram (TMA 8.0+). init() обязателен перед getLocation(). */
 export interface TelegramLocationManager {
   isInited?: boolean
-  init?: (opts?: object) => Promise<unknown> | unknown
-  /** Запрос текущего местоположения устройства. Возвращает данные или ошибку. */
-  getLocation: (opts?: { with_age?: boolean }) => Promise<TelegramLocationData> | TelegramLocationData
+  /** API на колбэках (не промисы): init(cb), getLocation(cb(data|null)) */
+  init?: (callback?: () => void) => unknown
+  getLocation: (callback: (data: TelegramLocationData | null) => void) => unknown
   /** Последнее известное местоположение — может быть устаревшим, для «живой» точки НЕ используем. */
   getLastKnownLocation?: () => Promise<TelegramLocationData> | TelegramLocationData
 }
@@ -55,6 +55,8 @@ export interface TelegramUser {
   username?: string
   firstName: string
   lastName?: string
+  first_name?: string
+  last_name?: string
 }
 
 export interface TelegramWebApp {
@@ -173,8 +175,9 @@ export function getTelegramUser(): TelegramUser | null {
   return {
     id: user.id,
     username: user.username,
-    firstName: user.firstName,
-    lastName: user.lastName,
+    // Telegram отдаёт snake_case (first_name), firstName всегда был undefined
+    firstName: user.first_name ?? user.firstName,
+    lastName: user.last_name ?? user.lastName,
   }
 }
 
@@ -262,7 +265,12 @@ async function ensureTgLocationInit(): Promise<void> {
   const lm = getTelegramWebApp()?.locationManager
   if (!lm?.init || tgLocationInited) return
   try {
-    await Promise.resolve(lm.init())
+    const init = lm.init
+    // Колбэк вызывается, когда менеджер готов; страхуемся таймаутом, если Telegram молчит
+    await new Promise<void>((resolve) => {
+      init(() => resolve())
+      setTimeout(resolve, 3000)
+    })
   } catch {
     // init = подписка, если Telegram не дал — getLocation всё равно попробуем ниже
   } finally {
@@ -277,7 +285,10 @@ export async function getTelegramLocation(): Promise<GeoFix | null> {
   try {
     await ensureTgLocationInit()
     // with_age — чтобы мы видели возраст данных и не брали «последнее известное» из прошлого.
-    const res = await Promise.resolve(lm.getLocation({ with_age: true }))
+    const res = await new Promise<TelegramLocationData | null>((resolve) => {
+      lm.getLocation((data) => resolve(data))
+      setTimeout(() => resolve(null), 15000)
+    })
     const norm = normalizeRes(res)
     if (!norm) return null
     if (norm.age != null && norm.age > 120) return null

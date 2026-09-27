@@ -246,6 +246,7 @@ const translations: Record<Lang, Record<string, string>> = {
     repeatOrderFewerDates: 'Меню назначено только на {n} из {total} дней — перенесли их, остальные добавите позже.',
     withoutIngredients: 'без',
     networkError: 'Нет связи с сервером — проверьте интернет',
+    actionError: 'Не получилось — попробуйте ещё раз',
     employeesLoadError: 'Не удалось загрузить сотрудников — проверьте интернет.',
     teamActionError: 'Не получилось — проверьте интернет и попробуйте ещё раз.',
 
@@ -559,6 +560,7 @@ const translations: Record<Lang, Record<string, string>> = {
     repeatOrderFewerDates: "Menyu faqat {total} kundan {n} tasiga belgilangan — ularni o'tkazdik, qolganini keyin qo'shasiz.",
     withoutIngredients: 'siz',
     networkError: "Server bilan aloqa yo'q — internetni tekshiring",
+    actionError: "Bajarilmadi — qayta urinib ko'ring",
     employeesLoadError: "Xodimlarni yuklab bo'lmadi — internetni tekshiring.",
     teamActionError: "Bo'lmadi — internetni tekshirib, qayta urinib ko'ring.",
 
