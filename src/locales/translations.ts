@@ -5,7 +5,7 @@ const translations: Record<Lang, Record<string, string>> = {
     // Brand & Header
     brand: 'Lunchistan',
     headerTitle: 'Корпоративная подписка на месяц',
-    headerSubtitle: 'Сбалансированные комплексные обеды для вашей команды — полное меню на 2 месяца ({n} сетов)',
+    headerSubtitle: 'Сбалансированные комплексные обеды для вашей команды — полное меню на 2 месяца (сетов: {n})',
 
     // Calculator
     calendarTitle: 'Календарь рабочих дней',
@@ -18,7 +18,7 @@ const translations: Record<Lang, Record<string, string>> = {
     calendarNextMonth: 'Следующий месяц',
     noDatesSelected: 'Выберите даты в календаре, чтобы собрать меню',
     employees: 'Количество сотрудников',
-    selectAll: 'Выбрать все {n}',
+    selectAll: 'Выбрать все: {n}',
     daysForms: 'день|дня|дней',
     employeesForms: 'сотрудник|сотрудника|сотрудников',
     portionsForms: 'порция|порции|порций',
@@ -38,7 +38,7 @@ const translations: Record<Lang, Record<string, string>> = {
     totalPortionsAll: 'Всего порций (на всех)',
     pricePerPortion: 'Цена одной порции',
     totalToPay: 'Итого к оплате',
-    menuTitle: 'Меню на 2 месяца ({n} сетов)',
+    menuTitle: 'Меню на 2 месяца (сетов: {n})',
     from: 'из',
     stepDecrease: 'Уменьшить',
     stepIncrease: 'Увеличить',

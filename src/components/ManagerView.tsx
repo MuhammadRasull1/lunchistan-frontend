@@ -114,7 +114,6 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
   useEffect(() => {
     if (!activeDate) return
     let cancelled = false
-    setReportError(false)
     fetchDayReport(activeDate)
       .then(data => {
         if (!cancelled) { setReport(data); setReportError(false) }
@@ -299,6 +298,7 @@ export default function ManagerView({ lang, userName, companyName, teamCode, tea
               // (activeDate не менялся) — отчёт пропадал до перезагрузки (25.09.2026)
               if (d.date === activeDate) return
               setReport(null)
+              setReportError(false)
               setActiveDate(d.date)
             }}
           >

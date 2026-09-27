@@ -142,7 +142,7 @@ function AddressPicker({ isOpen, lang, totalAmount, initial, geoAllowed, onClose
           fetchDeliveryQuote(position.lat, position.lon, totalAmount),
         ])
         if (cancelled) return
-        if (geocoded) setLabel(geocoded)
+        setLabel(geocoded ?? `${position.lat.toFixed(5)}, ${position.lon.toFixed(5)}`)
         setQuote(deliveryQuote)
         setQuoteLoading(false)
       } catch {

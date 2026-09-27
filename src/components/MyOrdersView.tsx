@@ -64,10 +64,12 @@ export default function MyOrdersView({ lang, onRepeatOrder }: Props) {
       </div>
 
       <OrderDetailSheet
+        key={openId ?? 'none'} // новый заказ — чистое состояние (сообщения, подтверждение отмены)
         lang={lang}
         orderId={openId}
         preset={openOrder}
         onClose={() => setOpenId(null)}
+        onChanged={(u) => setOrders(prev => prev?.map(o => (o.id === u.id ? { ...o, ...u } : o)) ?? prev)}
         onRepeat={onRepeatOrder ? (o) => { setOpenId(null); onRepeatOrder(o) } : undefined}
       />
     </div>

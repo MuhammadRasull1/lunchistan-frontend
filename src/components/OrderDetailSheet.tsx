@@ -38,7 +38,9 @@ export default function OrderDetailSheet({ lang, orderId, owner, preset, onClose
     return () => { cancelled = true }
   }, [orderId, owner])
 
-  const order: OrderView | null = owner ? (fetched ?? preset ?? null) : (preset ?? null)
+  // Только данные текущего orderId: после отмены клиент видит новый статус, чужой заказ не мелькает
+  const mine = (o: OrderView | null | undefined) => (o && o.id === orderId ? o : null)
+  const order: OrderView | null = mine(fetched) ?? mine(preset)
 
   const change = async (status: OrderStatus, note?: string) => {
     if (!order || busy) return

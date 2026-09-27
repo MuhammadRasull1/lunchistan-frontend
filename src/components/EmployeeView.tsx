@@ -30,7 +30,8 @@ export default function EmployeeView({ lang, userName, companyName, onLogout }: 
   // Меню на конкретную дату («Команды» тоже ограничены реально внесённым
   // меню дня, не всем каталогом — см. routes.js PUT /api/my/days/:date/choice,
   // которая отклоняет setId, если он не в daily_menu на эту дату).
-  const [pickForMenu, setPickForMenu] = useState<LunchSet[]>([])
+  // Меню храним вместе с датой: пока грузится другой день, старое меню не показываем
+  const [pickForMenu, setPickForMenu] = useState<{ date: string; sets: LunchSet[] } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [minMonth] = useState(() => startOfMonth(new Date()))
   const maxMonth = addMonths(minMonth, 1)
@@ -77,8 +78,8 @@ export default function EmployeeView({ lang, userName, companyName, onLogout }: 
     if (!pickFor) return
     let cancelled = false
     fetchDayMenu(pickFor.date)
-      .then(sets => { if (!cancelled) setPickForMenu(sets) })
-      .catch(() => { if (!cancelled) setPickForMenu([]) })
+      .then(sets => { if (!cancelled) setPickForMenu({ date: pickFor.date, sets }) })
+      .catch(() => { if (!cancelled) setPickForMenu({ date: pickFor.date, sets: [] }) })
     return () => {
       cancelled = true
     }
@@ -170,7 +171,7 @@ export default function EmployeeView({ lang, userName, companyName, onLogout }: 
 
       <SetPicker
         isOpen={pickFor !== null}
-        menu={pickFor ? pickForMenu : []}
+        menu={pickFor && pickForMenu?.date === pickFor.date ? pickForMenu.sets : []}
         lang={lang}
         dayLabel={pickFor ? dayLabel(pickFor.date, lang) : undefined}
         current={pickFor?.choice ?? null}
